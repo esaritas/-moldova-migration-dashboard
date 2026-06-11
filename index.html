@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moldova in Motion — migration & remittances</title>
+
+  <!-- Fonts (degrade gracefully to system fonts if offline) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
+      <h1>Moldova in Motion</h1>
+      <p class="lede">Where Moldovans go, who comes to Moldova, and how much money flows home.
+        Each ribbon's thickness is the number of people — or dollars — moving along it.</p>
+      <p class="scope-note" id="scopeNote"></p>
+
+      <!-- Mode toggle: plain-language labels for a general audience -->
+      <div class="modes" role="group" aria-label="Choose what to show">
+        <button class="mode-btn" data-mode="emigration"  aria-pressed="true">
+          <span class="ico"></span>Leaving Moldova</button>
+        <button class="mode-btn" data-mode="immigration" aria-pressed="false">
+          <span class="ico"></span>Coming to Moldova</button>
+        <button class="mode-btn" data-mode="remittances" aria-pressed="false">
+          <span class="ico"></span>Money sent home</button>
+      </div>
+    </header>
+
+    <!-- Map + table side by side -->
+    <div class="panel">
+      <div class="card map-card">
+        <svg id="map" role="img" aria-label="Map of migration flows"></svg>
+        <div class="zoom-ctrls">
+          <button class="zoom-btn" id="zoomIn" aria-label="Zoom in" title="Zoom in">+</button>
+          <button class="zoom-btn" id="zoomOut" aria-label="Zoom out" title="Zoom out">&minus;</button>
+          <button class="zoom-btn" id="zoomReset" aria-label="Reset to world view" title="Reset view">&#8862;</button>
+        </div>
+        <div class="map-caption" id="mapCaption">Flow width = people</div>
+        <div class="src-caption" id="mapSource"></div>
+      </div>
+
+      <div class="card table-card">
+        <div class="total">
+          <span class="big" id="totalValue">—</span>
+          <span class="label" id="totalLabel"></span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th class="c-bar-cell"></th>
+              <th class="num" id="valueHead">People</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card timeline-card">
+      <button class="play" id="playBtn" aria-label="Play through years" title="Play">
+        <svg width="14" height="14" viewBox="0 0 14 14" id="playIcon"><path d="M3 2 L12 7 L3 12 Z" fill="currentColor"/></svg>
+      </button>
+      <div class="track">
+        <div class="track-line"></div>
+        <div class="track-fill" id="trackFill"></div>
+        <div class="stops" id="stops"></div>
+      </div>
+    </div>
+
+    <!-- Economics: mode-aware analysis with world benchmarks -->
+    <div class="card context-card">
+      <p class="context-headline" id="contextHeadline"></p>
+      <div class="context-body">
+        <div class="context-chart">
+          <div class="ctx-chart-title" id="ctxChartTitle"></div>
+          <svg id="ctxChart" role="img"></svg>
+          <div class="src-caption" id="ctxSource"></div>
+        </div>
+        <div class="context-stats" id="ctxStats"></div>
+      </div>
+    </div>
+
+    <footer>
+      <p><strong>Sources &amp; caveats.</strong> <span class="src" id="sourceLine"></span></p>
+      <p>Drawn from official sources — National Bank of Moldova, UN DESA International Migrant
+        Stock, UNHCR, the World Bank and Eurostat — with mixed confidence labelled throughout.
+        <button type="button" class="link-btn" id="openMethod">Methodology &amp; sources</button></p>
+    </footer>
+
+    <!-- Methodology & sources (native <dialog>: Esc + focus-trap built in) -->
+    <dialog id="methodDialog" class="method-dialog" aria-labelledby="methodTitle">
+      <div class="method-head">
+        <h2 id="methodTitle">Methodology &amp; sources</h2>
+        <button type="button" class="method-close" id="methodClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="method-body" id="methodBody"><!-- built from DATA by app.js --></div>
+    </dialog>
+  </div>
+
+  <!-- Libraries & data (load order matters) -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="world-data.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
