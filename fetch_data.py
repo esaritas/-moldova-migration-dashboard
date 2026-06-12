@@ -87,6 +87,24 @@ def http_get(url, **kwargs):
         _cache_write(url, r.content)
     return r
 
+
+def http_post(url, json_body, **kwargs):
+    """POST with the same verified→unverified TLS fallback (statbank.statistica.md
+    also serves an incomplete cert chain)."""
+    kwargs.setdefault("headers", UA)
+    kwargs.setdefault("timeout", TIMEOUT)
+    try:
+        r = requests.post(url, json=json_body, **kwargs)
+    except requests.exceptions.SSLError:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        host = url.split("/")[2] if "//" in url else url
+        print(f"  [tls] verification failed for {host} - retrying WITHOUT verification.")
+        r = requests.post(url, json=json_body, verify=False, **kwargs)
+    if r.status_code == 200:
+        _cache_write(url + " |POST", r.content)
+    return r
+
 # Arc endpoints — keep in sync with data.js. [lat, lng].
 COORDS = {
     "Russia": [55.75, 37.62], "Italy": [41.90, 12.50], "Romania": [44.43, 26.10],
@@ -190,6 +208,17 @@ def sources_registry():
             "indicator_code": "SM.POP.TOTL", "accessed": ACCESSED, "tier": "official-api",
             "definition": "Number of people living in Moldova who were born elsewhere (UN DESA via WB).",
             "scope": "Excludes Transnistria.", "note": "",
+        },
+        "nbs_migration": {
+            "label": "International migration — emigrants by destination / immigrants by origin",
+            "publisher": "National Bureau of Statistics of the Republic of Moldova",
+            "url": "https://statbank.statistica.md/pxweb/en/20%20Populatia%20si%20procesele%20demografice/POP070/",
+            "indicator_code": "PxWeb POP07300 / POP07100", "accessed": ACCESSED, "tier": "official-api",
+            "definition": "Annual registered international migration FLOWS by country — people who "
+                          "formally emigrated (deregistered) or immigrated (registered) in the year.",
+            "scope": "Flows, not stocks, and only legally registered moves — a few thousand a year, "
+                     "NOT comparable to UN DESA migrant stock or UNHCR refugee counts. Excl. Transnistria.",
+            "note": "The authoritative Moldovan national source for registered migration.",
         },
         "eurostat_migr": {
             "label": "Population by citizenship / country of birth (Moldovans in the EU)",
@@ -355,22 +384,73 @@ def nbm_sum_quarters(year, qindex):
 # ---------------------------------------------------------------------------
 # 4. NBS statbank (PxWeb) — migration flows  (TEMPLATE — set the table id)
 # ---------------------------------------------------------------------------
-def nbs_pxweb(table_path, query):
-    """
-    Generic PxWeb query against Moldova's statistical bank.
-    Find the exact table_path by browsing https://statbank.statistica.md/
-    (Population and demographic processes -> International migration), then copy
-    the API path shown in the table's 'API' tab. Example shape only:
+NBS_API = ("https://statbank.statistica.md/PxWeb/api/v1/en/"
+           "20 Populatia si procesele demografice/POP070/")
 
-        table_path = "POP/POP070100.px"
-        query = [{"code":"Country","selection":{"filter":"all","values":["*"]}},
-                 {"code":"Years","selection":{"filter":"item","values":["2020"]}}]
-    """
-    base = "https://statbank.statistica.md/PxWeb/api/v1/en/statistica/"
-    body = {"query": query, "response": {"format": "json"}}
-    r = requests.post(base + table_path, json=body, headers=UA, timeout=TIMEOUT)
-    r.raise_for_status()
-    return r.json()   # parse into {country: value} per your chosen table's layout
+# Our canonical country names -> NBS spelling (they differ BY TABLE; e.g. the
+# emigrants table uses "Italia"/"USA"/"Great Britain", the immigrants table uses
+# "Italy"/"United Kingdom"/"Russian Federation"). Match on these.
+NBS_EMI_NAMES = {"Russia": "Russia", "Italy": "Italia", "Romania": "Romania",
+                 "Ukraine": "Ukraine", "Germany": "Germany", "France": "France",
+                 "Israel": "Israel", "United States": "USA", "United Kingdom": "Great Britain",
+                 "Portugal": "Portugal", "Spain": "Spain", "Turkey": "Turkey", "India": "India"}
+NBS_IMM_NAMES = {"Russia": "Russian Federation", "Italy": "Italy", "Romania": "Romania",
+                 "Ukraine": "Ukraine", "Germany": "Germany", "France": "France",
+                 "Israel": "Israel", "United Kingdom": "United Kingdom", "Portugal": "Portugal",
+                 "Spain": "Spain", "Turkey": "Turkey", "India": "India"}
+
+def _nbs_vmap(meta, code):
+    v = next(x for x in meta["variables"] if x["code"] == code)
+    return dict(zip(v["valueTexts"], v["values"]))   # text -> code
+
+def _nbs_num(x):
+    try:    return int(x)
+    except (TypeError, ValueError): return 0          # '-' / '..' = missing
+
+def _nbs_collect(payload, code_to_canon, ymap, year_idx, country_idx):
+    inv_y = {v: k for k, v in ymap.items()}
+    out = {}
+    for row in payload.get("data", []):
+        key = row["key"]
+        ccode, ycode = key[country_idx], key[year_idx]
+        if ccode not in code_to_canon or ycode not in inv_y:
+            continue
+        y = int(inv_y[ycode]); c = code_to_canon[ccode]
+        out.setdefault(y, {})
+        out[y][c] = out[y].get(c, 0) + _nbs_num(row["values"][0])
+    return out
+
+def nbs_emigration_flows(years):
+    """{year: {country: persons}} — authorised emigrants by destination (POP07300),
+    summed over sex, age-total. NBS official national FLOWS (not stocks)."""
+    m = http_get(NBS_API + "POP07300.px").json()
+    cmap = _nbs_vmap(m, "Tara de destinatie"); ymap = _nbs_vmap(m, "Ani")
+    amap = _nbs_vmap(m, "Grupe de virsta");    smap = _nbs_vmap(m, "Sexe")
+    names = {cmap[nbs]: canon for canon, nbs in NBS_EMI_NAMES.items() if nbs in cmap}
+    q = {"query": [
+        {"code": "Ani", "selection": {"filter": "item",
+            "values": [ymap[str(y)] for y in years if str(y) in ymap]}},
+        {"code": "Tara de destinatie", "selection": {"filter": "item", "values": list(names)}},
+        {"code": "Sexe", "selection": {"filter": "item", "values": list(smap.values())}},
+        {"code": "Grupe de virsta", "selection": {"filter": "item",
+            "values": [amap["Age groups- total"]]}}],
+        "response": {"format": "json"}}
+    return _nbs_collect(http_post(NBS_API + "POP07300.px", q).json(), names, ymap, 0, 1)
+
+def nbs_immigration_flows(years):
+    """{year: {country: persons}} — registered immigrants by country of origin
+    (POP07100, purpose=Total). NBS official national FLOWS (not stocks)."""
+    m = http_get(NBS_API + "POP07100.px").json()
+    cmap = _nbs_vmap(m, "Tara de emigrare"); ymap = _nbs_vmap(m, "Ani")
+    pmap = _nbs_vmap(m, "Scopul sosirii")
+    names = {cmap[nbs]: canon for canon, nbs in NBS_IMM_NAMES.items() if nbs in cmap}
+    q = {"query": [
+        {"code": "Tara de emigrare", "selection": {"filter": "item", "values": list(names)}},
+        {"code": "Ani", "selection": {"filter": "item",
+            "values": [ymap[str(y)] for y in years if str(y) in ymap]}},
+        {"code": "Scopul sosirii", "selection": {"filter": "item", "values": [pmap["Total"]]}}],
+        "response": {"format": "json"}}
+    return _nbs_collect(http_post(NBS_API + "POP07100.px", q).json(), names, ymap, 1, 0)
 
 
 # ---------------------------------------------------------------------------
@@ -503,6 +583,20 @@ def eurostat_moldovans_in_eu(dataset="migr_pop1ctz"):
 # Assemble + write
 # ---------------------------------------------------------------------------
 def build(years, undesa_path=None):
+    # NBS first — the authoritative national source (registered migration FLOWS).
+    print("NBS (national statistics): registered migration flows by country ...")
+    NBS_YEARS = [2015, 2018, 2020, 2022, 2024]
+    try:
+        nbs_emi = nbs_emigration_flows(NBS_YEARS)
+        print(f"  emigrants/yr by destination: { {y: sum(d.values()) for y, d in sorted(nbs_emi.items())} }")
+    except Exception as e:
+        nbs_emi = {}; print(f"  [skip emigration] {e}")
+    try:
+        nbs_imm = nbs_immigration_flows(NBS_YEARS)
+        print(f"  immigrants/yr by origin:     { {y: sum(d.values()) for y, d in sorted(nbs_imm.items())} }")
+    except Exception as e:
+        nbs_imm = {}; print(f"  [skip immigration] {e}")
+
     print("World Bank: total remittances + %GDP + migrant stock ...")
     def wb(indicator):
         try:
@@ -567,7 +661,25 @@ def build(years, undesa_path=None):
         "remittances": {"label": "Money sent home",  "sublabel": "Remittances by source country",
                         "unit": "usd_million", "direction": "in",
                         "source_id": "nbm_transfers", "years": {}},
+        "emigration_flow":  {"label": "Emigrants / year", "sublabel": "Registered with NBS, by destination",
+                             "unit": "people", "direction": "out",
+                             "source_id": "nbs_migration", "years": {}},
+        "immigration_flow": {"label": "Immigrants / year", "sublabel": "Registered with NBS, by origin",
+                             "unit": "people", "direction": "in",
+                             "source_id": "nbs_migration", "years": {}},
     }
+
+    # NBS registered-flow modes (official national source).
+    for y, d in nbs_emi.items():
+        if d:
+            modes["emigration_flow"]["years"][str(y)] = [
+                {"country": c, "value": v} for c, v in sorted(d.items(), key=lambda kv: -kv[1])]
+            used.add("nbs_migration")
+    for y, d in nbs_imm.items():
+        if d:
+            modes["immigration_flow"]["years"][str(y)] = [
+                {"country": c, "value": v} for c, v in sorted(d.items(), key=lambda kv: -kv[1])]
+            used.add("nbs_migration")
 
     # remittances: straight from the NBM scrape
     for y, d in remit_by_country.items():
@@ -674,6 +786,8 @@ SANITY_RANGES = {
     "remittances": (100, 4000),        # USD million, annual by-country sum
     "emigration":  (50_000, 2_500_000),
     "immigration": (100, 1_000_000),
+    "emigration_flow":  (100, 50_000), # NBS registered flows, persons/year
+    "immigration_flow": (100, 50_000),
 }
 
 def sanity_check(data):

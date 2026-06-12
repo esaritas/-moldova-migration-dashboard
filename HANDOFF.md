@@ -141,6 +141,12 @@ This matters; the figures are mixed-confidence on purpose and labelled in `data.
   Moldova-born cell for them → omitted (not zero) and footnoted. Birth-basis still
   undercounts (Italy ~219k UN DESA vs ~300k often cited); ~752k across covered
   destinations vs ~864k all-destinations (UN DESA by-origin).
+- **emigration_flow / immigration_flow** (NBS official-flows view, modes 4-5):
+  Moldova's NBS PxWeb registered-migration FLOWS by country (POP07300 emigrants by
+  destination, POP07100 immigrants by origin) — a few THOUSAND a year, a different
+  and much smaller measure than the diaspora/refugee STOCKS above. Shown as their
+  own modes (muted ochre/slate accents) after a divider, with a `.modes-note`
+  explaining the stock-vs-flow distinction. Never mix these with the stock modes.
 
 `MIGRATION_DATA.meta.latest_year` records the newest year per mode.
 
@@ -149,6 +155,11 @@ Run on a real machine (open internet). All live APIs are tested end-to-end. Each
 source records provenance via `sources_registry()` (mirrors `DATA.sources`, stamped
 with the run date); modes reference it by `source_id`, so the output carries a
 `sources` block and captions are generated, never hand-typed. Hierarchy:
+- **NBS PxWeb** (API, tried FIRST — the national source): `nbs_emigration_flows()`
+  (POP07300) and `nbs_immigration_flows()` (POP07100) → the `emigration_flow` /
+  `immigration_flow` modes. `http_post` has the verified→unverified TLS fallback
+  (statbank.statistica.md also serves an incomplete chain). Country spellings differ
+  per table (NBS_EMI_NAMES / NBS_IMM_NAMES). These are FLOWS, kept separate.
 - **World Bank Indicators** (API): `BX.TRF.PWKR.CD.DT`, `BX.TRF.PWKR.DT.GD.ZS`,
   `SM.POP.TOTL`. Fail-soft (wrapped per-indicator).
 - **UNHCR Population API**: refugees + asylum-seekers, `coa=MDA`. Field `refugees`

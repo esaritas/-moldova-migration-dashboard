@@ -178,6 +178,20 @@ window.MIGRATION_DATA = {
       definition: "Annual revenue of the state budget, used as a scale reference for remittances.",
       scope: "National scope; excludes Transnistria.",
       note: ""
+    },
+    nbs_migration: {
+      label: "International migration — emigrants by destination / immigrants by origin",
+      publisher: "National Bureau of Statistics of the Republic of Moldova",
+      url: "https://statbank.statistica.md/pxweb/en/20%20Populatia%20si%20procesele%20demografice/POP070/",
+      indicator_code: "PxWeb POP07300 / POP07100",
+      accessed: "2026-06-12",
+      definition: "Annual registered international migration FLOWS by country — people who " +
+                  "formally emigrated (deregistered) or immigrated (registered) in the year.",
+      scope: "Flows, not stocks, and only legally registered moves. 'Authorized emigrants' " +
+             "(who deregistered) are a small fraction of the real diaspora — counts are a few " +
+             "thousand a year, NOT comparable to UN DESA migrant stock or UNHCR refugee counts. " +
+             "Excludes Transnistria.",
+      note: "The authoritative Moldovan national source for registered migration."
     }
   },
 
@@ -210,7 +224,14 @@ window.MIGRATION_DATA = {
                   "sense of their scale in the economy." },
     { id: "net_settlements", term: "Net settlements",
       definition: "The National Bank of Moldova's measure of cross-border transfers to " +
-                  "individuals via banks, netted — a proxy for remittances by source country." }
+                  "individuals via banks, netted — a proxy for remittances by source country." },
+    { id: "registered_emigrant", term: "Registered (authorized) emigrant",
+      definition: "A person who formally deregistered their residence on emigrating, in a given " +
+                  "year (NBS). A FLOW, and only a small fraction of actual emigrants — most never " +
+                  "deregister — so it is far below the diaspora stock." },
+    { id: "registered_immigrant", term: "Registered immigrant",
+      definition: "A person who officially registered as immigrating to Moldova in a given year " +
+                  "(NBS), by country of origin. A FLOW; kept separate from UNHCR refugee figures." }
   ],
 
   // Caveats / scope notes — the political-safety + methodology landmines, in one
@@ -280,6 +301,24 @@ window.MIGRATION_DATA = {
         { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "5.1% world avg", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
         { term: "Remittance inflows", value: "$1.92bn", sub: "2024", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
         { term: "vs. state budget", value: "≈54%", sub: "of state budget revenue", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
+      ]
+    },
+    emigration_flow: {
+      headline: "Moldova's own statistics office records only people who formally deregister on " +
+                "leaving — a few thousand a year, far below the ~864,000-strong diaspora. It is a " +
+                "narrow but official measure of where registered departures go.",
+      indicators: [
+        { term: "Registered emigrants", value: "≈4,000/yr", sub: "2024, all destinations (NBS)", world: null, icon: "depart", source_id: "nbs_migration", def_id: "registered_emigrant" },
+        { term: "Top destination", value: "Russia", sub: "of registered emigrants, 2024", world: null, icon: "route", source_id: "nbs_migration", def_id: "registered_emigrant" }
+      ]
+    },
+    immigration_flow: {
+      headline: "Officially registered arrivals — people who formally settle in Moldova each year, " +
+                "by country of origin. A few thousand a year, and (unlike the refugee figures) not " +
+                "the Ukrainian displacement, which is recorded separately by UNHCR.",
+      indicators: [
+        { term: "Registered immigrants", value: "≈6,600/yr", sub: "2024, all origins (NBS)", world: null, icon: "arrive", source_id: "nbs_migration", def_id: "registered_immigrant" },
+        { term: "Top origin", value: "Russia", sub: "of registered immigrants, 2024", world: null, icon: "route", source_id: "nbs_migration", def_id: "registered_immigrant" }
       ]
     }
   },
@@ -417,6 +456,110 @@ window.MIGRATION_DATA = {
           { country: "Portugal", value: 19 },         //  19.21 (1.3%)
           { country: "Turkey", value: 14 },           //  14.25 (1.0%)
           { country: "Ukraine", value: 10 }           //  10.03 (0.7%)
+        ]
+      }
+    },
+
+    // ---- REGISTERED EMIGRANTS / YEAR (NBS official flows, by destination) ----
+    // OFFICIAL national flows — far smaller than the diaspora stock above; these
+    // count only people who formally deregistered on leaving (NBS POP07300).
+    emigration_flow: {
+      label: "Emigrants / year",
+      sublabel: "Registered with NBS, by destination",
+      unit: "people",
+      direction: "out",
+      source_id: "nbs_migration",
+      years: {
+        2015: [
+          { country: "Russia", value: 961 }, { country: "Ukraine", value: 312 },
+          { country: "United States", value: 287 }, { country: "Germany", value: 253 },
+          { country: "Israel", value: 174 }, { country: "Turkey", value: 26 },
+          { country: "Italy", value: 16 }, { country: "Romania", value: 8 },
+          { country: "United Kingdom", value: 3 }, { country: "France", value: 2 },
+          { country: "Spain", value: 1 }
+        ],
+        2018: [
+          { country: "Russia", value: 1081 }, { country: "Germany", value: 350 },
+          { country: "Ukraine", value: 233 }, { country: "United States", value: 207 },
+          { country: "Israel", value: 156 }, { country: "Italy", value: 17 },
+          { country: "Romania", value: 13 }, { country: "Turkey", value: 11 },
+          { country: "United Kingdom", value: 3 }, { country: "Portugal", value: 1 }
+        ],
+        2020: [
+          { country: "Russia", value: 847 }, { country: "Germany", value: 250 },
+          { country: "United States", value: 119 }, { country: "Ukraine", value: 102 },
+          { country: "Israel", value: 82 }, { country: "Turkey", value: 23 },
+          { country: "Romania", value: 8 }, { country: "France", value: 4 },
+          { country: "Italy", value: 4 }, { country: "United Kingdom", value: 4 },
+          { country: "Spain", value: 3 }, { country: "Portugal", value: 1 }
+        ],
+        2022: [
+          { country: "Russia", value: 1043 }, { country: "United States", value: 635 },
+          { country: "Italy", value: 517 }, { country: "Germany", value: 358 },
+          { country: "Ukraine", value: 210 }, { country: "Israel", value: 109 },
+          { country: "Turkey", value: 28 }, { country: "France", value: 16 },
+          { country: "Romania", value: 11 }, { country: "Spain", value: 9 },
+          { country: "Portugal", value: 2 }, { country: "United Kingdom", value: 2 }
+        ],
+        2024: [
+          { country: "Russia", value: 2256 }, { country: "Italy", value: 329 },
+          { country: "Ukraine", value: 244 }, { country: "United States", value: 186 },
+          { country: "Germany", value: 126 }, { country: "Turkey", value: 79 },
+          { country: "Israel", value: 72 }, { country: "Spain", value: 52 },
+          { country: "France", value: 40 }, { country: "Romania", value: 29 },
+          { country: "Portugal", value: 27 }, { country: "United Kingdom", value: 22 },
+          { country: "India", value: 2 }
+        ]
+      }
+    },
+
+    // ---- REGISTERED IMMIGRANTS / YEAR (NBS official flows, by origin) --------
+    immigration_flow: {
+      label: "Immigrants / year",
+      sublabel: "Registered with NBS, by origin",
+      unit: "people",
+      direction: "in",
+      source_id: "nbs_migration",
+      years: {
+        2015: [
+          { country: "Ukraine", value: 754 }, { country: "Romania", value: 646 },
+          { country: "Russia", value: 567 }, { country: "Israel", value: 548 },
+          { country: "Turkey", value: 347 }, { country: "Italy", value: 180 },
+          { country: "France", value: 43 }, { country: "Germany", value: 40 },
+          { country: "India", value: 37 }, { country: "Spain", value: 37 },
+          { country: "United Kingdom", value: 19 }, { country: "Portugal", value: 12 }
+        ],
+        2018: [
+          { country: "Ukraine", value: 752 }, { country: "Russia", value: 683 },
+          { country: "Israel", value: 489 }, { country: "Romania", value: 450 },
+          { country: "Turkey", value: 430 }, { country: "Italy", value: 130 },
+          { country: "India", value: 128 }, { country: "Germany", value: 41 },
+          { country: "France", value: 33 }, { country: "United Kingdom", value: 23 },
+          { country: "Spain", value: 18 }, { country: "Portugal", value: 10 }
+        ],
+        2020: [
+          { country: "Ukraine", value: 642 }, { country: "Turkey", value: 432 },
+          { country: "Russia", value: 426 }, { country: "Romania", value: 386 },
+          { country: "Italy", value: 81 }, { country: "India", value: 79 },
+          { country: "Israel", value: 42 }, { country: "Portugal", value: 42 },
+          { country: "France", value: 22 }, { country: "United Kingdom", value: 19 },
+          { country: "Germany", value: 18 }, { country: "Spain", value: 16 }
+        ],
+        2022: [
+          { country: "Russia", value: 1201 }, { country: "Ukraine", value: 1076 },
+          { country: "Turkey", value: 959 }, { country: "Romania", value: 362 },
+          { country: "India", value: 279 }, { country: "Israel", value: 188 },
+          { country: "Italy", value: 133 }, { country: "Germany", value: 41 },
+          { country: "France", value: 37 }, { country: "United Kingdom", value: 32 },
+          { country: "Spain", value: 9 }, { country: "Portugal", value: 8 }
+        ],
+        2024: [
+          { country: "Russia", value: 1213 }, { country: "Ukraine", value: 890 },
+          { country: "Turkey", value: 847 }, { country: "India", value: 522 },
+          { country: "Romania", value: 405 }, { country: "Israel", value: 156 },
+          { country: "Italy", value: 109 }, { country: "Germany", value: 65 },
+          { country: "France", value: 44 }, { country: "United Kingdom", value: 40 },
+          { country: "Spain", value: 9 }, { country: "Portugal", value: 5 }
         ]
       }
     }

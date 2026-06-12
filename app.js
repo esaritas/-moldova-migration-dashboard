@@ -17,7 +17,18 @@
   let currentK = 1;             // current zoom scale
   let hoverCountry = null;      // for the tooltip
 
-  const ACCENTS = { emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E" };
+  const ACCENTS = {
+    emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E",
+    // NBS official-flow modes: muted/earthy tones to read as secondary series.
+    emigration_flow: "#A8743A", immigration_flow: "#5E7488"
+  };
+  // Chart title per mode (the economics panel chart).
+  const CHART_TITLES = {
+    emigration: "Moldovans abroad — main destinations (stock)",
+    immigration: "Migrants & refugees in Moldova (stock)",
+    emigration_flow: "Registered emigrants per year (NBS)",
+    immigration_flow: "Registered immigrants per year (NBS)"
+  };
 
   // Hand-built inline icons (24x24, stroke = currentColor). No dependency.
   const ICONS = {
@@ -37,7 +48,10 @@
       + `fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" `
       + `stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] || ""}</svg>`;
   }
-  const MODE_ICON = { emigration: "depart", immigration: "arrive", remittances: "banknote" };
+  const MODE_ICON = {
+    emigration: "depart", immigration: "arrive", remittances: "banknote",
+    emigration_flow: "depart", immigration_flow: "arrive"
+  };
 
   const svg        = d3.select("#map");
   const tableBody  = d3.select("#tableBody");
@@ -604,9 +618,9 @@
       title = "Remittances as % of GDP";
     } else {
       data = modeTotals(mode);
-      unit = mode === "remittances" ? "usd_million" : "people";
+      unit = "people";
       refLine = null;
-      title = mode === "emigration" ? "Moldovans abroad — main destinations (stock)" : "Migrants & refugees in Moldova (stock)";
+      title = CHART_TITLES[mode] || (DATA.modes[mode].sublabel + " (total)");
     }
     document.getElementById("ctxChartTitle").textContent = title;
     drawLineChart(d3.select("#ctxChart"), data, { unit, accent, refLine });

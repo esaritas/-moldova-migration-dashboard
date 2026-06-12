@@ -123,6 +123,13 @@ h1 {
 }
 .mode-btn[aria-pressed="true"] .dot { opacity: 1; background: #fff; }
 .mode-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* divider before the NBS official-flow modes */
+.mode-sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line); }
+.modes-note {
+  margin: 8px 2px 0; max-width: 70ch;
+  font-size: 12px; line-height: 1.5; color: var(--ink-soft);
+}
+.modes-note strong { color: var(--ink); font-weight: 600; }
 
 /* ---- Main layout: map + table -------------------------------------------- */
 .panel {
