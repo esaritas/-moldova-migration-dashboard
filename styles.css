@@ -16,7 +16,7 @@
 
   /* One accent per mode */
   --c-out:   #C7402F;   /* leaving Moldova   (red)   */
-  --c-in:    #2F8F5B;   /* coming to Moldova (green) */
+  --c-in:    #1E8C72;   /* coming to Moldova (teal-green; safer for red-green CVD) */
   --c-money: #2B6F9E;   /* money sent home   (blue)  */
 
   --accent:  var(--c-out);   /* set per mode at runtime */
@@ -76,7 +76,7 @@ h1 {
 .scope-note {
   margin: 10px 0 0; max-width: 70ch;
   font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
-  color: var(--ink-faint);
+  color: var(--ink-soft);   /* provenance text → AA-legible, not decorative */
 }
 
 /* ---- Mode toggle (segmented) --------------------------------------------- */
@@ -365,15 +365,21 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 /* per-card source caption + keyboard focus (source also in title= on hover) */
 .stat { cursor: default; }
 .stat:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* cards with a glossary definition: hint it with a dotted underline on the term */
+.stat.has-def { cursor: help; }
+.stat.has-def .stat-term {
+  text-decoration: underline dotted; text-decoration-color: var(--ink-faint);
+  text-underline-offset: 2px;
+}
 .stat-src {
   font-family: var(--font-mono); font-size: 10px; line-height: 1.4;
-  color: var(--ink-faint); margin-top: 7px;
+  color: var(--ink-soft); margin-top: 7px;   /* AA-legible provenance */
 }
 
 /* ---- Source captions (one per chart; source travels with a screenshot) ---- */
 .src-caption {
   font-family: var(--font-mono); font-size: 10px; line-height: 1.45;
-  color: var(--ink-faint); margin-top: 6px; max-width: 60ch;
+  color: var(--ink-soft); margin-top: 6px; max-width: 60ch;   /* AA-legible provenance */
 }
 .context-chart .src-caption { margin-top: 8px; }
 
@@ -444,6 +450,23 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 .stop.empty .yr { opacity: .4; }
 .stop.empty[aria-current="true"] .pin { border-color: var(--accent); opacity: .9; }
 
+/* Annotated years: a small accent marker above the pin (text on hover + narration) */
+.stop { position: relative; }
+.stop.annotated::before {
+  content: ""; position: absolute; top: -7px; left: 50%; transform: translateX(-50%);
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: .85;
+}
+.timeline-note {
+  margin: 10px 2px 0; max-width: 80ch;
+  font-size: 12.5px; line-height: 1.5; color: var(--ink-soft);
+  display: flex; gap: 8px; align-items: baseline;
+}
+.timeline-note[hidden] { display: none; }
+.timeline-note::before {
+  content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); transform: translateY(-1px);
+}
+
 /* Table empty-state */
 .empty-note td {
   color: var(--ink-faint); font-size: 13px; line-height: 1.6;
@@ -460,6 +483,14 @@ footer {
 }
 footer .src { color: var(--ink-soft); }
 footer strong { color: var(--ink-soft); font-weight: 600; }
+.data-stamp {
+  margin-top: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.data-stamp::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--c-in); flex: none;   /* "fresh" dot */
+}
 
 /* link-styled button (footer trigger) */
 .link-btn {
@@ -514,6 +545,38 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 @media (max-width: 880px) {
   .panel { grid-template-columns: 1fr; }
   .timeline-card { flex-wrap: wrap; }
+}
+
+/* Phones (~380-560px): tighten chrome, fit the now-denser timeline, stop overflow */
+@media (max-width: 560px) {
+  .wrap { padding: 20px 14px 30px; }
+  .panel { gap: 14px; }
+  .modes { width: 100%; }
+  .mode-btn { font-size: 13px; padding: 8px 12px; }
+  .lede { font-size: 14px; }
+
+  /* map: keep the caption clear of the zoom controls; bigger tap targets */
+  .map-caption { max-width: 56%; font-size: 10px; line-height: 1.3; }
+  .zoom-btn { width: 36px; height: 36px; }
+
+  /* economics panel */
+  .context-card { padding: 16px 14px; }
+  .stat { padding: 11px 12px; gap: 10px; }
+  .stat-value { font-size: 21px; }
+  .stat-ico { width: 32px; height: 32px; }
+
+  /* timeline: the union is now ~10 years — shrink stops so they fit one row */
+  .timeline-card { padding: 14px 14px; gap: 12px; }
+  .track { height: 46px; }
+  .stop .pin { width: 11px; height: 11px; }
+  .stop .yr { font-size: 9.5px; }
+  .stop.annotated::before { width: 4px; height: 4px; top: -6px; }
+  .timeline-note { font-size: 12px; }
+
+  /* captions stay legible but compact */
+  .src-caption, .stat-src { font-size: 9.5px; }
+  .method-body { padding: 16px 16px 20px; }
+  .method-head { padding: 14px 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

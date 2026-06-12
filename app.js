@@ -17,7 +17,7 @@
   let currentK = 1;             // current zoom scale
   let hoverCountry = null;      // for the tooltip
 
-  const ACCENTS = { emigration: "#C7402F", immigration: "#2F8F5B", remittances: "#2B6F9E" };
+  const ACCENTS = { emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E" };
 
   // Hand-built inline icons (24x24, stroke = currentColor). No dependency.
   const ICONS = {
@@ -168,6 +168,27 @@
   }
   function citationsFor(obj) {
     return sourceIdsFor(obj).map(id => citation(sourceById(id))).filter(Boolean).join("  ·  ");
+  }
+
+  // Glossary (single source of truth for term definitions), keyed by id.
+  const GLOSSARY = {};
+  (DATA.glossary || []).forEach(g => { if (g.id) GLOSSARY[g.id] = g; });
+  function defById(id) { return GLOSSARY[id] || null; }
+
+  // "Data current as of" date: pipeline timestamp > manual meta.updated > newest
+  // source accessed date. Returns an ISO-ish date string or "".
+  function dataCurrentDate() {
+    const m = DATA.meta || {};
+    if (m.generated) return String(m.generated).slice(0, 10);
+    if (m.updated) return String(m.updated).slice(0, 10);
+    const accessed = Object.values(SOURCES).map(s => s.accessed).filter(Boolean).sort();
+    return accessed.length ? accessed[accessed.length - 1] : "";
+  }
+  function fmtDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
+    if (!m) return iso || "";
+    const mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m[2] - 1];
+    return `${+m[3]} ${mon} ${m[1]}`;
   }
 
   function arcPath(a, b) {
@@ -420,9 +441,14 @@
     tip.hidden = false;
   }
   function moveTip(e) {
-    const rect = document.querySelector(".map-card").getBoundingClientRect();
-    tip.style.left = (e.clientX - rect.left + 14) + "px";
-    tip.style.top  = (e.clientY - rect.top + 14) + "px";
+    const card = document.querySelector(".map-card").getBoundingClientRect();
+    // Clamp inside the map card so the tip never runs off-screen (esp. on mobile).
+    const tw = tip.offsetWidth || 140, th = tip.offsetHeight || 40;
+    let x = e.clientX - card.left + 14, y = e.clientY - card.top + 14;
+    x = Math.max(4, Math.min(x, card.width - tw - 4));
+    y = Math.max(4, Math.min(y, card.height - th - 4));
+    tip.style.left = x + "px";
+    tip.style.top  = y + "px";
   }
   function hideTip() { tip.hidden = true; }
 
@@ -438,21 +464,38 @@
     return Object.keys(DATA.modes[mode].years).map(Number).sort((a, b) => a - b);
   }
 
+  // Annotation for a year in the current mode (or null). `modes` omitted = all.
+  function annotationFor(y) {
+    return (DATA.annotations || []).find(a =>
+      a.year === y && (!a.modes || a.modes.includes(mode))) || null;
+  }
+
   function buildTimeline() {
     const ys = years();
     if (year == null) year = 2024;          // default landing year
     stopsEl.innerHTML = "";
     ys.forEach(y => {
       const has = !!DATA.modes[mode].years[y];
+      const note = annotationFor(y);
       const b = document.createElement("button");
-      b.className = "stop" + (has ? "" : " empty");
+      b.className = "stop" + (has ? "" : " empty") + (note ? " annotated" : "");
       b.disabled = !has;                       // can't select a year with no data
       b.setAttribute("aria-current", String(y === year));
+      if (note) b.title = `${y} — ${note.text}`;
       b.innerHTML = `<span class="pin"></span><span class="yr">${y}</span>`;
       if (has) b.addEventListener("click", () => { stopPlay(); setYear(y); });
       stopsEl.appendChild(b);
     });
     updateTrackFill();
+    updateTimelineNote();
+  }
+  // Narration line: shows the current year's annotation (mode-aware) during play.
+  function updateTimelineNote() {
+    const el = document.getElementById("timelineNote");
+    if (!el) return;
+    const note = annotationFor(year);
+    if (note) { el.textContent = `${year} — ${note.text}`; el.hidden = false; }
+    else { el.textContent = ""; el.hidden = true; }
   }
   function updateTrackFill() {
     const ys = years(), i = ys.indexOf(year);
@@ -466,6 +509,7 @@
       b.classList.toggle("empty", !DATA.modes[mode].years[ys[i]]);
     });
     updateTrackFill(); renderMap(); renderTable(); updateContextHighlight();
+    updateTimelineNote(); updateHash();
   }
 
   function togglePlay() { timer ? stopPlay() : startPlay(); }
@@ -492,6 +536,28 @@
     return ys.reduce((best, cur) => Math.abs(cur - y) < Math.abs(best - y) ? cur : best, ys[0]);
   }
 
+  // ---- URL hash deep-linking (#mode=…&year=…) ------------------------------
+  // Reflect the view in the hash so a link opens the exact mode+year, and a
+  // reload restores it. We use replaceState (no history spam); manual hash edits
+  // / back-forward fire hashchange and re-render.
+  function parseHash() {
+    const p = new URLSearchParams(location.hash.replace(/^#/, ""));
+    return { mode: p.get("mode"), year: p.get("year") };
+  }
+  function applyHashToState() {
+    const h = parseHash();
+    if (h.mode && DATA.modes[h.mode]) mode = h.mode;
+    const y = (h.year && /^\d+$/.test(h.year)) ? +h.year : 2024;
+    year = nearestDataYear(y);                 // guarantees a year with data
+    document.querySelectorAll(".mode-btn").forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+  }
+  function updateHash() {
+    if (mode == null || year == null) return;
+    const h = `#mode=${mode}&year=${year}`;
+    if (location.hash !== h) history.replaceState(null, "", h);
+  }
+
   document.querySelectorAll(".mode-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       stopPlay();
@@ -501,6 +567,7 @@
       // so switching a filter never blanks the table.
       year = nearestDataYear(year);
       setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
+      updateHash();
     });
   });
 
@@ -556,9 +623,14 @@
     stats.selectAll("*").remove();
     ctx.indicators.forEach(it => {
       const src = sourceById(it.source_id);
+      const def = defById(it.def_id);
       const c = stats.append("div").attr("class", "stat");
-      // Source on hover/focus: full citation in title=, card is keyboard-focusable.
-      if (src) c.attr("tabindex", 0).attr("title", citation(src));
+      // Hover/focus shows the term definition + the source (card is focusable).
+      const tip = [];
+      if (def) tip.push(`${def.term}: ${def.definition}`);
+      if (src) tip.push(`Source: ${citation(src)}`);
+      if (tip.length) c.attr("tabindex", 0).attr("title", tip.join("\n\n"));
+      if (def) c.classed("has-def", true);   // dotted underline hints "definition"
       c.append("div").attr("class", "stat-ico")
         .style("color", accent)
         .style("background", `color-mix(in srgb, ${accent} 11%, transparent)`)
@@ -678,8 +750,29 @@
   injectIcons();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
+  const stampEl = document.getElementById("dataStamp");
+  if (stampEl) {
+    const d = dataCurrentDate();
+    stampEl.textContent = d ? "Data current as of " + fmtDate(d) : "";
+  }
   buildMethodology(); wireMethodology();
+  applyHashToState();   // open the mode+year from the URL hash, if present
   setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
+  updateHash();         // normalise the hash to the resolved view
   europeView();   // open zoomed into Europe
   document.addEventListener("mouseleave", clearHighlight);
+
+  // Touch: a tap on a bubble/arc shows its tip (via synthesized mouse events);
+  // a tap anywhere else dismisses it and clears any highlight.
+  document.addEventListener("touchstart", (e) => {
+    if (!e.target.closest || !e.target.closest("g.flow, circle.node, text.bubble-label")) {
+      hideTip(); clearHighlight();
+    }
+  }, { passive: true });
+
+  // External hash changes (paste a link, edit the bar, back/forward) re-render.
+  window.addEventListener("hashchange", () => {
+    applyHashToState();
+    setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
+  });
 })();
