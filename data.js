@@ -236,7 +236,16 @@ window.MIGRATION_DATA = {
       definition: "NBS publishes two population concepts: 'de jure resident' (registered residents, " +
                   "including many who live abroad) and 'usually resident' (people actually living in " +
                   "Moldova). The difference — about 0.86M in 2019 — approximates the diaspora, and is " +
-                  "why NBS's tiny registered-emigration flows don't contradict the ~864k stock." }
+                  "why NBS's tiny registered-emigration flows don't contradict the ~864k stock." },
+    { id: "depopulation", term: "Depopulation",
+      definition: "Moldova's usually-resident population fell from 2.87M (2014) to 2.42M (2024) — " +
+                  "about −16% in a decade — driven by emigration plus more deaths than births (NBS)." },
+    { id: "youth_emigration", term: "Youth emigration",
+      definition: "Share of registered emigrants aged under 35 — 68% in 2024 (about 46% are 15–29), " +
+                  "concentrating the loss in working and child-bearing ages (NBS POP07300)." },
+    { id: "repatriate", term: "Repatriate (returnee)",
+      definition: "A person of Moldovan origin who officially returns to settle in Moldova in a given " +
+                  "year (NBS) — a small, declining counter-flow (1,462 in 2015 → 332 in 2024)." }
   ],
 
   // Caveats / scope notes — the political-safety + methodology landmines, in one
@@ -263,7 +272,11 @@ window.MIGRATION_DATA = {
       "did; (3) the diaspora instead appears in NBS's population accounts, where 'de jure resident' " +
       "exceeds 'usually resident' by ≈0.86M; (4) Ukrainian refugees are counted by UNHCR, not NBS; and " +
       "(5) each source defines a 'migrant' differently (UN DESA = country of birth, Eurostat = " +
-      "citizenship, NBM = bank transfers, UNHCR = refugees, NBS = registered moves)."
+      "citizenship, NBM = bank transfers, UNHCR = refugees, NBS = registered moves).",
+    "A consequence of (2): by NBS registered counts, recorded immigration (~6,600/yr) now exceeds " +
+      "recorded emigration (~4,000/yr) — not because more people arrive than leave, but because " +
+      "arrivals must register while departures rarely do. The real net flow is strongly outward, as " +
+      "the −16% fall in resident population shows."
   ],
 
   // Economic context shown in the analysis panel below the map. Professional
@@ -292,7 +305,8 @@ window.MIGRATION_DATA = {
                 "the UK report by citizenship rather than birthplace.",
       indicators: [
         { term: "Emigration rate", value: "≈26%", sub: "of Moldovan-born live abroad (UN DESA 2024)", world: "3.7% global", icon: "globe", source_id: "undesa_2024", def_id: "emigration_rate" },
-        { term: "Diaspora (official)", value: "≈864k", sub: "UN DESA 2024 · vs 2.4M at home", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" }
+        { term: "Diaspora (official)", value: "≈864k", sub: "UN DESA 2024 · vs 2.4M at home", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" },
+        { term: "Resident population", value: "2.42M", sub: "−16% since 2014 (NBS)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" }
       ]
     },
     immigration: {
@@ -326,16 +340,19 @@ window.MIGRATION_DATA = {
                 "by ≈0.86M — essentially everyone living abroad.",
       indicators: [
         { term: "Registered emigrants", value: "≈4,000/yr", sub: "2024, all destinations (NBS)", world: null, icon: "depart", source_id: "nbs_migration", def_id: "registered_emigrant" },
-        { term: "Implied diaspora (NBS)", value: "≈0.86M", sub: "de jure − usually-resident population", world: null, icon: "users", source_id: "nbs_census_2024", def_id: "population_gap" }
+        { term: "Under 35", value: "68%", sub: "of 2024 registered emigrants (NBS)", world: null, icon: "users", source_id: "nbs_migration", def_id: "youth_emigration" },
+        { term: "Implied diaspora (NBS)", value: "≈0.86M", sub: "de jure − usually-resident population", world: null, icon: "globe", source_id: "nbs_census_2024", def_id: "population_gap" }
       ]
     },
     immigration_flow: {
       headline: "Officially registered arrivals — people who formally settle in Moldova each year, " +
-                "by country of origin. A few thousand a year, mostly for work and family, and (unlike " +
-                "the refugee figures) NOT the Ukrainian displacement, which UNHCR records separately.",
+                "by country of origin, mostly for work and family. By these registered counts more " +
+                "arrive than formally leave — only because most emigrants never deregister. Ukrainian " +
+                "displacement is NOT here; UNHCR records that separately.",
       indicators: [
         { term: "Registered immigrants", value: "≈6,600/yr", sub: "2024, all origins (NBS)", world: null, icon: "arrive", source_id: "nbs_migration", def_id: "registered_immigrant" },
-        { term: "Main reasons", value: "Work · Family", sub: "2024: 3,002 work · 2,211 family reunification", world: null, icon: "users", source_id: "nbs_migration", def_id: "registered_immigrant" }
+        { term: "Main reasons", value: "Work · Family", sub: "2024: 3,002 work · 2,211 family reunification", world: null, icon: "users", source_id: "nbs_migration", def_id: "registered_immigrant" },
+        { term: "Returnees", value: "332", sub: "repatriates in 2024 (1,462 in 2015), NBS", world: null, icon: "route", source_id: "nbs_migration", def_id: "repatriate" }
       ]
     }
   },

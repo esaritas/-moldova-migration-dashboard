@@ -474,6 +474,61 @@ def nbs_immigration_by_purpose(years):
             out.setdefault(int(inv_y[ycode]), {})[purposes[pcode]] = _nbs_num(row["values"][0])
     return out
 
+NBS_POP_TBL = ("https://statbank.statistica.md/PxWeb/api/v1/en/"
+               "20 Populatia si procesele demografice/POP010/POPro/POP010100rcl.px")
+
+def nbs_usually_resident(years):
+    """{year: persons} usually-resident population (area='Whole country', sex='Total').
+    The decade-long fall in this series is Moldova's depopulation."""
+    m = http_get(NBS_POP_TBL).json()
+    ymap = _nbs_vmap(m, "Ani"); amap = _nbs_vmap(m, "Medii"); smap = _nbs_vmap(m, "Sexe")
+    q = {"query": [
+        {"code": "Ani", "selection": {"filter": "item",
+            "values": [ymap[str(y)] for y in years if str(y) in ymap]}},
+        {"code": "Medii", "selection": {"filter": "item", "values": [amap["Whole country"]]}},
+        {"code": "Sexe", "selection": {"filter": "item", "values": [smap["Total"]]}}],
+        "response": {"format": "json"}}
+    payload = http_post(NBS_POP_TBL, q).json()
+    inv_y = {v: k for k, v in ymap.items()}
+    return {int(inv_y[r["key"][0]]): _nbs_num(r["values"][0]) for r in payload.get("data", [])}
+
+def nbs_repatriates(years):
+    """{year: persons} repatriates (returnees), summed across countries (POP07600)."""
+    m = http_get(NBS_API + "POP07600.px").json()
+    cmap = _nbs_vmap(m, "Tara de emigrare"); ymap = _nbs_vmap(m, "Ani")
+    q = {"query": [
+        {"code": "Tara de emigrare", "selection": {"filter": "item", "values": list(cmap.values())}},
+        {"code": "Ani", "selection": {"filter": "item",
+            "values": [ymap[str(y)] for y in years if str(y) in ymap]}}],
+        "response": {"format": "json"}}
+    payload = http_post(NBS_API + "POP07600.px", q).json()
+    inv_y = {v: k for k, v in ymap.items()}; out = {}
+    for r in payload.get("data", []):
+        y = int(inv_y[r["key"][1]]); out[y] = out.get(y, 0) + _nbs_num(r["values"][0])
+    return out
+
+def nbs_emigrant_under35_pct(year):
+    """Share (%) of registered emigrants aged under 35 in `year` (POP07300)."""
+    m = http_get(NBS_API + "POP07300.px").json()
+    cmap = _nbs_vmap(m, "Tara de destinatie"); ymap = _nbs_vmap(m, "Ani")
+    amap = _nbs_vmap(m, "Grupe de virsta");    smap = _nbs_vmap(m, "Sexe")
+    ages = {k: v for k, v in amap.items() if "total" not in k.lower()}
+    q = {"query": [
+        {"code": "Ani", "selection": {"filter": "item", "values": [ymap[str(year)]]}},
+        {"code": "Tara de destinatie", "selection": {"filter": "item", "values": [cmap["Total"]]}},
+        {"code": "Sexe", "selection": {"filter": "item", "values": list(smap.values())}},
+        {"code": "Grupe de virsta", "selection": {"filter": "item", "values": list(ages.values())}}],
+        "response": {"format": "json"}}
+    payload = http_post(NBS_API + "POP07300.px", q).json()
+    inv_a = {v: k for k, v in amap.items()}
+    young = ("0-", "5-", "10-", "15-", "20-", "25-", "30-")
+    tot = under = 0
+    for r in payload.get("data", []):
+        a = inv_a[r["key"][3]]; val = _nbs_num(r["values"][0]); tot += val
+        if any(a.startswith(s) for s in young):
+            under += val
+    return round(100 * under / tot) if tot else 0
+
 
 # ---------------------------------------------------------------------------
 # 5. UN DESA Int'l Migrant Stock — bilateral  (download xlsx, then parse)
@@ -608,21 +663,23 @@ def build(years, undesa_path=None):
     # NBS first — the authoritative national source (registered migration FLOWS).
     print("NBS (national statistics): registered migration flows by country ...")
     NBS_YEARS = [2015, 2018, 2020, 2022, 2024]
-    try:
-        nbs_emi = nbs_emigration_flows(NBS_YEARS)
-        print(f"  emigrants/yr by destination: { {y: sum(d.values()) for y, d in sorted(nbs_emi.items())} }")
-    except Exception as e:
-        nbs_emi = {}; print(f"  [skip emigration] {e}")
-    try:
-        nbs_imm = nbs_immigration_flows(NBS_YEARS)
-        print(f"  immigrants/yr by origin:     { {y: sum(d.values()) for y, d in sorted(nbs_imm.items())} }")
-    except Exception as e:
-        nbs_imm = {}; print(f"  [skip immigration] {e}")
-    try:
-        nbs_purpose = nbs_immigration_by_purpose(NBS_YEARS)
-        print(f"  immigration purposes (2024): {nbs_purpose.get(2024, {})}")
-    except Exception as e:
-        nbs_purpose = {}; print(f"  [skip purpose] {e}")
+    def nbs_call(fn, label, default):
+        # statbank throttles rapid requests — pace them and fail soft.
+        try:
+            out = fn(); time.sleep(1); return out
+        except Exception as e:
+            time.sleep(1); print(f"  [skip {label}] {e}"); return default
+    nbs_emi = nbs_call(lambda: nbs_emigration_flows(NBS_YEARS), "emigration", {})
+    print(f"  emigrants/yr by destination: { {y: sum(d.values()) for y, d in sorted(nbs_emi.items())} }")
+    nbs_imm = nbs_call(lambda: nbs_immigration_flows(NBS_YEARS), "immigration", {})
+    print(f"  immigrants/yr by origin:     { {y: sum(d.values()) for y, d in sorted(nbs_imm.items())} }")
+    nbs_purpose = nbs_call(lambda: nbs_immigration_by_purpose(NBS_YEARS), "purpose", {})
+    print(f"  immigration purposes (2024): {nbs_purpose.get(2024, {})}")
+    nbs_pop = nbs_call(lambda: nbs_usually_resident([2014, 2018, 2020, 2022, 2024, 2026]), "population", {})
+    nbs_rep = nbs_call(lambda: nbs_repatriates(NBS_YEARS), "repatriates", {})
+    nbs_youth = nbs_call(lambda: nbs_emigrant_under35_pct(2024), "youth-age", None)
+    print(f"  resident pop 2014->2024: {nbs_pop.get(2014)} -> {nbs_pop.get(2024)} | "
+          f"under-35 emigrants {nbs_youth}% | returnees 2024 {nbs_rep.get(2024)}")
 
     print("World Bank: total remittances + %GDP + migrant stock ...")
     def wb(indicator):
@@ -800,6 +857,10 @@ def build(years, undesa_path=None):
             "eurostat_moldovan_citizens_eu": eurostat_eu,
             # NBS registered-immigration by reason for arrival (work/study/family/…).
             "nbs_immigration_by_purpose": {str(y): d for y, d in nbs_purpose.items() if d},
+            # NBS depopulation + return migration + youth-emigration share.
+            "nbs_usually_resident_population": {str(y): v for y, v in sorted(nbs_pop.items())},
+            "nbs_repatriates": {str(y): v for y, v in sorted(nbs_rep.items())},
+            "nbs_emigrant_under35_pct": nbs_youth,
             "_note": "Editorial blocks (context, glossary, caveats, annotations, "
                      "scope_note, country_notes) are hand-maintained in data.js — "
                      "merge `modes` + `sources` + `meta` from here; leave those intact.",
