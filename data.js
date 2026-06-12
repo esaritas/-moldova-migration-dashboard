@@ -38,6 +38,10 @@ window.MIGRATION_DATA = {
   },
 
   meta: {
+    // "Data current as of" stamp. The pipeline overwrites `generated` on each run;
+    // `updated` is a manual fallback for hand-edits. Per-series freshness lives in
+    // each source's `accessed`.
+    updated: "2026-06-12",
     latest_year: { emigration: 2024, immigration: 2026, remittances: 2020 },
     note: "Remittances by-country is official/exact (NBM 2018 & 2020). " +
           "Immigration uses UNHCR refugee counts (to 2026). " +
@@ -60,6 +64,20 @@ window.MIGRATION_DATA = {
     Ukraine: { text: "From 2022, arrivals from Ukraine are predominantly refugees / " +
                      "people fleeing the war in Ukraine (UNHCR).", modes: ["immigration"] }
   },
+
+  // Timeline call-outs — factual, mode-scoped notes tied to a year. Rendered as
+  // subtle markers + a narration line so pressing play tells the story. Keep them
+  // neutral (data, not framing); `modes` limits where each shows.
+  annotations: [
+    { year: 2022, modes: ["immigration"],
+      text: "War in Ukraine — arrivals of refugees / people fleeing the war surge (UNHCR)." },
+    { year: 2024, modes: ["immigration"],
+      text: "≈136,000 refugees from Ukraine residing in Moldova (UNHCR)." },
+    { year: 2020, modes: ["remittances"],
+      text: "Russia's share falls to third; Israel becomes the top source (NBM, 2020)." },
+    { year: 2024, modes: ["emigration"],
+      text: "Recorded diaspora tilts toward the EU; Italy leads and recorded Russia-born stock falls (UN DESA)." }
+  ],
 
   // ==========================================================================
   // SOURCES — single source of truth for provenance. Every series, context
@@ -166,25 +184,31 @@ window.MIGRATION_DATA = {
   // Plain-language definitions for the terms used on cards and in the modal.
   // Single source of truth for definitions (cards link here in item 8).
   glossary: [
-    { term: "Emigrant (diaspora) stock",
+    { id: "emigrant_stock", term: "Emigrant (diaspora) stock",
       definition: "People born in Moldova who live in another country, counted at a point in " +
                   "time — a stock, not the number who left in a given year." },
-    { term: "Immigrant stock",
+    { id: "immigrant_stock", term: "Immigrant stock",
       definition: "People living in Moldova who were born in another country, counted at a " +
                   "point in time." },
-    { term: "Emigration rate",
+    { id: "emigration_rate", term: "Emigration rate",
       definition: "The share of all Moldovan-born people who live abroad: diaspora ÷ " +
                   "(diaspora + resident Moldovan-born)." },
-    { term: "Refugee population",
+    { id: "refugee_population", term: "Refugee population",
       definition: "Refugees and asylum-seekers residing in a country at a given time (UNHCR " +
                   "basis), here with the Republic of Moldova as country of asylum." },
-    { term: "Remittances-to-GDP",
+    { id: "remittances_gdp", term: "Remittances-to-GDP",
       definition: "Personal remittances received as a percentage of GDP — how large money " +
                   "sent home is relative to the whole economy." },
-    { term: "Remittance dependency",
+    { id: "remittance_dependency", term: "Remittance dependency",
       definition: "How much an economy relies on money sent home from abroad; proxied here by " +
                   "remittances-to-GDP." },
-    { term: "Net settlements",
+    { id: "remittance_inflows", term: "Remittance inflows",
+      definition: "Total personal remittances received from abroad in a year (World Bank BPM6 " +
+                  "series); broader than the NBM net-settlement measure." },
+    { id: "budget_ratio", term: "Remittances vs. state budget",
+      definition: "Remittance inflows expressed as a share of the state budget's revenue — a " +
+                  "sense of their scale in the economy." },
+    { id: "net_settlements", term: "Net settlements",
       definition: "The National Bank of Moldova's measure of cross-border transfers to " +
                   "individuals via banks, netted — a proxy for remittances by source country." }
   ],
@@ -230,16 +254,16 @@ window.MIGRATION_DATA = {
                 "remain — and even that official figure undercounts, as Germany, the US and " +
                 "the UK report by citizenship rather than birthplace.",
       indicators: [
-        { term: "Emigration rate", value: "≈26%", sub: "of Moldovan-born live abroad (UN DESA 2024)", world: "3.7% global", icon: "globe", source_id: "undesa_2024" },
-        { term: "Diaspora (official)", value: "≈864k", sub: "UN DESA 2024 · vs 2.4M at home", world: null, icon: "users", source_id: "undesa_2024" }
+        { term: "Emigration rate", value: "≈26%", sub: "of Moldovan-born live abroad (UN DESA 2024)", world: "3.7% global", icon: "globe", source_id: "undesa_2024", def_id: "emigration_rate" },
+        { term: "Diaspora (official)", value: "≈864k", sub: "UN DESA 2024 · vs 2.4M at home", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" }
       ]
     },
     immigration: {
       headline: "Long a country of emigration, Moldova became a major host after 2022, sheltering " +
                 "people fleeing the war in Ukraine at one of Europe's highest per-capita rates.",
       indicators: [
-        { term: "Immigrant stock", value: "≈4%", sub: "foreign-born share of population", world: "3.7% global", icon: "globe", source_id: "undesa_2024" },
-        { term: "Refugees hosted", value: "136k", sub: "≈57 per 1,000 residents", world: null, icon: "tent", source_id: "unhcr" }
+        { term: "Immigrant stock", value: "≈4%", sub: "foreign-born share of population", world: "3.7% global", icon: "globe", source_id: "undesa_2024", def_id: "immigrant_stock" },
+        { term: "Refugees hosted", value: "136k", sub: "≈57 per 1,000 residents", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" }
       ]
     },
     remittances: {
@@ -253,9 +277,9 @@ window.MIGRATION_DATA = {
         { year: 2023, pct: 12.3 }, { year: 2024, pct: 10.5 }
       ],
       indicators: [
-        { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "5.1% world avg", icon: "percent", source_id: "wb_remit_gdp" },
-        { term: "Remittance inflows", value: "$1.92bn", sub: "2024", world: null, icon: "banknote", source_id: "wb_remit_total" },
-        { term: "vs. state budget", value: "≈54%", sub: "of state budget revenue", world: null, icon: "landmark", source_id: "mof_budget" }
+        { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "5.1% world avg", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
+        { term: "Remittance inflows", value: "$1.92bn", sub: "2024", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
+        { term: "vs. state budget", value: "≈54%", sub: "of state budget revenue", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
       ]
     }
   },
@@ -346,6 +370,15 @@ window.MIGRATION_DATA = {
       direction: "in",
       source_id: "nbm_transfers",
       years: {
+        // OFFICIAL — NBM 2017 annual release (net settlements, USD m, rounded)
+        2017: [
+          { country: "Russia", value: 403 }, { country: "Israel", value: 205 },
+          { country: "Italy", value: 144 }, { country: "United States", value: 95 },
+          { country: "United Kingdom", value: 58 }, { country: "Germany", value: 58 },
+          { country: "France", value: 34 }, { country: "Turkey", value: 15 },
+          { country: "Spain", value: 14 }, { country: "Portugal", value: 10 },
+          { country: "Romania", value: 10 }, { country: "Ukraine", value: 5 }
+        ],
         // EXACT — NBM 2018 release (total USD 1,266.84m)
         2018: [
           { country: "Russia", value: 343 },          // 343.00 (27.1%)
@@ -360,6 +393,15 @@ window.MIGRATION_DATA = {
           { country: "Romania", value: 14 },          //  14.09 (1.1%)
           { country: "Portugal", value: 14 },         //  13.79 (1.1%)
           { country: "Ukraine", value: 5 }            //   5.46 (0.4%)
+        ],
+        // OFFICIAL — NBM 2019 annual release (net settlements, USD m, rounded)
+        2019: [
+          { country: "Russia", value: 256 }, { country: "Israel", value: 229 },
+          { country: "Italy", value: 151 }, { country: "Germany", value: 97 },
+          { country: "United States", value: 94 }, { country: "United Kingdom", value: 86 },
+          { country: "France", value: 64 }, { country: "Spain", value: 19 },
+          { country: "Romania", value: 18 }, { country: "Portugal", value: 16 },
+          { country: "Turkey", value: 11 }, { country: "Ukraine", value: 6 }
         ],
         // EXACT — NBM 2020 release (total USD 1,486.74m)
         2020: [
