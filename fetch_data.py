@@ -2,34 +2,41 @@
 """
 fetch_data.py — build the dashboard's data file from official sources.
 
-Run this on your own machine (it needs open internet — it will NOT run inside a
-locked sandbox). It pulls from:
+Run on your own machine (needs open internet). Sources are tried in an
+OFFICIAL-FIRST hierarchy and every written series records its provenance:
 
-  REAL APIs (no key needed)
-    - World Bank Indicators API ...... total remittances, % of GDP, migrant stock
-    - UNHCR Population API ............ refugees from Ukraine residing in Moldova
+  OFFICIAL APIs (no key)
+    - World Bank Indicators .......... remittances total, % of GDP, migrant stock
+    - UNHCR Population API ........... refugees/asylum-seekers residing in Moldova
+    - Eurostat (migr_pop1ctz) ....... Moldovan citizens in the EU (CROSS-CHECK only)
+  OFFICIAL FILE (download, then parsed)
+    - UN DESA Int'l Migrant Stock ... emigrants by destination / immigrants by origin
+  SCRAPE (last resort)
+    - National Bank of Moldova ...... remittances by SOURCE country (annual release,
+                                      else summed from quarterly releases)
 
-  WEB SCRAPING
-    - National Bank of Moldova ........ remittances by SOURCE country (annual page)
+Provenance: each source is catalogued in sources_registry() (mirrors DATA.sources
+in data.js) and stamped with the run date; modes reference it by source_id, so the
+output carries a `sources` block and the dashboard's captions are generated, never
+hand-typed. EDITORIAL blocks in data.js (context, glossary, caveats, annotations,
+scope_note, country_notes) are NOT regenerated — merge `modes` + `sources` + `meta`.
 
-  SEMI-MANUAL (file download, then parsed)
-    - UN DESA Int'l Migrant Stock ..... emigrants by destination / immigrants by origin
-    - NBS statbank (PxWeb) ............ migration flows (template query included)
-
-Output: writes data.json and data.js (window.MIGRATION_DATA = ...), so the
-dashboard works with no code changes — just overwrite the existing data.js.
+Output: data.json + data.generated.js (window.MIGRATION_DATA = ...). Raw downloads
+are cached under raw_cache/<run-timestamp>/ for reproducibility (--no-cache to skip).
+A sanity_check() flags out-of-range totals / outliers before writing (never blocks).
 
 Usage:
     pip install -r requirements.txt
-    python fetch_data.py --years 2015 2020 2024
-    # optional: --undesa path/to/undesa_migrant_stock.xlsx
+    python fetch_data.py --years 2017 2018 2019 2020 \
+        --undesa undesa_pd_2024_ims_stock_by_sex_destination_and_origin.xlsx
 
-Each source is independent and fails soft: if one is unreachable, the others
-still populate and the gap is reported. Always sanity-check the output before
-publishing — these sources define "migrant" differently and revise figures.
+Each source fails soft: if one is unreachable the others still populate and the gap
+is reported. COVERAGE CEILING: NBM publishes a by-country breakdown only through
+2020 (annual 2016-2020 + quarterly to 2020Q3); there is none on the web after 2020.
+Always review the output before publishing — sources define "migrant" differently.
 """
 
-import argparse, json, re, sys, time
+import argparse, hashlib, json, os, re, sys, time
 from datetime import datetime, timezone
 
 import requests
@@ -37,6 +44,26 @@ from bs4 import BeautifulSoup
 
 UA = {"User-Agent": "moldova-migration-dashboard/1.0 (research)"}
 TIMEOUT = 30
+
+# Raw-download cache (reproducibility): every fetched response is saved under
+# raw_cache/<run-timestamp>/ so a run can be audited/replayed. Toggle with --no-cache.
+CACHE = True
+RUN_STAMP = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+def _cache_write(url, content):
+    if not CACHE:
+        return
+    try:
+        d = os.path.join("raw_cache", RUN_STAMP)
+        os.makedirs(d, exist_ok=True)
+        # Keep the name short — deep CWDs + long query strings can blow past
+        # Windows' 260-char path limit. The md5 suffix guarantees uniqueness.
+        stem = re.sub(r"[^A-Za-z0-9._-]", "_", url.split("//", 1)[-1])[:48]
+        path = os.path.join(d, f"{stem}__{hashlib.md5(url.encode()).hexdigest()[:8]}")
+        with open(path, "wb") as f:
+            f.write(content if isinstance(content, bytes) else content.encode("utf-8"))
+    except Exception as e:
+        print(f"  [cache] could not save {url}: {e}")
 
 
 def http_get(url, **kwargs):
@@ -48,14 +75,17 @@ def http_get(url, **kwargs):
     kwargs.setdefault("headers", UA)
     kwargs.setdefault("timeout", TIMEOUT)
     try:
-        return requests.get(url, **kwargs)
+        r = requests.get(url, **kwargs)
     except requests.exceptions.SSLError:
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         host = url.split("/")[2] if "//" in url else url
         print(f"  [tls] verification failed for {host} - retrying WITHOUT "
               f"verification (that host's cert chain is incomplete).")
-        return requests.get(url, verify=False, **kwargs)
+        r = requests.get(url, verify=False, **kwargs)
+    if r.status_code == 200:
+        _cache_write(url, r.content)
+    return r
 
 # Arc endpoints — keep in sync with data.js. [lat, lng].
 COORDS = {
@@ -88,6 +118,90 @@ UNDESA_CODE = {
     826: "United Kingdom", 620: "Portugal", 724: "Spain", 792: "Turkey",
     356: "India",
 }
+
+# Run date — stamped onto every source's `accessed` so freshness is recorded
+# automatically, never hand-typed.
+ACCESSED = datetime.now(timezone.utc).date().isoformat()
+
+
+def sources_registry():
+    """The provenance catalogue, mirroring DATA.sources in data.js. Each series
+    the pipeline writes references one of these ids; we emit the subset actually
+    used into the output `sources` block, so the dashboard's captions/modal are
+    generated from provenance rather than hand-maintained. `accessed` is the run
+    date. Hierarchy of preference: official APIs > official files > scraping."""
+    return {
+        "undesa_2024": {
+            "label": "International Migrant Stock 2024 (by destination and origin)",
+            "publisher": "UN DESA Population Division",
+            "url": "https://www.un.org/development/desa/pd/content/international-migrant-stock",
+            "indicator_code": "POP/DB/MIG/Stock/Rev.2024", "accessed": ACCESSED,
+            "tier": "official-file",
+            "definition": "Migrant stock = people living in a country other than the one they "
+                          "were born in (country-of-birth basis), at mid-year.",
+            "scope": "Bilateral, by country of birth. Germany, the US and the UK report by "
+                     "citizenship, so they carry no Moldova-born cell (omitted, not zero). The "
+                     "'Republic of Moldova' row carries a UN note on Transnistria coverage.",
+            "note": "Birth-basis counts undercount Moldovans who naturalised abroad.",
+        },
+        "unhcr": {
+            "label": "Refugee Population Statistics (people residing in Moldova)",
+            "publisher": "UNHCR",
+            "url": "https://www.unhcr.org/refugee-statistics/",
+            "indicator_code": "population/v1 · coa=MDA · refugees + asylum-seekers",
+            "accessed": ACCESSED, "tier": "official-api",
+            "definition": "Refugees and asylum-seekers whose country of asylum is the Republic "
+                          "of Moldova, at year-end.",
+            "scope": "From 2022 predominantly people fleeing the war in Ukraine.",
+            "note": "Reported in UNHCR's terms; not merged into general 'immigrants'.",
+        },
+        "nbm_transfers": {
+            "label": "Money transfers from abroad in favour of individuals via banks (net settlements)",
+            "publisher": "National Bank of Moldova",
+            "url": "https://www.bnm.md/en/content/money-transfers-abroad-individuals-banks-republic-moldova-2020-net-settlements",
+            "indicator_code": "DBP4 / press releases (net settlements)",
+            "accessed": ACCESSED, "tier": "scrape",
+            "definition": "Cross-border transfers to resident individuals settled via Moldovan "
+                          "banks, by source country, net basis. A proxy for remittances.",
+            "scope": "Excludes Transnistria; not solely labour remittances. Full by-country "
+                     "breakdown published annually only through 2020; 2021+ via quarterly releases.",
+            "note": "Exact official figures for 2018 and 2020.",
+        },
+        "wb_remit_gdp": {
+            "label": "Personal remittances received (% of GDP)",
+            "publisher": "World Bank — World Development Indicators",
+            "url": "https://data.worldbank.org/indicator/BX.TRF.PWKR.DT.GD.ZS?locations=MD",
+            "indicator_code": "BX.TRF.PWKR.DT.GD.ZS", "accessed": ACCESSED, "tier": "official-api",
+            "definition": "Remittance dependency — personal remittances received as a share of GDP (BPM6).",
+            "scope": "National accounts basis; excludes Transnistria.", "note": "",
+        },
+        "wb_remit_total": {
+            "label": "Personal remittances received (current US$)",
+            "publisher": "World Bank — World Development Indicators",
+            "url": "https://data.worldbank.org/indicator/BX.TRF.PWKR.CD.DT?locations=MD",
+            "indicator_code": "BX.TRF.PWKR.CD.DT", "accessed": ACCESSED, "tier": "official-api",
+            "definition": "Total personal remittances received, current US dollars (BPM6).",
+            "scope": "Broader than the NBM net-settlement series (different methodology).", "note": "",
+        },
+        "wb_migrant_stock": {
+            "label": "International migrant stock in Moldova (total)",
+            "publisher": "World Bank — World Development Indicators",
+            "url": "https://data.worldbank.org/indicator/SM.POP.TOTL?locations=MD",
+            "indicator_code": "SM.POP.TOTL", "accessed": ACCESSED, "tier": "official-api",
+            "definition": "Number of people living in Moldova who were born elsewhere (UN DESA via WB).",
+            "scope": "Excludes Transnistria.", "note": "",
+        },
+        "eurostat_migr": {
+            "label": "Population by citizenship / country of birth (Moldovans in the EU)",
+            "publisher": "Eurostat",
+            "url": "https://ec.europa.eu/eurostat/databrowser/product/view/migr_pop1ctz",
+            "indicator_code": "migr_pop1ctz · migr_pop3ctb", "accessed": ACCESSED, "tier": "official-api",
+            "definition": "EU resident population who are Moldovan citizens or Moldova-born, 1 January.",
+            "scope": "Cross-check only — a DIFFERENT measure from UN DESA country-of-birth stock; "
+                     "not mixed into the map.",
+            "note": "Corroborates EU destinations, does not replace UN DESA.",
+        },
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -139,56 +253,103 @@ def unhcr_refugees_in_moldova(start, end):
 # ---------------------------------------------------------------------------
 # 3. NATIONAL BANK OF MOLDOVA — remittances by SOURCE country (WEB SCRAPING)
 # ---------------------------------------------------------------------------
-def nbm_remittances_by_country(year):
-    """
-    Scrape NBM's annual money-transfers release and return {country: USD_million}.
-    NB: NBM published this full by-country breakdown as a press release only
-    through 2020 (the 2018 and 2020 pages are the cleanest). From 2021 the
-    breakdown lives in NBM's interactive database (DBP4), not a press release —
-    so for 2021+ you'll need to pull DBP4 instead of scraping a release page.
-    """
-    # The URL slug changed over the years.
-    overrides = {
-        2015: "money-transfers-abroad-made-favour-individuals-through-banks-republic-moldova-2015-net",
-        2016: "money-transfers-abroad-made-favour-individuals-through-banks-republic-moldova-2016-net",
-    }
-    slug = overrides.get(
-        year, f"money-transfers-abroad-individuals-banks-republic-moldova-{year}-net-settlements")
-    url = f"https://www.bnm.md/en/content/{slug}"
-    r = http_get(url)
-    if r.status_code != 200:
-        raise RuntimeError(f"NBM page not found for {year} ({r.status_code}) — "
-                           f"check the URL slug, it changes some years.")
-    text = BeautifulSoup(r.text, "html.parser").get_text(" ", strip=True)
+# NB ON COVERAGE: NBM publishes a full by-SOURCE-COUNTRY breakdown only through
+# 2020 — annual releases (2017-2020) and quarterly releases (2017Q1-2020Q3). The
+# interactive database (DBP4/DBP7/DBP14) is aggregate only (no country axis), and
+# no by-country page is published after 2020. So this module auto-discovers and
+# parses everything NBM publishes (and can SUM four quarters into a missing annual,
+# e.g. 2017/2019), but it cannot fetch what doesn't exist publicly post-2020.
 
-    # The wording is messy ('the US', 'the United Kingdom and Nord Ireland', 'the
-    # Russian Federation') and lists run "<Country> - <pct> percent (USD <val>
-    # million), <Country> - ...". So we find every money value, then look back
-    # ONLY as far as the previous value (its own segment) for a country keyword.
-    # Bounding to the segment stops a value from grabbing the *previous* row's
-    # country (the old 60-char window did: 2018's US value latched onto 'Italy').
-    # Keywords are matched at word boundaries (so short 'us' won't fire inside
-    # 'Russia'/'August'/'Belarus'), nearest-to-the-value wins, longest as tiebreak.
-    keys = sorted(NAME_MAP, key=len, reverse=True)
-    val_re = re.compile(r"\(\s*(?:USD\s*)?([\d.]+)\s*million(?:\s*USD)?\s*\)", re.I)
-    results = {}
+_NBM_KEYS = sorted(NAME_MAP, key=len, reverse=True)
+_NBM_VAL = re.compile(r"\(\s*(?:USD\s*)?([\d.]+)\s*million(?:\s*USD)?\s*\)", re.I)
+_NBM_MAXBACK = 48   # a value's country keyword must END within this many chars of it
+
+def _nbm_text(slug):
+    """Plain text of an NBM /en/content page, or None if it 404s."""
+    r = http_get(f"https://www.bnm.md/en/content/{slug}")
+    if r.status_code != 200:
+        return None
+    return BeautifulSoup(r.text, "html.parser").get_text(" ", strip=True)
+
+def _parse_nbm_by_country(text):
+    """
+    {country: USD_million} from an NBM money-transfer release. Value-first: for
+    each '(USD x million)', take the nearest country keyword that ENDS within
+    _NBM_MAXBACK chars before it (word-bounded, longest-first, bounded to the
+    segment since the previous value). The distance cap skips figures with no
+    adjacent country — notably the prior-year comparison total ("increased by
+    34.7 percent, compared to ... (USD 314.51 million)") that used to be mis-read
+    as 'United States = 315'.
+    """
+    res = {}
     seg_start = 0
-    for m in val_re.finditer(text):
+    for m in _NBM_VAL.finditer(text):
         seg = text[seg_start:m.start()].lower()
         seg_start = m.end()
-        best, best_pos = None, -1
-        for k in keys:
+        best, best_end = None, -1
+        for k in _NBM_KEYS:
             for km in re.finditer(r"(?<![a-z])" + re.escape(k) + r"(?![a-z])", seg):
-                # nearest occurrence to the value wins; on a tie, longer key (keys
-                # is already longest-first, so the first to reach a position holds)
-                if km.start() > best_pos:
-                    best_pos, best = km.start(), k
-        if best:
-            results.setdefault(NAME_MAP[best], round(float(m.group(1))))
-    if not results:
-        raise RuntimeError(f"NBM page for {year} parsed but no country values found — "
-                           f"the wording may have changed; inspect the page.")
-    return results
+                if km.end() > best_end:   # nearest-to-value wins; longest as tiebreak
+                    best_end, best = km.end(), k
+        if best is not None and (len(seg) - best_end) <= _NBM_MAXBACK:
+            cc = NAME_MAP[best]
+            if cc in COORDS:
+                res.setdefault(cc, round(float(m.group(1))))
+    return res
+
+_NBM_ANNUAL_OVERRIDES = {
+    2015: "money-transfers-abroad-made-favour-individuals-through-banks-republic-moldova-2015-net",
+    2016: "money-transfers-abroad-made-favour-individuals-through-banks-republic-moldova-2016-net",
+}
+
+def nbm_annual_by_country(year):
+    """The annual by-country release for `year` (the year is in this slug), or
+    None if NBM didn't publish one (e.g. 2021+)."""
+    slug = _NBM_ANNUAL_OVERRIDES.get(
+        year, f"money-transfers-abroad-individuals-banks-republic-moldova-{year}-net-settlements")
+    text = _nbm_text(slug)
+    return (_parse_nbm_by_country(text) or None) if text else None
+
+_NBM_QUARTERS = ["first", "second", "third", "fourth"]
+
+def nbm_quarterly_index(max_suffix=16):
+    """
+    Discover every quarterly by-country release. The quarterly slugs are YEAR-LESS
+    (`…republic-moldova-{quarter}` then Drupal's duplicate counter `-1`, `-2`, …),
+    so they can't be constructed — we walk each quarter's suffix sequence, reading
+    the actual year from the page text, until it runs out. Returns
+    {(year:int, quarter:str) -> {country: USD_million}}.
+    """
+    base = "money-transfers-abroad-made-favour-individuals-through-banks-republic-moldova-"
+    index = {}
+    for q in _NBM_QUARTERS:
+        consec_miss = 0
+        for n in range(0, max_suffix + 1):
+            text = _nbm_text(base + q + ("" if n == 0 else f"-{n}"))
+            if not text:
+                consec_miss += 1
+                if consec_miss >= 4:
+                    break          # sequence exhausted for this quarter
+                continue
+            consec_miss = 0
+            ym = re.search(r"(first|second|third|fourth)\s+quarter\s+of\s+(\d{4})", text, re.I)
+            data = _parse_nbm_by_country(text)
+            if ym and data:
+                index[(int(ym.group(2)), ym.group(1).lower())] = data
+            time.sleep(0.3)        # be polite
+    return index
+
+def nbm_sum_quarters(year, qindex):
+    """Annual by-country for `year` summed from its four quarterly releases, or
+    {} unless all four quarters are present (don't emit a partial year)."""
+    quarters = [qindex.get((year, q)) for q in _NBM_QUARTERS]
+    if not all(quarters):
+        return {}
+    summed = {}
+    for qd in quarters:
+        for c, v in qd.items():
+            summed[c] = summed.get(c, 0) + v
+    return summed
 
 
 # ---------------------------------------------------------------------------
@@ -303,13 +464,55 @@ def undesa_bilateral(xlsx_path, years=(2010, 2015, 2020, 2024)):
 
 
 # ---------------------------------------------------------------------------
+# 6. EUROSTAT — Moldovans living in EU countries  (REAL API, cross-check only)
+# ---------------------------------------------------------------------------
+# EU/EFTA destinations we cover -> Eurostat geo (ISO-2). Non-EU destinations
+# (Russia, Ukraine, Israel, US, UK, Turkey, India) aren't in Eurostat.
+EUROSTAT_GEO = {"Italy": "IT", "Romania": "RO", "Germany": "DE",
+                "France": "FR", "Spain": "ES", "Portugal": "PT"}
+
+def eurostat_moldovans_in_eu(dataset="migr_pop1ctz"):
+    """
+    {country: {year: people}} for Moldovan CITIZENS resident in each EU country
+    (Eurostat migr_pop1ctz, 1 January). This is a CROSS-CHECK on a different basis
+    (citizenship, not country of birth), so it is NOT merged into the emigration
+    map — citizenship counts drop Moldovans who have naturalised. Returned for
+    corroboration / the methodology panel only.
+    """
+    base = ("https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
+            + dataset)
+    out = {}
+    for country, geo in EUROSTAT_GEO.items():
+        url = f"{base}?format=JSON&geo={geo}&citizen=MD&sex=T&age=TOTAL&lang=EN"
+        try:
+            r = http_get(url)
+            r.raise_for_status()
+            j = r.json()
+            val = j.get("value", {})
+            idx = j.get("dimension", {}).get("time", {}).get("category", {}).get("index", {})
+            inv = {v: k for k, v in idx.items()}
+            series = {inv[int(k)]: int(round(v)) for k, v in val.items() if int(k) in inv}
+            if series:
+                out[country] = dict(sorted(series.items()))
+        except Exception as e:
+            print(f"  [skip {country}] {e}")
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Assemble + write
 # ---------------------------------------------------------------------------
 def build(years, undesa_path=None):
     print("World Bank: total remittances + %GDP + migrant stock ...")
-    rem_total = worldbank("BX.TRF.PWKR.CD.DT", min(years), max(years))   # current US$
-    rem_gdp   = worldbank("BX.TRF.PWKR.DT.GD.ZS", min(years), max(years))  # % of GDP
-    stock     = worldbank("SM.POP.TOTL", min(years), max(years))         # migrants IN Moldova
+    def wb(indicator):
+        try:
+            return worldbank(indicator, min(years), max(years))
+        except Exception as e:
+            print(f"  [skip {indicator}] {e}")
+            return {}
+    rem_total = wb("BX.TRF.PWKR.CD.DT")     # current US$
+    rem_gdp   = wb("BX.TRF.PWKR.DT.GD.ZS")  # % of GDP
+    stock     = wb("SM.POP.TOTL")           # migrants IN Moldova
     print(f"  remittances total: { {y: round(rem_total.get(y,0)/1e6) for y in years if y in rem_total} } (USD m)")
     print(f"  % of GDP:          { {y: round(rem_gdp.get(y,0),1) for y in years if y in rem_gdp} }")
 
@@ -320,38 +523,59 @@ def build(years, undesa_path=None):
     except Exception as e:
         refugees = {}; print(f"  [skip] {e}")
 
-    print("NBM: remittances by source country (scrape) ...")
+    print("NBM: remittances by source country (annual release, else sum of quarters) ...")
     remit_by_country = {}
+    need_sum = []
     for y in years:
         try:
-            remit_by_country[y] = nbm_remittances_by_country(y)
-            print(f"  {y}: {remit_by_country[y]}")
+            d = nbm_annual_by_country(y)
         except Exception as e:
-            print(f"  [skip {y}] {e}")
-        time.sleep(1)   # be polite to the server
+            d = None; print(f"  [warn {y}] {e}")
+        if d:
+            remit_by_country[y] = d
+            print(f"  {y}: annual release — total {sum(d.values())} (USD m, {len(d)} countries)")
+        else:
+            need_sum.append(y)
+        time.sleep(0.5)
+    if need_sum:
+        print(f"  no annual page for {need_sum}; discovering quarterly releases to sum ...")
+        try:
+            qidx = nbm_quarterly_index()
+            qyears = sorted({y for (y, _q) in qidx})
+            print(f"  quarterly releases found for years: {qyears} (NBM stops after 2020)")
+            for y in need_sum:
+                d = nbm_sum_quarters(y, qidx)
+                if d:
+                    remit_by_country[y] = d
+                    print(f"  {y}: summed 4 quarters — total {sum(d.values())} (USD m)")
+                else:
+                    print(f"  [skip {y}] no full by-country set (NBM didn't publish it)")
+        except Exception as e:
+            print(f"  [skip quarterly] {e}")
 
     # --- shape into the dashboard structure --------------------------------
+    # Every mode references provenance by id (resolved from the sources block);
+    # `used` collects the ids actually populated so we emit only those.
+    used = set()
     modes = {
         "emigration":  {"label": "Leaving Moldova",  "sublabel": "Moldovans living abroad",
                         "unit": "people", "direction": "out",
-                        "source": "UN DESA bilateral migrant stock (run undesa_bilateral).",
-                        "years": {}},
+                        "source_id": "undesa_2024", "years": {}},
         "immigration": {"label": "Coming to Moldova", "sublabel": "Migrants & refugees in Moldova",
                         "unit": "people", "direction": "in",
-                        "source": "UNHCR Population API (refugees) + UN DESA stock by origin.",
-                        "years": {}},
+                        "source_ids": ["unhcr"], "years": {}},
         "remittances": {"label": "Money sent home",  "sublabel": "Remittances by source country",
                         "unit": "usd_million", "direction": "in",
-                        "source": "National Bank of Moldova money-transfer releases (scraped).",
-                        "years": {}},
+                        "source_id": "nbm_transfers", "years": {}},
     }
 
     # remittances: straight from the NBM scrape
     for y, d in remit_by_country.items():
-        modes["remittances"]["years"][str(y)] = [
-            {"country": c, "value": v} for c, v in
-            sorted(d.items(), key=lambda kv: -kv[1]) if c in COORDS
-        ]
+        rows = [{"country": c, "value": v} for c, v in
+                sorted(d.items(), key=lambda kv: -kv[1]) if c in COORDS]
+        if rows:
+            modes["remittances"]["years"][str(y)] = rows
+            used.add("nbm_transfers")
 
     # immigration: seed with UNHCR Ukraine; you can add UN DESA origins here
     for y in years:
@@ -360,6 +584,7 @@ def build(years, undesa_path=None):
             rows.append({"country": "Ukraine", "value": refugees[y]})
         if rows:
             modes["immigration"]["years"][str(y)] = rows
+            used.add("unhcr")
 
     # emigration (+ optional UN DESA immigration by origin): the bilateral matrix.
     undesa_imm = None
@@ -374,11 +599,7 @@ def build(years, undesa_path=None):
                         {"country": c, "value": v}
                         for c, v in sorted(d.items(), key=lambda kv: -kv[1])
                     ]
-            modes["emigration"]["source"] = (
-                "UN DESA Int'l Migrant Stock 2024 (bilateral, by country of birth). "
-                "NB: Germany, the US and the UK report by citizenship, so they carry "
-                "no Moldova-origin cell and are absent here — these are UN DESA's "
-                "known undercounts, not zeros.")
+                    used.add("undesa_2024")
             yrs = [y for y in emi if emi[y]]
             print(f"  emigration years filled: {yrs}")
             print(f"  immigration-by-origin captured for review: "
@@ -386,11 +607,44 @@ def build(years, undesa_path=None):
         except Exception as e:
             print(f"  [skip] {e}")
 
+    # Eurostat cross-check: Moldovan citizens in EU countries (different basis).
+    print("Eurostat: Moldovan citizens resident in EU countries (cross-check) ...")
+    try:
+        eurostat_eu = eurostat_moldovans_in_eu()
+        if eurostat_eu:
+            used.add("eurostat_migr")
+            print(f"  {[f'{c}:{max(s.values())}' for c, s in eurostat_eu.items()]}")
+    except Exception as e:
+        eurostat_eu = {}; print(f"  [skip] {e}")
+
+    # World Bank macro series feed data.js context (% GDP, totals, stock).
+    if rem_gdp:   used.add("wb_remit_gdp")
+    if rem_total: used.add("wb_remit_total")
+    if stock:     used.add("wb_migrant_stock")
+
+    # Emit every source actually populated PLUS every source a mode references, so
+    # there are never dangling source_ids (captions always resolve).
+    for m in modes.values():
+        if m.get("source_id"):
+            used.add(m["source_id"])
+        used.update(m.get("source_ids", []))
+    registry = sources_registry()
+    sources = {sid: registry[sid] for sid in sorted(used) if sid in registry}
+
     data = {
         "origin": {"name": "Moldova", "lat": 47.01, "lng": 28.86},
         "coords": COORDS,
+        # Provenance catalogue (same shape as DATA.sources). Modes reference it by
+        # source_id/source_ids; the dashboard generates its captions from this.
+        "sources": sources,
         "meta": {
             "generated": datetime.now(timezone.utc).isoformat(),
+            # per-series provenance: which source id backs each macro series.
+            "provenance": {
+                "remittances_total_usd_million": "wb_remit_total",
+                "remittances_pct_gdp": "wb_remit_gdp",
+                "migrant_stock_in_moldova": "wb_migrant_stock",
+            },
             "remittances_total_usd_million": {str(y): round(rem_total[y]/1e6)
                                               for y in years if y in rem_total},
             "remittances_pct_gdp": {str(y): round(rem_gdp[y], 1)
@@ -402,10 +656,77 @@ def build(years, undesa_path=None):
             # (UN DESA 2024 stock already absorbs the Ukrainian arrivals).
             "undesa_immigration_by_origin": (
                 {str(y): d for y, d in undesa_imm.items() if d} if undesa_imm else {}),
+            # Eurostat cross-check (Moldovan CITIZENS in EU; citizenship basis, a
+            # different measure from the birth-basis emigration map — not merged).
+            "eurostat_moldovan_citizens_eu": eurostat_eu,
+            "_note": "Editorial blocks (context, glossary, caveats, annotations, "
+                     "scope_note, country_notes) are hand-maintained in data.js — "
+                     "merge `modes` + `sources` + `meta` from here; leave those intact.",
         },
         "modes": modes,
     }
     return data
+
+
+# Plausible totals per mode-year — wide enough to pass normal variation, tight
+# enough to catch parsing blunders (wrong column, doubled values, dropped digit).
+SANITY_RANGES = {
+    "remittances": (100, 4000),        # USD million, annual by-country sum
+    "emigration":  (50_000, 2_500_000),
+    "immigration": (100, 1_000_000),
+}
+
+def sanity_check(data):
+    """Flag (not block) anything that looks wrong before writing: out-of-range
+    totals, dangling source ids, by-country sums above the World Bank total, and
+    big year-on-year swings. Returns the list of warnings."""
+    warn = []
+    sources = data.get("sources", {})
+
+    # 1) every source_id referenced actually exists in the sources block
+    def ids(o): return (o.get("source_ids") or ([o["source_id"]] if o.get("source_id") else []))
+    for mk, m in data["modes"].items():
+        for sid in ids(m):
+            if sid not in sources:
+                warn.append(f"{mk}: source_id '{sid}' missing from sources block")
+
+    # 2) per mode-year totals in range; 3) no single country exceeds its year total
+    for mk, m in data["modes"].items():
+        lo, hi = SANITY_RANGES.get(mk, (0, float("inf")))
+        years = sorted(m["years"], key=int)
+        totals = {}
+        for y in years:
+            rows = m["years"][y]
+            tot = sum(r["value"] for r in rows)
+            totals[y] = tot
+            if not (lo <= tot <= hi):
+                warn.append(f"{mk} {y}: total {tot:,} outside expected [{lo:,}..{hi:,}]")
+            for r in rows:
+                if r["value"] > tot:
+                    warn.append(f"{mk} {y}: {r['country']} {r['value']:,} exceeds year total")
+                if r["value"] < 0:
+                    warn.append(f"{mk} {y}: {r['country']} negative value")
+        # 4) year-on-year swing > 70% (informational)
+        for a, b in zip(years, years[1:]):
+            if totals[a] and abs(totals[b] - totals[a]) / totals[a] > 0.70:
+                warn.append(f"{mk}: {a}->{b} total swings {totals[a]:,}->{totals[b]:,} (>70%)")
+
+    # 5) NBM by-country sum should not exceed the (broader) World Bank total
+    wb_total = data["meta"].get("remittances_total_usd_million", {})
+    for y, rows in data["modes"]["remittances"]["years"].items():
+        nbm = sum(r["value"] for r in rows)
+        if y in wb_total and nbm > wb_total[y] * 1.10:
+            warn.append(f"remittances {y}: NBM by-country sum {nbm:,} > World Bank total "
+                        f"{wb_total[y]:,} (+10% tolerance) — check the parse")
+
+    print("\nSanity check:")
+    if warn:
+        for w in warn:
+            print(f"  [!] {w}")
+        print(f"  {len(warn)} warning(s) — review before publishing.")
+    else:
+        print("  all checks passed.")
+    return warn
 
 
 def write(data):
@@ -424,10 +745,17 @@ def write(data):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--years", nargs="+", type=int, default=[2015, 2020, 2024])
-    ap.add_argument("--undesa", help="path to a downloaded UN DESA migrant-stock .xlsx")
+    ap.add_argument("--years", nargs="+", type=int, default=[2017, 2018, 2019, 2020])
+    ap.add_argument("--undesa", help="path to the UN DESA bilateral migrant-stock .xlsx")
+    ap.add_argument("--no-cache", action="store_true",
+                    help="don't save raw downloads under raw_cache/")
     args = ap.parse_args()
 
-    data = build(sorted(args.years), undesa_path=args.undesa)
+    if args.no_cache:
+        CACHE = False
 
+    data = build(sorted(args.years), undesa_path=args.undesa)
+    sanity_check(data)
     write(data)
+    if CACHE:
+        print(f"Raw downloads cached under raw_cache/{RUN_STAMP}/")
