@@ -101,47 +101,91 @@ present the Russia→EU remittance shift as data only; "irregular" not "illegal"
 "Republic of Moldova" formally; estimates labelled as estimates; Natural Earth
 borders stay neutral — no internal-region overlays.
 
+## SHAREABILITY & UX (items 5–8)
+- **Accessibility:** the "coming" green is teal `--c-in #1E8C72` (defined in BOTH
+  `styles.css` and the `ACCENTS` map in `app.js` — keep them in sync); it improves
+  red↔green deuteranopia separation. Provenance captions use `--ink-soft` (AA),
+  `--ink-faint` only for decorative marks. Map never encodes by hue alone.
+- **Deep-linking:** state lives in the hash `#mode=…&year=…` (`applyHashToState`
+  on load + `hashchange`, `updateHash` via `replaceState` on every change). Years
+  with no data snap to the nearest real year; unknown mode → emigration.
+- **Timeline annotations:** `DATA.annotations` (`{year, modes?, text}`) → accent dot
+  above the pin + hover title + an `aria-live` narration line (`#timelineNote`,
+  `updateTimelineNote`) that updates as play advances.
+- **Definitions + freshness:** `DATA.glossary` entries carry an `id`; each indicator
+  has a `def_id` → the card's hover/focus title shows the definition + source, and a
+  dotted underline (`.stat.has-def`) hints it. The footer "Data current as of …"
+  stamp (`#dataStamp`) reads `meta.generated` › `meta.updated` › newest source
+  `accessed` (`dataCurrentDate`/`fmtDate`).
+- **Mobile (≤560px):** a media query tightens chrome, shrinks the now ~10-stop
+  timeline to fit one row, caps the map caption so it clears the zoom buttons, and
+  enlarges tap targets. Touch: a tap on a bubble/arc shows its tip (synthesized
+  mouse events), a tap elsewhere dismisses it; `moveTip` clamps the tip inside the
+  map card so it never runs off-screen.
+
 ## DATA PROVENANCE — read before changing numbers
 This matters; the figures are mixed-confidence on purpose and labelled in `data.js`:
-- **remittances**: EXACT official NBM figures (USD m, net settlements) for **2018
-  and 2020 only**. These are the last two years NBM published a full by-source-
-  country breakdown as a press release. From 2021 the breakdown lives only in
-  NBM's interactive database (DBP4), NOT a press release. So 2020 is genuinely the
-  latest by-country year via scraping. The 2018→2020 shift is real and the
-  headline story: Russia $343M→$206M while Israel rose to #1 ($225M→$276M).
-- **immigration**: UN DESA migrant stock (2020) + UNHCR Moldova residing-refugee
-  counts (2022 ≈100k, 2023 ≈115k, 2024 ≈136k, 2026 ≈140k). Freshest mode. From
-  2022 the Ukraine figure is predominantly refugees, not long-term migrants.
-- **emigration**: diaspora STOCK ESTIMATES (UN DESA, OSW 2025, censuses). No clean
-  official bilateral series exists and official counts undercount badly (e.g.
-  Italy's register ~103k vs ~300k actual). Treat as indicative.
+- **remittances**: EXACT official NBM figures (USD m, net settlements). `data.js`
+  currently carries **2018 & 2020**; the pipeline can supply **2016–2020** from the
+  annual by-country releases (2017–2020 full, 2016 partial). CORRECTION to earlier
+  notes: the by-country breakdown did NOT move to the interactive DB — DBP4/DBP7/
+  DBP14 are aggregate-only (no country axis), and **no by-country page exists on the
+  web after 2020** (annual or quarterly). 2020 is genuinely the last year. The
+  Russia decline is the headline story: **$403M (2017) → 343 → 256 → 206 (2020)**,
+  while Israel rose to #1 ($205M → $276M).
+- **immigration**: UN DESA migrant stock + UNHCR Moldova residing-refugee counts
+  (2022 ≈105k, 2023 ≈121k, 2024 ≈136k via UNHCR; data.js rounds). Freshest mode.
+  From 2022 the Ukraine figure is predominantly refugees / people fleeing the war.
+- **emigration**: now OFFICIAL UN DESA 2024 bilateral migrant stock (by country of
+  birth), NOT estimates. Germany/US/UK report by citizenship so UN DESA has no
+  Moldova-born cell for them → omitted (not zero) and footnoted. Birth-basis still
+  undercounts (Italy ~219k UN DESA vs ~300k often cited); ~752k across covered
+  destinations vs ~864k all-destinations (UN DESA by-origin).
 
 `MIGRATION_DATA.meta.latest_year` records the newest year per mode.
 
-## The pipeline (fetch_data.py)
-Run on a real machine (it needs open internet). Sources:
-- **World Bank Indicators API** (real, no key): total remittances
-  `BX.TRF.PWKR.CD.DT`, % of GDP `BX.TRF.PWKR.DT.GD.ZS`, migrant stock `SM.POP.TOTL`.
-- **UNHCR Population API** (real): refugees residing in Moldova (`coa=MDA`).
-- **NBM scrape** (real, tested): parses the annual money-transfers release into
-  `{country: USD_million}`. The parser is value-first (finds each `(USD x million)`
-  then looks back ~60 chars for a known country) because NBM's wording is messy
-  ("the USA", "the Russian Federation", "United Kingdom and Nord Ireland").
-  Slug overrides exist for 2015/2016 (different URL pattern).
-- **NBS statbank (PxWeb)** and **UN DESA bilateral matrix**: left as clearly-marked
-  hooks/stubs — they are NOT clean public APIs (need a table id / a file download).
-It writes `data.json` + `data.generated.js` (rename to `data.js` to use).
+## The pipeline (fetch_data.py) — official-first + provenance (item 9)
+Run on a real machine (open internet). All live APIs are tested end-to-end. Each
+source records provenance via `sources_registry()` (mirrors `DATA.sources`, stamped
+with the run date); modes reference it by `source_id`, so the output carries a
+`sources` block and captions are generated, never hand-typed. Hierarchy:
+- **World Bank Indicators** (API): `BX.TRF.PWKR.CD.DT`, `BX.TRF.PWKR.DT.GD.ZS`,
+  `SM.POP.TOTL`. Fail-soft (wrapped per-indicator).
+- **UNHCR Population API**: refugees + asylum-seekers, `coa=MDA`. Field `refugees`
+  confirmed live. `http_get` falls back to unverified TLS for `api.unhcr.org` (its
+  cert chain is incomplete) — World Bank verifies fine.
+- **Eurostat** `migr_pop1ctz` (API): Moldovan CITIZENS in EU countries — a
+  CROSS-CHECK only (citizenship basis ≠ UN DESA birth basis), stored in
+  `meta.eurostat_moldovan_citizens_eu`, never merged into the emigration map.
+- **UN DESA** bilateral workbook (`--undesa <xlsx>`): `undesa_bilateral()` reads the
+  long-format Table 1 by M49 location code (release-robust). Fills emigration; UN
+  DESA immigration-by-origin parked in `meta.undesa_immigration_by_origin`.
+- **NBM scrape** (last resort): `_parse_nbm_by_country()` is value-first with a
+  word-bounded, distance-capped lookback (`_NBM_MAXBACK`) that skips the prior-year
+  comparison total (fixed the old `US=315` mis-parse). `nbm_annual_by_country(year)`
+  uses the year-in-slug annual release (**2016–2020**); `nbm_quarterly_index()` +
+  `nbm_sum_quarters()` walk the year-less quarterly slugs and sum four quarters when
+  an annual is missing. **Coverage ceiling: nothing by-country after 2020 exists on
+  the web** (DBP4 is aggregate; quarterly slugs stop at 2020Q3) — the pipeline finds
+  this correctly and fails soft.
+- **NBS statbank (PxWeb)**: still a template (`nbs_pxweb`) — NBS has no clean
+  bilateral diaspora-by-country series, so it's not wired.
+
+`sanity_check()` flags (never blocks) out-of-range totals, dangling source ids,
+NBM-sum-over-WB-total, and >70% YoY swings before writing. Raw downloads are cached
+under `raw_cache/<run-timestamp>/` (`--no-cache` to skip; gitignored). Writes
+`data.json` + `data.generated.js`. **Merge `modes` + `sources` + `meta` into data.js;
+the editorial blocks (context/glossary/caveats/annotations/scope/country_notes) are
+hand-maintained and NOT regenerated.**
 
 ## Known limitations / honest gaps
-1. The original chat's sandbox was network-locked, so the pipeline's live API calls
-   were NEVER executed end-to-end — they're written to spec and the NBM parser was
-   unit-tested against real page text, but **the World Bank + UNHCR functions need a
-   real first run to confirm response shapes** (especially the UNHCR field names).
-2. `undesa_bilateral()` is a deliberate `NotImplementedError` stub — emigration
-   stays as estimates until someone points it at a downloaded UN DESA workbook and
-   maps the "Republic of Moldova" row/column (layout shifts per release).
-3. Remittances by-country beyond 2020 requires NBM DBP4 (interactive DB), not the
-   press-release scrape.
+1. **NBM by-country ends in 2020** — not a pipeline gap; the data isn't published
+   anywhere public after 2020 (verified via the `bnm_search` autocomplete index).
+2. Germany/US/UK have no UN DESA Moldova-born cell (citizenship reporting); Eurostat
+   gives a citizenship-basis cross-check only — do not merge the two bases.
+3. Quarterly summing only completes a year if all four quarterly slugs are
+   discoverable; NBM's older/Q4 slugs use different titles, so in practice the
+   annual releases (2016–2020) are the reliable path.
 
 ## Sensible next steps (owner's likely priorities)
 - First real run of `fetch_data.py`; verify/repair the UNHCR + World Bank parsing.
