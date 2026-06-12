@@ -452,6 +452,28 @@ def nbs_immigration_flows(years):
         "response": {"format": "json"}}
     return _nbs_collect(http_post(NBS_API + "POP07100.px", q).json(), names, ymap, 1, 0)
 
+def nbs_immigration_by_purpose(years):
+    """{year: {purpose: persons}} — registered immigrants by reason for arrival
+    (POP07100, all origins). Adds the 'why' to the immigration-flow story."""
+    m = http_get(NBS_API + "POP07100.px").json()
+    cmap = _nbs_vmap(m, "Tara de emigrare"); ymap = _nbs_vmap(m, "Ani")
+    pmap = _nbs_vmap(m, "Scopul sosirii")
+    purposes = {v: k for k, v in pmap.items() if k != "Total"}
+    q = {"query": [
+        {"code": "Tara de emigrare", "selection": {"filter": "item", "values": [cmap["Total"]]}},
+        {"code": "Ani", "selection": {"filter": "item",
+            "values": [ymap[str(y)] for y in years if str(y) in ymap]}},
+        {"code": "Scopul sosirii", "selection": {"filter": "item", "values": list(purposes)}}],
+        "response": {"format": "json"}}
+    payload = http_post(NBS_API + "POP07100.px", q).json()
+    inv_y = {v: k for k, v in ymap.items()}
+    out = {}
+    for row in payload.get("data", []):
+        c, ycode, pcode = row["key"]
+        if ycode in inv_y and pcode in purposes:
+            out.setdefault(int(inv_y[ycode]), {})[purposes[pcode]] = _nbs_num(row["values"][0])
+    return out
+
 
 # ---------------------------------------------------------------------------
 # 5. UN DESA Int'l Migrant Stock — bilateral  (download xlsx, then parse)
@@ -596,6 +618,11 @@ def build(years, undesa_path=None):
         print(f"  immigrants/yr by origin:     { {y: sum(d.values()) for y, d in sorted(nbs_imm.items())} }")
     except Exception as e:
         nbs_imm = {}; print(f"  [skip immigration] {e}")
+    try:
+        nbs_purpose = nbs_immigration_by_purpose(NBS_YEARS)
+        print(f"  immigration purposes (2024): {nbs_purpose.get(2024, {})}")
+    except Exception as e:
+        nbs_purpose = {}; print(f"  [skip purpose] {e}")
 
     print("World Bank: total remittances + %GDP + migrant stock ...")
     def wb(indicator):
@@ -771,6 +798,8 @@ def build(years, undesa_path=None):
             # Eurostat cross-check (Moldovan CITIZENS in EU; citizenship basis, a
             # different measure from the birth-basis emigration map — not merged).
             "eurostat_moldovan_citizens_eu": eurostat_eu,
+            # NBS registered-immigration by reason for arrival (work/study/family/…).
+            "nbs_immigration_by_purpose": {str(y): d for y, d in nbs_purpose.items() if d},
             "_note": "Editorial blocks (context, glossary, caveats, annotations, "
                      "scope_note, country_notes) are hand-maintained in data.js — "
                      "merge `modes` + `sources` + `meta` from here; leave those intact.",

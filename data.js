@@ -231,7 +231,12 @@ window.MIGRATION_DATA = {
                   "deregister — so it is far below the diaspora stock." },
     { id: "registered_immigrant", term: "Registered immigrant",
       definition: "A person who officially registered as immigrating to Moldova in a given year " +
-                  "(NBS), by country of origin. A FLOW; kept separate from UNHCR refugee figures." }
+                  "(NBS), by country of origin. A FLOW; kept separate from UNHCR refugee figures." },
+    { id: "population_gap", term: "Implied diaspora (de jure − usually-resident)",
+      definition: "NBS publishes two population concepts: 'de jure resident' (registered residents, " +
+                  "including many who live abroad) and 'usually resident' (people actually living in " +
+                  "Moldova). The difference — about 0.86M in 2019 — approximates the diaspora, and is " +
+                  "why NBS's tiny registered-emigration flows don't contradict the ~864k stock." }
   ],
 
   // Caveats / scope notes — the political-safety + methodology landmines, in one
@@ -252,7 +257,13 @@ window.MIGRATION_DATA = {
       "includes some salaries and pensions, excludes Transnistria, and was published with a " +
       "full by-country breakdown only through 2020. The Russia-to-EU shift is shown as data only.",
     "Figures shown as estimates are estimates; official series are cited individually in Sources. " +
-      "Terminology follows official usage (“irregular” not “illegal”; “Republic of Moldova”)."
+      "Terminology follows official usage (“irregular” not “illegal”; “Republic of Moldova”).",
+    "Why NBS migration looks so small vs other sources: (1) it is an annual FLOW, not a cumulative " +
+      "stock; (2) emigration counts only people who formally DEREGISTERED — most of the diaspora never " +
+      "did; (3) the diaspora instead appears in NBS's population accounts, where 'de jure resident' " +
+      "exceeds 'usually resident' by ≈0.86M; (4) Ukrainian refugees are counted by UNHCR, not NBS; and " +
+      "(5) each source defines a 'migrant' differently (UN DESA = country of birth, Eurostat = " +
+      "citizenship, NBM = bank transfers, UNHCR = refugees, NBS = registered moves)."
   ],
 
   // Economic context shown in the analysis panel below the map. Professional
@@ -267,7 +278,12 @@ window.MIGRATION_DATA = {
       population_resident: 2401200,    // 2024 Census (usually-resident)
       gdp_usd_bn: 18.2, gdp_mdl_bn: 342.1,
       state_budget_revenue_mdl_bn: 66.6,
-      diaspora_estimate: 864257   // UN DESA 2024, Moldovan-born abroad (all destinations)
+      diaspora_estimate: 864257,  // UN DESA 2024, Moldovan-born abroad (all destinations)
+      // NBS's own population concepts: "de jure resident" (registered, incl. those
+      // abroad) minus "usually resident" (actually living here) ≈ the diaspora.
+      dejure_2019: 3542708,            // NBS de jure resident population, 1 Jan 2019
+      usually_resident_2019: 2684772,  // NBS usually-resident population, 1 Jan 2019
+      implied_diaspora_nbs: 857936     // the gap — NBS's own measure of who's abroad
     },
     emigration: {
       headline: "Few countries are as shaped by emigration. UN DESA counts about 864,000 " +
@@ -305,20 +321,21 @@ window.MIGRATION_DATA = {
     },
     emigration_flow: {
       headline: "Moldova's own statistics office records only people who formally deregister on " +
-                "leaving — a few thousand a year, far below the ~864,000-strong diaspora. It is a " +
-                "narrow but official measure of where registered departures go.",
+                "leaving — a few thousand a year. The real diaspora shows up elsewhere in NBS data: " +
+                "its 'de jure' population (registered residents) exceeds its 'usually-resident' count " +
+                "by ≈0.86M — essentially everyone living abroad.",
       indicators: [
         { term: "Registered emigrants", value: "≈4,000/yr", sub: "2024, all destinations (NBS)", world: null, icon: "depart", source_id: "nbs_migration", def_id: "registered_emigrant" },
-        { term: "Top destination", value: "Russia", sub: "of registered emigrants, 2024", world: null, icon: "route", source_id: "nbs_migration", def_id: "registered_emigrant" }
+        { term: "Implied diaspora (NBS)", value: "≈0.86M", sub: "de jure − usually-resident population", world: null, icon: "users", source_id: "nbs_census_2024", def_id: "population_gap" }
       ]
     },
     immigration_flow: {
       headline: "Officially registered arrivals — people who formally settle in Moldova each year, " +
-                "by country of origin. A few thousand a year, and (unlike the refugee figures) not " +
-                "the Ukrainian displacement, which is recorded separately by UNHCR.",
+                "by country of origin. A few thousand a year, mostly for work and family, and (unlike " +
+                "the refugee figures) NOT the Ukrainian displacement, which UNHCR records separately.",
       indicators: [
         { term: "Registered immigrants", value: "≈6,600/yr", sub: "2024, all origins (NBS)", world: null, icon: "arrive", source_id: "nbs_migration", def_id: "registered_immigrant" },
-        { term: "Top origin", value: "Russia", sub: "of registered immigrants, 2024", world: null, icon: "route", source_id: "nbs_migration", def_id: "registered_immigrant" }
+        { term: "Main reasons", value: "Work · Family", sub: "2024: 3,002 work · 2,211 family reunification", world: null, icon: "users", source_id: "nbs_migration", def_id: "registered_immigrant" }
       ]
     }
   },
