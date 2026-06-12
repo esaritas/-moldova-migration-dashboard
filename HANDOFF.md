@@ -24,7 +24,8 @@ world-data.js     # Natural Earth 1:110m country outlines (public domain), bundl
 app.js            # D3 logic: map, flow arcs, linked table, zoom, timeline
 fetch_data.py     # pipeline: World Bank + UNHCR APIs + NBM scrape -> data file
 requirements.txt  # python deps
-moldova-migration-dashboard.html  # single-file build of everything (preview/share only)
+moldova-migration-dashboard.html  # single-file build (preview/share only)
+build_single.py   # regenerates the single-file build from source (run after edits)
 ```
 Plain `<script>` tags (not ES modules) are used on purpose so it runs from
 `file://` without a server. To preview: VS Code Live Server on `index.html`, or
