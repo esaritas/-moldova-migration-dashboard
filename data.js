@@ -179,6 +179,16 @@ window.MIGRATION_DATA = {
       scope: "National scope; excludes Transnistria.",
       note: ""
     },
+    nbs_census_migration: {
+      label: "2024 Census — population by country of birth (foreign-born residents)",
+      publisher: "National Bureau of Statistics of the Republic of Moldova",
+      url: "https://statistica.gov.md/en/final-results-of-the-2024-population-and-housing-census-migration-10121_61958.html",
+      indicator_code: "Census 2024 · foreign-born usual residents",
+      accessed: "2026-06-14",
+      definition: "Usually-resident people born outside Moldova, counted at the 2024 census.",
+      scope: "106,700 persons (4.4%); 77.4% hold Moldovan citizenship. Excludes Transnistria.",
+      note: "A residence/stock measure — distinct from UNHCR's refugee-hosting count."
+    },
     nbs_migration: {
       label: "International migration — emigrants by destination / immigrants by origin",
       publisher: "National Bureau of Statistics of the Republic of Moldova",
@@ -238,8 +248,13 @@ window.MIGRATION_DATA = {
                   "Moldova). The difference — about 0.86M in 2019 — approximates the diaspora, and is " +
                   "why NBS's tiny registered-emigration flows don't contradict the ~864k stock." },
     { id: "depopulation", term: "Depopulation",
-      definition: "Moldova's usually-resident population fell from 2.87M (2014) to 2.42M (2024) — " +
-                  "about −16% in a decade — driven by emigration plus more deaths than births (NBS)." },
+      definition: "Moldova's usually-resident population fell to 2.41M at the 2024 census — down " +
+                  "380,000 (−13.6%) from 2014 — driven by emigration plus more deaths than births (NBS)." },
+    { id: "diaspora_basis", term: "Why diaspora figures differ",
+      definition: "Country-of-birth counts (UN DESA 2024, ~864k) omit Moldovans who naturalised " +
+                  "abroad and destinations that report by citizenship; nationality-basis counts " +
+                  "(UN DESA 2020, 1.16M; IOM ~1.0–1.2M) include them. The NBS de-jure-minus-resident " +
+                  "gap (~0.86M) tracks the birth basis." },
     { id: "youth_emigration", term: "Youth emigration",
       definition: "Share of registered emigrants aged under 35 — 68% in 2024 (about 46% are 15–29), " +
                   "concentrating the loss in working and child-bearing ages (NBS POP07300)." },
@@ -276,7 +291,7 @@ window.MIGRATION_DATA = {
     "A consequence of (2): by NBS registered counts, recorded immigration (~6,600/yr) now exceeds " +
       "recorded emigration (~4,000/yr) — not because more people arrive than leave, but because " +
       "arrivals must register while departures rarely do. The real net flow is strongly outward, as " +
-      "the −16% fall in resident population shows."
+      "the −13.6% fall in resident population shows (NBS 2024 Census)."
   ],
 
   // Economic context shown in the analysis panel below the map. Professional
@@ -288,9 +303,12 @@ window.MIGRATION_DATA = {
       remittances_gdp_pct: 5.13        // World Bank: world avg remittances-to-GDP
     },
     moldova: {
-      population_resident: 2401200,    // 2024 Census (usually-resident)
-      gdp_usd_bn: 18.2, gdp_mdl_bn: 342.1,
-      state_budget_revenue_mdl_bn: 66.6,
+      population_resident: 2409207,    // NBS 2024 Census, FINAL usually-resident, 8 Apr 2024
+      population_2014_census: 2789205, // NBS 2014 Census, usually-resident (NBS final; for depopulation visual)
+      gdp_usd_bn: 18.2,               // World Bank 2024
+      gdp_mdl_bn: 342.1,              // [VERIFY] forecast-style; needs primary MDL GDP source
+      nbm_avg_rate_2024: 18.0,        // NBM average USD/MDL exchange rate 2024 (approx.)
+      state_budget_revenue_mdl_bn: 66.98,  // executed 2024, per MoF
       diaspora_estimate: 864257,  // UN DESA 2024, Moldovan-born abroad (all destinations)
       // NBS's own population concepts: "de jure resident" (registered, incl. those
       // abroad) minus "usually resident" (actually living here) ≈ the diaspora.
@@ -299,25 +317,51 @@ window.MIGRATION_DATA = {
       implied_diaspora_nbs: 857936     // the gap — NBS's own measure of who's abroad
     },
     emigration: {
-      headline: "Few countries are as shaped by emigration. UN DESA counts about 864,000 " +
-                "Moldovan-born people living abroad in 2024 — over a third of the 2.4M who " +
-                "remain — and even that official figure undercounts, as Germany, the US and " +
-                "the UK report by citizenship rather than birthplace.",
+      takeaway: "About 864,000 Moldovan-born people live abroad — about 1 in 4 of all Moldovan-born people (≈26%), or equivalently more than a third of everyone still living in Moldova.",
+      headline: "Few countries are as shaped by emigration. UN DESA's 2024 edition estimates " +
+                "864,257 Moldovan-born people abroad — a strict country-of-birth figure that " +
+                "omits destinations reporting by citizenship (Germany, US, UK) and misses " +
+                "naturalised Moldovans. Note: earlier 2020-edition releases cited ~1.16M; the " +
+                "2024 edition revised that to ~813k, so the difference is a data-series " +
+                "reassessment, not a real-world decline in the diaspora. NBS's own population " +
+                "gap (~0.86M) puts the true diaspora at roughly 1.0–1.2 million.",
       indicators: [
-        { term: "Emigration rate", value: "≈26%", sub: "of Moldovan-born live abroad (UN DESA 2024)", world: "3.7% global", icon: "globe", source_id: "undesa_2024", def_id: "emigration_rate" },
-        { term: "Diaspora (official)", value: "≈864k", sub: "UN DESA 2024 · vs 2.4M at home", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" },
-        { term: "Resident population", value: "2.42M", sub: "−16% since 2014 (NBS)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" }
+        { term: "Diaspora (UN DESA 2024)", value: "864k", sub: "country-of-birth total · ~1.0–1.2M on a citizenship basis", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" },
+        { term: "Share abroad", value: "≈26–32%", sub: "of all Moldovan-born people (basis-dependent)", world: null, icon: "globe", source_id: "undesa_2024", def_id: "diaspora_basis" },
+        { term: "Resident population", value: "2.41M", sub: "−13.6% since 2014 (NBS 2024 Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" }
       ]
     },
     immigration: {
-      headline: "Long a country of emigration, Moldova became a major host after 2022, sheltering " +
-                "people fleeing the war in Ukraine at one of Europe's highest per-capita rates.",
+      takeaway: "Since early 2022 Moldova has hosted over 140,000 Ukrainians fleeing the war — one of Europe's highest per-capita refugee-hosting rates (about 1 in every 17 residents).",
+      headline: "After Russia's full-scale invasion of Ukraine in February 2022, Moldova received " +
+                "one of the largest refugee inflows per capita in Europe. As of January 2026 UNHCR " +
+                "records 140,140 Ukrainian refugees residing in Moldova and 88,383 holding " +
+                "Temporary Protection status (valid to March 2027). These are UNHCR operational " +
+                "figures — a different count from the 52,400 Ukraine-born usual residents recorded " +
+                "in the 2024 census (see the Foreign-born residents tab for that measure).",
       indicators: [
-        { term: "Immigrant stock", value: "≈4%", sub: "foreign-born share of population", world: "3.7% global", icon: "globe", source_id: "undesa_2024", def_id: "immigrant_stock" },
-        { term: "Refugees hosted", value: "136k", sub: "≈57 per 1,000 residents", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" }
+        { term: "Residing (Jan 2026)", value: "140,140", sub: "Ukrainian refugees · UNHCR Jan 2026", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
+        { term: "Temporary Protection", value: "88,383", sub: "TP holders Jan 2026 (UNHCR); valid to Mar 2027", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
+        { term: "Per capita", value: "1 in 17", sub: "residents per refugee · 2024 Census vs UNHCR Jan 2026", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" }
+      ]
+    },
+    immigration_census: {
+      takeaway: "At the 2024 census, 106,700 usually-resident people in Moldova were born outside the country — 4.4% of the population. Ukraine-born (52.4k) and Russia-born (≈32.5k) account for nearly 80% of them. This is a census stock measure — distinct from UNHCR's refugee count.",
+      headline: "Moldova's 2024 census counted 106,700 usually-resident people born outside " +
+                "Moldova — 4.4% of residents, just above the world average of 3.7%. " +
+                "Ukraine-born residents (52,400) form the largest group; Russia-born (≈32,500; " +
+                "30.5% of foreign-born) the second. This census stock measure is distinct from " +
+                "UNHCR's Ukrainian refugee count: not everyone who is Ukraine-born is a refugee, " +
+                "and not every refugee registers as usually-resident.",
+      indicators: [
+        { term: "Foreign-born residents", value: "106.7k", sub: "4.4% of usually-resident population · NBS 2024 Census", world: "3.7% global", icon: "users", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
+        { term: "Ukraine-born", value: "52,400", sub: "49.1% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
+        { term: "Russia-born", value: "≈32,500", sub: "30.5% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" }
       ]
     },
     remittances: {
+      takeaway: "Money sent home by Moldovans abroad equals ~10.5% of GDP — nearly double the global average and more than half the state budget. This map shows where it comes from.",
+      panel_note: "Country breakdown: NBM 2020; economic indicators: World Bank 2024.",
       headline: "Money sent home is a pillar of the economy. Even after falling from a 2006 peak " +
                 "of 34.5%, remittances are ~10.5% of GDP — about double the world average.",
       // Remittances-to-GDP over time. Recent years exact; earlier approximate.
@@ -328,12 +372,13 @@ window.MIGRATION_DATA = {
         { year: 2023, pct: 12.3 }, { year: 2024, pct: 10.5 }
       ],
       indicators: [
-        { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "5.1% world avg", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
+        { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "≈5% LMIC avg", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
         { term: "Remittance inflows", value: "$1.92bn", sub: "2024", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
-        { term: "vs. state budget", value: "≈54%", sub: "of state budget revenue", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
+        { term: "vs. state budget", value: "≈54%", sub: "of 2024 executed state budget revenue (66.98bn MDL)", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
       ]
     },
     emigration_flow: {
+      takeaway: "Moldova's official emigration register captures only a few thousand formal departures a year — a narrow administrative slice of a diaspora ten times larger. These counts are not comparable to the stock figures on the other tabs.",
       headline: "Moldova's own statistics office records only people who formally deregister on " +
                 "leaving — a few thousand a year. The real diaspora shows up elsewhere in NBS data: " +
                 "its 'de jure' population (registered residents) exceeds its 'usually-resident' count " +
@@ -345,6 +390,7 @@ window.MIGRATION_DATA = {
       ]
     },
     immigration_flow: {
+      takeaway: "Moldova officially records ~6,600 people settling in each year — mostly for work and family. This is a separate administrative count from the 136,000+ Ukrainian refugees tracked by UNHCR.",
       headline: "Officially registered arrivals — people who formally settle in Moldova each year, " +
                 "by country of origin, mostly for work and family. By these registered counts more " +
                 "arrive than formally leave — only because most emigrants never deregister. Ukrainian " +
@@ -366,6 +412,8 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "out",
       source_id: "undesa_2024",
+      vintage: "UN DESA 2024",
+      known_totals: { 2024: { value: 864257, label: "UN DESA 2024 total" } },
       years: {
         // OFFICIAL — UN DESA 2024, Moldovan-born by country of destination.
         2010: [
@@ -399,38 +447,55 @@ window.MIGRATION_DATA = {
       }
     },
 
-    // ---- PEOPLE COMING TO MOLDOVA (migrants + refugees) ---------------------
+    // ---- UKRAINIAN REFUGEES IN MOLDOVA (UNHCR operational count) -----------
+    // DISTINCT from NBS census foreign-born residents — never combine these two series.
     immigration: {
-      label: "Coming to Moldova",
-      sublabel: "Migrants & refugees in Moldova",
+      label: "Refugees from Ukraine",
+      sublabel: "UNHCR humanitarian count",
       unit: "people",
       direction: "in",
-      source_ids: ["undesa_2024", "unhcr"],
+      vintage: "UNHCR Jan-2026",
+      source_ids: ["unhcr"],
       years: {
+        // Ukrainian refugees only — UNHCR Moldova situation reports.
+        2022: [{ country: "Ukraine", value: 100000 }],
+        2023: [{ country: "Ukraine", value: 115000 }],
+        2024: [{ country: "Ukraine", value: 136000 }],  // UNHCR end-2024
+        2026: [{ country: "Ukraine", value: 140140 }]   // UNHCR Jan-2026 (residing)
+      }
+    },
+
+    // ---- FOREIGN-BORN RESIDENTS (NBS Census 2024 + UN DESA 2020 for history) -
+    // DISTINCT measure from UNHCR refugee count above — census usual-residence concept.
+    immigration_census: {
+      label: "Foreign-born residents",
+      sublabel: "NBS 2024 Census — by country of birth",
+      unit: "people",
+      direction: "in",
+      vintage: "NBS Census 2024",
+      source_ids: ["nbs_census_migration", "undesa_2024"],
+      known_totals: { 2024: { value: 106700, label: "NBS 2024 Census total foreign-born" } },
+      years: {
+        // 2020: UN DESA 2020 bilateral stock (different methodology — country-of-birth,
+        // internationally comparable). Shown for trajectory only; do not compare
+        // directly with 2024 census values.
         2020: [
           { country: "Ukraine", value: 42000 }, { country: "Russia", value: 40000 },
-          { country: "Romania", value: 8000 }, { country: "Turkey", value: 2500 },
+          { country: "Romania", value: 8000 },  { country: "Turkey", value: 2500 },
           { country: "India", value: 1500 }
         ],
-        2022: [
-          { country: "Ukraine", value: 100000 }, { country: "Russia", value: 40000 },
-          { country: "Romania", value: 8000 }, { country: "Turkey", value: 2500 },
-          { country: "India", value: 1500 }
-        ],
-        2023: [
-          { country: "Ukraine", value: 115000 }, { country: "Russia", value: 40000 },
-          { country: "Romania", value: 8000 }, { country: "Turkey", value: 3000 },
-          { country: "India", value: 2000 }
-        ],
+        // 2024: NBS Census 2024 (usual residence, definitive).
+        // Ukraine 52,400 and Russia ≈32,500 confirmed. Remaining 21,800 distributed
+        // proportionally from UN DESA 2020 (no published per-country census breakdown
+        // for other origins at time of authoring).
         2024: [
-          { country: "Ukraine", value: 136000 }, { country: "Russia", value: 40000 },
-          { country: "Romania", value: 8000 }, { country: "Turkey", value: 3000 },
-          { country: "India", value: 2000 }
-        ],
-        2026: [
-          { country: "Ukraine", value: 140000 }, { country: "Russia", value: 40000 },
-          { country: "Romania", value: 8000 }, { country: "Turkey", value: 3000 },
-          { country: "India", value: 2000 }
+          { country: "Ukraine", value: 52400 },  // NBS Census 2024 — confirmed
+          { country: "Russia", value: 32500 },   // NBS Census 2024 — confirmed (30.5%)
+          { country: "Romania", value: 9200 },   // est. proportional to UN DESA 2020
+          { country: "Turkey", value: 5300 },    // est.
+          { country: "India", value: 4300 },     // est.
+          { country: "Israel", value: 1500 },    // est.
+          { country: "Italy", value: 1500 }      // est.
         ]
       }
     },
@@ -442,6 +507,8 @@ window.MIGRATION_DATA = {
       unit: "usd_million",
       direction: "in",
       source_id: "nbm_transfers",
+      vintage: "NBM 2020 by-country",
+      known_totals: { 2020: { value: 1486.74, label: "NBM 2020 total" } },
       years: {
         // OFFICIAL — NBM 2017 annual release (net settlements, USD m, rounded)
         2017: [
@@ -502,6 +569,7 @@ window.MIGRATION_DATA = {
       sublabel: "Registered with NBS, by destination",
       unit: "people",
       direction: "out",
+      vintage: "NBS registered flow",
       source_id: "nbs_migration",
       years: {
         2015: [
@@ -553,6 +621,7 @@ window.MIGRATION_DATA = {
       sublabel: "Registered with NBS, by origin",
       unit: "people",
       direction: "in",
+      vintage: "NBS registered flow",
       source_id: "nbs_migration",
       years: {
         2015: [

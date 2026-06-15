@@ -73,6 +73,15 @@ h1 {
   max-width: 60ch;
   margin: 0;
 }
+.story-subhead {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 4px 0 6px;
+  line-height: 1.45;
+}
+
 .scope-note {
   margin: 10px 0 0; max-width: 70ch;
   font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
@@ -130,6 +139,28 @@ h1 {
   font-size: 12px; line-height: 1.5; color: var(--ink-soft);
 }
 .modes-note strong { color: var(--ink); font-weight: 600; }
+
+.mode-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(0,0,0,.07);
+  color: inherit;
+  opacity: 0.75;
+  margin-left: 2px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.mode-btn[aria-pressed="true"] .mode-badge {
+  background: rgba(255,255,255,.22);
+  opacity: 1;
+}
+/* NBS flow buttons — visually muted to signal "different magnitude category" */
+.mode-btn-nbs { opacity: 0.82; }
+.mode-btn-nbs[aria-pressed="true"] { opacity: 1; }
 
 /* ---- Main layout: map + table -------------------------------------------- */
 .panel {
@@ -192,6 +223,7 @@ h1 {
 .flow-rail {
   fill: none;
   stroke-linecap: round;
+  stroke-width: 2.5px;   /* constant — direction/connection only; magnitude = bubble */
 }
 .flow-stream {
   fill: none;
@@ -329,6 +361,30 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 }
 .context-body { display: grid; grid-template-columns: 1.55fr 1fr; gap: 28px; align-items: start; }
 
+/* ---- Part-to-whole comparison strip -------------------------------------- */
+.part-whole-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 14px 0 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 18px;
+}
+.pw-svg {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  display: block;
+  overflow: visible;
+  font-family: var(--font-body);
+}
+/* animate fill on mode change, but respect reduced-motion */
+@media (prefers-reduced-motion: no-preference) {
+  .pw-svg rect[fill]:not([fill="none"]) {
+    transition: width 0.35s ease, fill 0.25s ease;
+  }
+}
+
 .ctx-chart-title {
   font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em;
   text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px;
@@ -405,16 +461,22 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
   appearance: none;
   border: 1px solid var(--line);
   background: var(--surface);
-  width: 40px; height: 40px;
-  border-radius: 50%;
+  height: 40px;
+  padding: 0 16px 0 12px;
+  border-radius: 999px;
   cursor: pointer;
   flex: none;
-  display: grid; place-items: center;
+  display: inline-flex; align-items: center; gap: 8px;
   color: var(--ink);
-  transition: border-color .18s, background .18s;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: border-color .18s, background .18s, color .18s;
 }
 .play:hover { border-color: var(--accent); color: var(--accent); }
 .play:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.play-label { line-height: 1; }
 
 .track {
   position: relative;
@@ -465,13 +527,17 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 }
 .timeline-note {
   margin: 10px 2px 0; max-width: 80ch;
-  font-size: 12.5px; line-height: 1.5; color: var(--ink-soft);
-  display: flex; gap: 8px; align-items: baseline;
+  font-size: 13px; line-height: 1.5; color: var(--ink);
+  font-weight: 500;
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent);
 }
 .timeline-note[hidden] { display: none; }
 .timeline-note::before {
-  content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent); transform: translateY(-1px);
+  content: "";
 }
 
 /* Table empty-state */
@@ -590,3 +656,31 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
   .arc-anim { animation: none !important; }
   * { transition: none !important; }
 }
+
+/* ---- Key-takeaway card -------------------------------------------------- */
+.takeaway-card {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.65rem 1rem;
+  margin: 0 0 0.6rem;
+  line-height: 1.5;
+  transition: border-left-color 0.25s ease;
+}
+
+/* ---- How to read this strip -------------------------------------------- */
+.howto-strip {
+  font-size: 0.78rem;
+  color: var(--ink-muted, #6b7280);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.45rem 0.8rem;
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+.howto-strip strong { color: var(--ink); }

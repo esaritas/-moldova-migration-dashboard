@@ -17,26 +17,38 @@
     <header>
       <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
       <h1>Moldova in Motion</h1>
+      <p class="story-subhead">About one in four Moldovan-born people live abroad &mdash; but their money, families and crises still connect back home.</p>
       <p class="lede">Where Moldovans go, who comes to Moldova, and how much money flows home.
-        Each ribbon's thickness is the number of people — or dollars — moving along it.</p>
+        Bubble size is the number of people — or dollars — moving along each route.</p>
       <p class="scope-note" id="scopeNote"></p>
 
       <!-- Mode toggle: plain-language labels for a general audience -->
       <div class="modes" role="group" aria-label="Choose what to show">
         <button class="mode-btn" data-mode="emigration"  aria-pressed="true">
-          <span class="ico"></span>Leaving Moldova</button>
+          <span class="ico"></span>Leaving Moldova<span class="mode-badge">STOCK</span></button>
         <button class="mode-btn" data-mode="immigration" aria-pressed="false">
-          <span class="ico"></span>Coming to Moldova</button>
+          <span class="ico"></span>Refugees from Ukraine<span class="mode-badge">REFUGEE-HOSTING</span></button>
+        <button class="mode-btn" data-mode="immigration_census" aria-pressed="false">
+          <span class="ico"></span>Foreign-born residents<span class="mode-badge">STOCK</span></button>
         <button class="mode-btn" data-mode="remittances" aria-pressed="false">
-          <span class="ico"></span>Money sent home</button>
+          <span class="ico"></span>Money sent home<span class="mode-badge">MONEY-PROXY</span></button>
         <span class="mode-sep" aria-hidden="true"></span>
         <button class="mode-btn mode-btn-nbs" data-mode="emigration_flow" aria-pressed="false">
-          <span class="ico"></span>Emigrants / year</button>
+          <span class="ico"></span>Emigrants / year<span class="mode-badge">REGISTERED-FLOW</span></button>
         <button class="mode-btn mode-btn-nbs" data-mode="immigration_flow" aria-pressed="false">
-          <span class="ico"></span>Immigrants / year</button>
+          <span class="ico"></span>Immigrants / year<span class="mode-badge">REGISTERED-FLOW</span></button>
       </div>
       <p class="modes-note">The last two are <strong>official NBS registered flows</strong> (a few thousand a year) — a different, much smaller measure than the diaspora &amp; refugee <em>stocks</em> on the left.</p>
     </header>
+
+    <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
+    <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
+
+    <!-- Definitions strip: one-line orientation for all audiences -->
+    <div class="howto-strip" role="note" aria-label="How to read this dashboard">
+      <strong>How to read this:</strong>
+      Stock &ne; flow &nbsp;&middot;&nbsp; Refugee count &ne; immigrant stock &nbsp;&middot;&nbsp; Bank transfers &ne; total remittances &nbsp;&middot;&nbsp; Shown countries &ne; national total
+    </div>
 
     <!-- Map + table side by side -->
     <div class="panel">
@@ -47,7 +59,7 @@
           <button class="zoom-btn" id="zoomOut" aria-label="Zoom out" title="Zoom out">&minus;</button>
           <button class="zoom-btn" id="zoomReset" aria-label="Reset to world view" title="Reset view">&#8862;</button>
         </div>
-        <div class="map-caption" id="mapCaption">Flow width = people</div>
+        <div class="map-caption" id="mapCaption"></div>
         <div class="src-caption" id="mapSource"></div>
       </div>
 
@@ -73,6 +85,7 @@
     <div class="card timeline-card">
       <button class="play" id="playBtn" aria-label="Play through years" title="Play">
         <svg width="14" height="14" viewBox="0 0 14 14" id="playIcon"><path d="M3 2 L12 7 L3 12 Z" fill="currentColor"/></svg>
+        <span class="play-label">Play timeline</span>
       </button>
       <div class="track">
         <div class="track-line"></div>
@@ -85,6 +98,9 @@
     <!-- Economics: mode-aware analysis with world benchmarks -->
     <div class="card context-card">
       <p class="context-headline" id="contextHeadline"></p>
+      <p class="ctx-panel-note src-caption" id="ctxPanelNote" hidden></p>
+      <!-- Part-to-whole comparison strip: shows the proportion, not just the stat -->
+      <div id="partWholeViz" class="part-whole-strip" hidden></div>
       <div class="context-body">
         <div class="context-chart">
           <div class="ctx-chart-title" id="ctxChartTitle"></div>

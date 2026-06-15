@@ -19,13 +19,15 @@
 
   const ACCENTS = {
     emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E",
+    immigration_census: "#2E7D62",  // darker teal — same family as immigration, different measure
     // NBS official-flow modes: muted/earthy tones to read as secondary series.
     emigration_flow: "#A8743A", immigration_flow: "#5E7488"
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
     emigration: "Moldovans abroad — main destinations (stock)",
-    immigration: "Migrants & refugees in Moldova (stock)",
+    immigration: "Ukrainian refugees in Moldova (UNHCR)",
+    immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     emigration_flow: "Registered emigrants per year (NBS)",
     immigration_flow: "Registered immigrants per year (NBS)"
   };
@@ -49,7 +51,8 @@
       + `stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] || ""}</svg>`;
   }
   const MODE_ICON = {
-    emigration: "depart", immigration: "arrive", remittances: "banknote",
+    emigration: "depart", immigration: "tent", remittances: "banknote",
+    immigration_census: "users",
     emigration_flow: "depart", immigration_flow: "arrive"
   };
 
@@ -209,9 +212,12 @@
     const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
     const dx = b[0] - a[0], dy = b[1] - a[1];
     const dist = Math.hypot(dx, dy) || 1;
-    const lift = dist * 0.22;
+    // Cap lift so long arcs (US, Israel) don't over-curve
+    const lift = Math.min(dist * 0.22, 80);
     let nx = -dy / dist, ny = dx / dist;
-    if (ny > 0) { nx = -nx; ny = -ny; }
+    // Curve away from Moldova hub so spokes fan out rather than all bending upward
+    const hubDot = nx * (hub[0] - mx) + ny * (hub[1] - my);
+    if (hubDot > 0) { nx = -nx; ny = -ny; }
     return `M${a[0]},${a[1]} Q${mx + nx * lift},${my + ny * lift} ${b[0]},${b[1]}`;
   }
 
@@ -292,7 +298,7 @@
     flows.select(".flow-rail")
       .attr("d", pathFor)
       .attr("stroke", d => "url(#fg-" + slug(d.country) + ")")
-      .attr("stroke-width", d => currentWScale(d.value));
+      .attr("stroke-width", 2.5);   // constant — magnitude shown by bubble only
     flows.select(".flow-stream")
       .attr("d", pathFor)
       .call(animateStream, reduceMotion);
@@ -331,6 +337,11 @@
 
     renderLegend(m);
     rescaleForZoom();   // size new elements to the current zoom level
+
+    // Dynamic aria-label: summarise what the map shows for screen readers.
+    const topRows = rows.slice(0, 3).map(r => `${r.country}: ${fmt(r.value, m.unit)}`).join(", ");
+    svg.attr("aria-label", `Map of ${m.label.toLowerCase()}, ${year}. ` +
+      (topRows ? `Top countries: ${topRows}${rows.length > 3 ? ", and more" : ""}.` : "No data."));
   }
 
   // Graduated-circle size legend (fixed corner, like the Migration Data Portal).
@@ -381,8 +392,7 @@
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
-    mapCaption.textContent = (m.unit === "usd_million" ? "Flow width = money" : "Flow width = people")
-      + " · scroll to zoom, drag to pan";
+    mapCaption.textContent = (m.vintage ? m.vintage + " · " : "") + "scroll to zoom, drag to pan";
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(m); mapSrc.title = citationsFor(m); }
     sourceLine.textContent = citationsFor(m);
@@ -401,7 +411,13 @@
     const max = d3.max(rows, d => d.value) || 1;
     const total = d3.sum(rows, d => d.value);
     totalValue.textContent = fmt(total, m.unit);
-    totalLabel.textContent = m.sublabel + " · " + year;
+    const kt = m.known_totals && m.known_totals[year];
+    if (kt) {
+      const pct = Math.round(total / kt.value * 100);
+      totalLabel.textContent = `Shown: ${fmt(total, m.unit)} of ${fmt(kt.value, m.unit)} ${kt.label} (${pct}%)`;
+    } else {
+      totalLabel.textContent = m.sublabel + " · " + year;
+    }
 
     tableBody.selectAll("tr").data(rows, d => d.country).join(
       enter => {
@@ -530,6 +546,8 @@
   function startPlay() {
     playBtn.querySelector("#playIcon").innerHTML =
       '<rect x="3" y="2.5" width="2.6" height="9" fill="currentColor"/><rect x="8.4" y="2.5" width="2.6" height="9" fill="currentColor"/>';
+    const lbl = playBtn.querySelector(".play-label");
+    if (lbl) lbl.textContent = "Pause";
     timer = setInterval(() => {
       const ys = modeYears(); if (!ys.length) return;
       const i = ys.indexOf(year);
@@ -539,6 +557,8 @@
   function stopPlay() {
     if (timer) { clearInterval(timer); timer = null; }
     playBtn.querySelector("#playIcon").innerHTML = '<path d="M3 2 L12 7 L3 12 Z" fill="currentColor"/>';
+    const lbl = playBtn.querySelector(".play-label");
+    if (lbl) lbl.textContent = "Play timeline";
   }
   playBtn.addEventListener("click", togglePlay);
 
@@ -605,6 +625,19 @@
   function renderContext() {
     const ctx = DATA.context[mode];
     const accent = ACCENTS[mode];
+
+    // Key-takeaway card: one plain sentence above the map, mode-specific.
+    const card = document.getElementById("takeawayCard");
+    if (card) {
+      if (ctx.takeaway) {
+        card.textContent = ctx.takeaway;
+        card.style.borderLeftColor = accent;
+        card.hidden = false;
+      } else {
+        card.hidden = true;
+      }
+    }
+
     document.getElementById("contextHeadline").textContent = ctx.headline;
 
     // Pick the chart that fits the story:
@@ -614,7 +647,7 @@
     if (mode === "remittances") {
       data = ctx.gdp_series.map(d => ({ year: d.year, total: d.pct }));
       unit = "pct";
-      refLine = { value: DATA.context.world.remittances_gdp_pct, label: "World average 5.1%" };
+      refLine = { value: DATA.context.world.remittances_gdp_pct, label: "LMIC average ≈5%" };
       title = "Remittances as % of GDP";
     } else {
       data = modeTotals(mode);
@@ -659,6 +692,250 @@
       if (src) body.append("div").attr("class", "stat-src").text(sourceCaption(src));
     });
     updateContextHighlight();
+    renderPartWhole();
+
+    // Panel-level source note (e.g. remittances: two different sources for map vs chart).
+    const pnEl = document.getElementById("ctxPanelNote");
+    if (pnEl) {
+      if (ctx.panel_note) { pnEl.textContent = ctx.panel_note; pnEl.hidden = false; }
+      else { pnEl.hidden = true; }
+    }
+  }
+
+  // ---- Part-to-whole comparison visuals ------------------------------------
+  // One SVG per mode (hidden for NBS flow modes). Renders values computed live
+  // from DATA.context.moldova so the visual never drifts from the stat cards.
+
+  function renderPartWhole() {
+    const el = document.getElementById("partWholeViz");
+    if (!el) return;
+    el.innerHTML = "";
+    const m = DATA.context.moldova;
+    const accent = ACCENTS[mode];
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (mode === "emigration") {
+      // A. Population split: Abroad vs In Moldova
+      const total = m.diaspora_estimate + m.population_resident;
+      pwSplitBar(el, {
+        part: m.diaspora_estimate, whole: total,
+        partLabel: "Abroad", wholeLabel: "In Moldova",
+        accent,
+        readout: "About 1 in 4 Moldovan-born people lives abroad.",
+        denomLabel: "Whole = all Moldovan-born (resident + diaspora) · UN DESA 2024 + NBS 2024 Census"
+      });
+      // B. Depopulation comparison
+      const pop14 = m.population_2014_census || (m.population_resident + 380000);
+      pwDepopBars(el, {
+        pop2014: pop14, pop2024: m.population_resident, accent,
+        readout: `Since 2014 Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents — about 1 in 7 people.`
+      });
+      el.hidden = false;
+
+    } else if (mode === "immigration") {
+      // C. Per-capita refugee hosting: 1 in N unit cluster
+      const refugees = 140140;   // UNHCR Jan-2026
+      const ratio = Math.round(m.population_resident / refugees);  // ~17
+      pwUnitCluster(el, {
+        ratio, accent, reduceMotion: rm,
+        readout: `Moldova hosts about 1 Ukrainian refugee for every ${ratio} residents — among Europe's highest per-capita rates.`,
+        denomLabel: "● = 1 person · UNHCR Jan-2026 + NBS 2024 Census (usually-resident)"
+      });
+      el.hidden = false;
+
+    } else if (mode === "immigration_census") {
+      // C2. Foreign-born share of resident population
+      const foreignBorn = 106700;  // NBS Census 2024
+      pwSplitBar(el, {
+        part: foreignBorn,
+        whole: m.population_resident,
+        partLabel: "Foreign-born",
+        wholeLabel: "Moldova-born",
+        accent,
+        readout: "About 1 in 23 residents was born outside Moldova (4.4%).",
+        denomLabel: "Whole = usually-resident population · NBS 2024 Census"
+      });
+      el.hidden = false;
+
+    } else if (mode === "remittances") {
+      // D1. GDP waffle: 10×10 = 100% of GDP
+      const gdpSeries = DATA.context.remittances.gdp_series;
+      const latestPct = gdpSeries[gdpSeries.length - 1].pct;
+      const worldPct = DATA.context.world.remittances_gdp_pct;
+      pwWaffle(el, {
+        pct: latestPct, refPct: worldPct, accent,
+        readout: `Roughly 1 in every 10 lei of GDP comes home as remittances — nearly double the world average.`,
+        denomLabel: `1 square = 1% of GDP · World Bank 2024 · World avg ≈${worldPct.toFixed(1)}% (dotted)`
+      });
+      // D2. Budget comparison bars (explicit NBM FX rate, both figures in MDL)
+      const fxRate = m.nbm_avg_rate_2024 || 18.0;     // NBM avg 2024 MDL/USD
+      const remitMdl = 1920 * fxRate / 1000;          // $1.92bn × rate → bn MDL
+      pwBudgetBars(el, {
+        remitMdl, budgetMdl: m.state_budget_revenue_mdl_bn,
+        fxLabel: `NBM avg rate 2024: ~${fxRate} MDL/USD`,
+        accent,
+        readout: `Money sent home (~${remitMdl.toFixed(1)} bn MDL) is worth more than half the state budget (${m.state_budget_revenue_mdl_bn} bn MDL).`
+      });
+      el.hidden = false;
+
+    } else {
+      el.hidden = true;
+    }
+  }
+
+  // A. Horizontal proportional split bar.
+  function pwSplitBar(el, o) {
+    const W = 420, barH = 28;
+    const pct = o.part / o.whole;
+    const partPx = Math.max(4, Math.round(pct * W));
+    const svg = d3.create("svg")
+      .attr("viewBox", `0 0 ${W} 64`).attr("class", "pw-svg")
+      .attr("role", "img").attr("aria-label", o.readout + " " + o.denomLabel);
+    // grey whole
+    svg.append("rect").attr("x", 0).attr("y", 0).attr("width", W).attr("height", barH).attr("rx", 5).attr("fill", "#d8d8d2");
+    // accent part
+    svg.append("rect").attr("x", 0).attr("y", 0).attr("width", partPx).attr("height", barH).attr("rx", 5).attr("fill", o.accent);
+    if (partPx > 90)
+      svg.append("text").attr("x", partPx / 2).attr("y", barH / 2 + 4.5).attr("text-anchor", "middle")
+        .attr("fill", "#fff").attr("font-size", 11)
+        .text(`${o.partLabel} · ${fmtShort(o.part)} · ${Math.round(pct * 100)}%`);
+    if (W - partPx > 90)
+      svg.append("text").attr("x", partPx + (W - partPx) / 2).attr("y", barH / 2 + 4.5).attr("text-anchor", "middle")
+        .attr("fill", "#555").attr("font-size", 11)
+        .text(`${o.wholeLabel} · ${fmtShort(o.whole - o.part)}`);
+    svg.append("text").attr("x", 0).attr("y", barH + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
+    svg.append("text").attr("x", 0).attr("y", barH + 32).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
+    el.appendChild(svg.node());
+  }
+
+  // B. Two-row bar: 2014 pop vs 2024 pop, loss shown as hatched.
+  function pwDepopBars(el, o) {
+    const W = 420, barH = 22, gap = 6, labelH = 14;
+    const row2Y = labelH + barH + gap + labelH;
+    const totalH = row2Y + barH + 42;
+    const max = o.pop2014;
+    const w2024 = Math.round(o.pop2024 / max * W);
+    const wLoss = W - w2024;
+    const svg = d3.create("svg")
+      .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-depop")
+      .attr("role", "img").attr("aria-label", o.readout);
+    // 2014 row
+    svg.append("text").attr("x", 0).attr("y", 11).attr("fill", "#9aa09c").attr("font-size", 10).text("2014 census");
+    svg.append("rect").attr("x", 0).attr("y", labelH).attr("width", W).attr("height", barH).attr("rx", 4).attr("fill", "#c8ccc6");
+    svg.append("text").attr("x", W - 4).attr("y", labelH + barH / 2 + 4).attr("text-anchor", "end").attr("fill", "#555").attr("font-size", 10).text(fmtShort(o.pop2014));
+    // 2024 row
+    svg.append("text").attr("x", 0).attr("y", labelH + barH + gap + 11).attr("fill", "#9aa09c").attr("font-size", 10).text("2024 census");
+    svg.append("rect").attr("x", 0).attr("y", row2Y).attr("width", w2024).attr("height", barH).attr("rx", 4).attr("fill", "#9aa09c");
+    // loss segment
+    svg.append("rect").attr("x", w2024).attr("y", row2Y).attr("width", wLoss).attr("height", barH)
+      .attr("rx", 4).attr("fill", o.accent).attr("opacity", 0.18)
+      .attr("stroke", o.accent).attr("stroke-width", 1.5).attr("stroke-dasharray", "4 3");
+    if (wLoss > 40)
+      svg.append("text").attr("x", w2024 + wLoss / 2).attr("y", row2Y + barH / 2 + 4).attr("text-anchor", "middle")
+        .attr("fill", o.accent).attr("font-size", 10)
+        .text(`−${fmtShort(o.pop2014 - o.pop2024)} (−${Math.round((1 - o.pop2024 / o.pop2014) * 100)}%)`);
+    svg.append("text").attr("x", w2024 - 4).attr("y", row2Y + barH / 2 + 4).attr("text-anchor", "end").attr("fill", "#fff").attr("font-size", 10).text(fmtShort(o.pop2024));
+    // readout
+    svg.append("text").attr("x", 0).attr("y", row2Y + barH + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
+    svg.append("text").attr("x", 0).attr("y", row2Y + barH + 32).attr("fill", "#9aa09c").attr("font-size", 10).text("vs 2014 census · NBS final results");
+    el.appendChild(svg.node());
+  }
+
+  // C. Unit cluster: ratio grey icons + 1 accent icon ("1 in N").
+  function pwUnitCluster(el, o) {
+    const n = o.ratio + 1;   // 18 total icons
+    const cols = Math.min(n, 9), rows = Math.ceil(n / cols);
+    const cell = 30, icoW = 14, icoH = 20;
+    const W = cols * cell, totalH = rows * cell + 50;
+    const svg = d3.create("svg")
+      .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-cluster")
+      .attr("role", "img").attr("aria-label", o.readout);
+    svg.append("defs").html(
+      `<symbol id="pw-p" viewBox="0 0 14 20">
+        <circle cx="7" cy="4" r="3.5"/>
+        <path d="M1,18 a6,6 0 0,1 12,0 Z"/>
+      </symbol>`
+    );
+    // Accent icon first, then grey
+    for (let i = 0; i < n; i++) {
+      const isAccent = i === 0;
+      const col = i % cols, row = Math.floor(i / cols);
+      svg.append("use").attr("href", "#pw-p")
+        .attr("x", col * cell + (cell - icoW) / 2)
+        .attr("y", row * cell + (cell - icoH) / 2)
+        .attr("width", icoW).attr("height", icoH)
+        .attr("fill", isAccent ? o.accent : "#c8ccc6");
+    }
+    svg.append("text").attr("x", 0).attr("y", rows * cell + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
+    svg.append("text").attr("x", 0).attr("y", rows * cell + 32).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
+    el.appendChild(svg.node());
+  }
+
+  // D1. 10×10 waffle: each cell = 1% of GDP; reference dotted at world avg.
+  function pwWaffle(el, o) {
+    const cols = 10, rows = 10, cell = 22, pad = 3;
+    const filled = Math.round(o.pct);
+    const refFilled = Math.round(o.refPct);
+    const W = cols * (cell + pad) - pad;
+    const H = rows * (cell + pad) - pad + 52;
+    const svg = d3.create("svg")
+      .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "pw-svg pw-waffle")
+      .attr("role", "img").attr("aria-label", o.readout);
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        // Fill bottom-to-top, left-to-right
+        const valueIdx = (rows - 1 - row) * cols + col;
+        const isFilled = valueIdx < filled;
+        const isRefEdge = valueIdx === refFilled - 1;
+        const x = col * (cell + pad), y = row * (cell + pad);
+        svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
+          .attr("rx", 3)
+          .attr("fill", isFilled ? o.accent : "#e0e0d8").attr("opacity", isFilled ? 0.88 : 0.55);
+        if (isRefEdge)
+          svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
+            .attr("rx", 3).attr("fill", "none")
+            .attr("stroke", o.accent).attr("stroke-width", 1.5).attr("stroke-dasharray", "3 2");
+      }
+    }
+    // World avg label near the reference cell
+    const refRow = rows - 1 - Math.floor((refFilled - 1) / cols);
+    const refCol = (refFilled - 1) % cols;
+    svg.append("text")
+      .attr("x", refCol * (cell + pad) + cell / 2).attr("y", refRow * (cell + pad) - 4)
+      .attr("text-anchor", "middle").attr("fill", o.accent).attr("font-size", 9).attr("opacity", 0.8)
+      .text(`≈${o.refPct.toFixed(1)}% world avg`);
+    const textY = rows * (cell + pad) + 16;
+    svg.append("text").attr("x", 0).attr("y", textY).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
+    svg.append("text").attr("x", 0).attr("y", textY + 15).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
+    el.appendChild(svg.node());
+  }
+
+  // D2. Two comparison bars: remittances vs state budget (same MDL scale).
+  function pwBudgetBars(el, o) {
+    const W = 420, barH = 24, gap = 10, labelH = 13;
+    const totalH = labelH * 2 + barH * 2 + gap + 52;
+    const remitPx = Math.round(Math.min(o.remitMdl / o.budgetMdl, 1) * W);
+    const svg = d3.create("svg")
+      .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-budget")
+      .attr("role", "img").attr("aria-label", o.readout);
+    // Row 1: remittances
+    svg.append("text").attr("x", 0).attr("y", 11).attr("fill", "#9aa09c").attr("font-size", 10).text("Annual remittances");
+    svg.append("rect").attr("x", 0).attr("y", labelH).attr("width", remitPx).attr("height", barH).attr("rx", 4).attr("fill", o.accent).attr("opacity", 0.85);
+    svg.append("text").attr("x", remitPx + 5).attr("y", labelH + barH / 2 + 4.5).attr("fill", o.accent).attr("font-size", 10)
+      .text(`~${o.remitMdl.toFixed(1)} bn MDL`);
+    // Row 2: state budget (full width = scale)
+    const row2 = labelH + barH + gap;
+    svg.append("text").attr("x", 0).attr("y", row2 + 11).attr("fill", "#9aa09c").attr("font-size", 10).text("State budget revenue 2024");
+    svg.append("rect").attr("x", 0).attr("y", row2 + labelH).attr("width", W).attr("height", barH).attr("rx", 4).attr("fill", "#d8d8d2");
+    // tint the remittance share within the budget bar
+    svg.append("rect").attr("x", 0).attr("y", row2 + labelH).attr("width", remitPx).attr("height", barH).attr("rx", 4).attr("fill", o.accent).attr("opacity", 0.22);
+    svg.append("text").attr("x", W / 2).attr("y", row2 + labelH + barH / 2 + 4.5).attr("text-anchor", "middle")
+      .attr("fill", "#555").attr("font-size", 10).text(`${o.budgetMdl} bn MDL`);
+    // FX note + readout
+    const noteY = row2 + labelH + barH + 15;
+    svg.append("text").attr("x", 0).attr("y", noteY).attr("fill", "#b0b4b0").attr("font-size", 9).text(`FX: ${o.fxLabel}`);
+    svg.append("text").attr("x", 0).attr("y", noteY + 16).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
+    el.appendChild(svg.node());
   }
 
   function drawLineChart(svg, data, opts) {
