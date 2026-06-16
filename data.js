@@ -491,7 +491,7 @@ window.MIGRATION_DATA = {
       direction: "out",
       source_id: "undesa_2024",
       vintage: "UN DESA 2024",
-      known_totals: { 2024: { value: 864257, label: "UN DESA 2024 total" } },
+      known_totals: { 2024: { value: 864257, label: "UN DESA 2024 emigrants, by origin" } },
       years: {
         // OFFICIAL — UN DESA 2024, Moldovan-born by country of destination.
         2010: [

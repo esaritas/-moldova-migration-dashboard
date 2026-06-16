@@ -8,7 +8,7 @@
 
   const DATA  = window.MIGRATION_DATA;
   const WORLD = window.WORLD_GEO;
-  const MOLDOVA = window.MOLDOVA_ADM1;   // geoBoundaries MDA ADM1 (districts)
+  const MOLDOVA = rewindForD3(window.MOLDOVA_ADM1);   // geoBoundaries MDA ADM1 (districts)
 
   // Sequential blues for the TP choropleth (humanitarian-neutral; avoid alarm-red).
   const TP_SCALE = ["#E6EEF5", "#B9D2E6", "#7FB0D4", "#3E86BC", "#1F5A8C"];
@@ -19,6 +19,24 @@
       .normalize("NFD").replace(/[̀-ͯ]/g, "")
       .replace(/^(municipiul|raionul|uta|ato)\s+/i, "")
       .toLowerCase().trim();
+  }
+
+  // The vendored geoBoundaries ADM1 rings are wound clockwise — the opposite of
+  // what d3's spherical geometry expects. Left as-is, d3.geoPath fills the
+  // *complement* of each district, so the choropleth paints as one solid block
+  // instead of a map. Reverse the rings of any feature whose spherical area
+  // exceeds a hemisphere (the tell-tale of inverted winding) so each district
+  // renders as itself. Idempotent and a no-op on correctly-wound data.
+  function rewindForD3(geo) {
+    if (!geo || !geo.features || typeof d3 === "undefined" || !d3.geoArea) return geo;
+    geo.features.forEach(f => {
+      if (d3.geoArea(f) <= 2 * Math.PI) return;
+      const g = f.geometry || {};
+      const polys = g.type === "Polygon" ? [g.coordinates]
+                  : g.type === "MultiPolygon" ? g.coordinates : [];
+      polys.forEach(poly => poly.forEach(ring => ring.reverse()));
+    });
+    return geo;
   }
 
   let mode = "emigration";
