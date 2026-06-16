@@ -177,7 +177,7 @@ h1 {
   box-shadow: var(--shadow);
 }
 
-.map-card { position: relative; overflow: hidden; padding: 6px; }
+.map-card { position: relative; overflow: hidden; padding: 6px; align-self: start; }
 #map { width: 100%; display: block; cursor: grab; touch-action: none; }
 #map:active { cursor: grabbing; }
 
@@ -375,6 +375,7 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
   border-bottom: 1px solid var(--line);
   margin-bottom: 18px;
 }
+.pw-item { display: flex; flex-direction: column; }
 .pw-svg {
   width: 100%;
   max-width: 480px;
@@ -383,6 +384,10 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
   overflow: visible;
   font-family: var(--font-body);
 }
+/* Readout + denominator note live in HTML (not SVG) so long lines wrap. */
+.pw-cap { max-width: 520px; margin-top: 8px; }
+.pw-readout { font-size: 12px; font-weight: 500; color: var(--ink); line-height: 1.4; }
+.pw-denom { font-size: 10px; color: #9aa09c; margin-top: 3px; line-height: 1.4; }
 /* animate fill on mode change, but respect reduced-motion */
 @media (prefers-reduced-motion: no-preference) {
   .pw-svg rect[fill]:not([fill="none"]) {

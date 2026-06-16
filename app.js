@@ -55,7 +55,7 @@
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
-    emigration: "Moldovans abroad — main destinations (stock)",
+    emigration: "Moldovans abroad, by main destination (stock)",
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     emigration_flow: "Registered emigrants per year (NBS)",
@@ -221,11 +221,11 @@
     if (s.accessed) bits.push("as of " + s.accessed);
     return bits.join(" · ");
   }
-  // Fuller one-line citation for the footer: "Publisher, label (code) — as of date".
+  // Fuller one-line citation for the footer: "Publisher, label (code), as of date".
   function citation(s) {
     if (!s) return "";
     const code = s.indicator_code ? ` (${s.indicator_code})` : "";
-    return `${s.publisher}, ${s.label}${code} — as of ${s.accessed}`;
+    return `${s.publisher}, ${s.label}${code}, as of ${s.accessed}`;
   }
   function captionsFor(obj) {
     return sourceIdsFor(obj).map(id => sourceCaption(sourceById(id))).filter(Boolean).join("  ·  ");
@@ -727,7 +727,7 @@
       b.className = "stop" + (has ? "" : " empty") + (note ? " annotated" : "");
       b.disabled = !has;                       // can't select a year with no data
       b.setAttribute("aria-current", String(y === year));
-      if (note) b.title = `${y} — ${note.text}`;
+      if (note) b.title = `${y}: ${note.text}`;
       b.innerHTML = `<span class="pin"></span><span class="yr">${y}</span>`;
       if (has) b.addEventListener("click", () => { stopPlay(); setYear(y); });
       stopsEl.appendChild(b);
@@ -740,7 +740,7 @@
     const el = document.getElementById("timelineNote");
     if (!el) return;
     const note = annotationFor(year);
-    if (note) { el.textContent = `${year} — ${note.text}`; el.hidden = false; }
+    if (note) { el.textContent = `${year}: ${note.text}`; el.hidden = false; }
     else { el.textContent = ""; el.hidden = true; }
   }
   function updateTrackFill() {
@@ -946,7 +946,7 @@
       const pop14 = m.population_2014_census || (m.population_resident + 380000);
       pwDepopBars(el, {
         pop2014: pop14, pop2024: m.population_resident, accent,
-        readout: `Since 2014 Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents — about 1 in 7 people.`
+        readout: `Since 2014 Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents, about 1 in 7 people.`
       });
       el.hidden = false;
 
@@ -956,7 +956,7 @@
       const ratio = Math.round(m.population_resident / refugees);  // ~17
       pwUnitCluster(el, {
         ratio, accent, reduceMotion: rm,
-        readout: `Moldova hosts about 1 Ukrainian refugee for every ${ratio} residents — among Europe's highest per-capita rates.`,
+        readout: `Moldova hosts about 1 Ukrainian refugee for every ${ratio} residents, among the highest rates per person anywhere in Europe.`,
         denomLabel: "● = 1 person · UNHCR May-2026 + NBS 2024 Census (usually-resident)"
       });
       el.hidden = false;
@@ -982,7 +982,7 @@
       const worldPct = DATA.context.world.remittances_gdp_pct;
       pwWaffle(el, {
         pct: latestPct, refPct: worldPct, accent,
-        readout: `Roughly 1 in every 10 lei of GDP comes home as remittances — nearly double the world average.`,
+        readout: `Roughly 1 in every 10 lei of GDP comes home as remittances, nearly double the world average.`,
         denomLabel: `1 square = 1% of GDP · World Bank 2024 · World avg ≈${worldPct.toFixed(1)}% (dotted)`
       });
       // D2. Budget comparison bars (explicit NBM FX rate, both figures in MDL)
@@ -1001,13 +1001,26 @@
     }
   }
 
+  // Shared HTML caption under each part-to-whole visual: the plain-language
+  // readout plus the denominator note. Kept in HTML rather than SVG text so a
+  // long line wraps instead of overflowing the viz's narrow viewBox (which used
+  // to clip on the choropleth mode and on narrow screens).
+  function pwCaption(box, readout, denom) {
+    let html = `<div class="pw-readout">${esc(readout)}</div>`;
+    if (denom) html += `<div class="pw-denom">${esc(denom)}</div>`;
+    const cap = document.createElement("div");
+    cap.className = "pw-cap";
+    cap.innerHTML = html;
+    box.appendChild(cap);
+  }
+
   // A. Horizontal proportional split bar.
   function pwSplitBar(el, o) {
     const W = 420, barH = 28;
     const pct = o.part / o.whole;
     const partPx = Math.max(4, Math.round(pct * W));
     const svg = d3.create("svg")
-      .attr("viewBox", `0 0 ${W} 64`).attr("class", "pw-svg")
+      .attr("viewBox", `0 0 ${W} 34`).attr("class", "pw-svg")
       .attr("role", "img").attr("aria-label", o.readout + " " + o.denomLabel);
     // grey whole
     svg.append("rect").attr("x", 0).attr("y", 0).attr("width", W).attr("height", barH).attr("rx", 5).attr("fill", "#d8d8d2");
@@ -1021,16 +1034,17 @@
       svg.append("text").attr("x", partPx + (W - partPx) / 2).attr("y", barH / 2 + 4.5).attr("text-anchor", "middle")
         .attr("fill", "#555").attr("font-size", 11)
         .text(`${o.wholeLabel} · ${fmtShort(o.whole - o.part)}`);
-    svg.append("text").attr("x", 0).attr("y", barH + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", barH + 32).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // B. Two-row bar: 2014 pop vs 2024 pop, loss shown as hatched.
   function pwDepopBars(el, o) {
     const W = 420, barH = 22, gap = 6, labelH = 14;
     const row2Y = labelH + barH + gap + labelH;
-    const totalH = row2Y + barH + 42;
+    const totalH = row2Y + barH + 6;
     const max = o.pop2014;
     const w2024 = Math.round(o.pop2024 / max * W);
     const wLoss = W - w2024;
@@ -1053,10 +1067,10 @@
         .attr("fill", o.accent).attr("font-size", 10)
         .text(`−${fmtShort(o.pop2014 - o.pop2024)} (−${Math.round((1 - o.pop2024 / o.pop2014) * 100)}%)`);
     svg.append("text").attr("x", w2024 - 4).attr("y", row2Y + barH / 2 + 4).attr("text-anchor", "end").attr("fill", "#fff").attr("font-size", 10).text(fmtShort(o.pop2024));
-    // readout
-    svg.append("text").attr("x", 0).attr("y", row2Y + barH + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", row2Y + barH + 32).attr("fill", "#9aa09c").attr("font-size", 10).text("vs 2014 census · NBS final results");
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, "vs 2014 census · NBS final results");
+    el.appendChild(box);
   }
 
   // C. Unit cluster: ratio grey icons + 1 accent icon ("1 in N").
@@ -1064,7 +1078,7 @@
     const n = o.ratio + 1;   // 18 total icons
     const cols = Math.min(n, 9), rows = Math.ceil(n / cols);
     const cell = 30, icoW = 14, icoH = 20;
-    const W = cols * cell, totalH = rows * cell + 50;
+    const W = cols * cell, totalH = rows * cell + 8;
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-cluster")
       .attr("role", "img").attr("aria-label", o.readout);
@@ -1084,9 +1098,10 @@
         .attr("width", icoW).attr("height", icoH)
         .attr("fill", isAccent ? o.accent : "#c8ccc6");
     }
-    svg.append("text").attr("x", 0).attr("y", rows * cell + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", rows * cell + 32).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // D1. 10×10 waffle: each cell = 1% of GDP; reference dotted at world avg.
@@ -1095,7 +1110,7 @@
     const filled = Math.round(o.pct);
     const refFilled = Math.round(o.refPct);
     const W = cols * (cell + pad) - pad;
-    const H = rows * (cell + pad) - pad + 52;
+    const H = rows * (cell + pad) - pad + 8;
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "pw-svg pw-waffle")
       .attr("role", "img").attr("aria-label", o.readout);
@@ -1122,16 +1137,16 @@
       .attr("x", refCol * (cell + pad) + cell / 2).attr("y", refRow * (cell + pad) - 4)
       .attr("text-anchor", "middle").attr("fill", o.accent).attr("font-size", 9).attr("opacity", 0.8)
       .text(`≈${o.refPct.toFixed(1)}% world avg`);
-    const textY = rows * (cell + pad) + 16;
-    svg.append("text").attr("x", 0).attr("y", textY).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", textY + 15).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // D2. Two comparison bars: remittances vs state budget (same MDL scale).
   function pwBudgetBars(el, o) {
     const W = 420, barH = 24, gap = 10, labelH = 13;
-    const totalH = labelH * 2 + barH * 2 + gap + 52;
+    const totalH = labelH * 2 + barH * 2 + gap + 24;
     const remitPx = Math.round(Math.min(o.remitMdl / o.budgetMdl, 1) * W);
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-budget")
@@ -1152,8 +1167,10 @@
     // FX note + readout
     const noteY = row2 + labelH + barH + 15;
     svg.append("text").attr("x", 0).attr("y", noteY).attr("fill", "#b0b4b0").attr("font-size", 9).text(`FX: ${o.fxLabel}`);
-    svg.append("text").attr("x", 0).attr("y", noteY + 16).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout);
+    el.appendChild(box);
   }
 
   function drawLineChart(svg, data, opts) {
@@ -1218,7 +1235,7 @@
         : esc(s.label);
       const meta = [s.indicator_code, s.accessed ? "as of " + s.accessed : ""].filter(Boolean).map(esc).join(" · ");
       const desc = [s.definition, s.scope, s.note].filter(Boolean).map(esc).join(" ");
-      return `<div class="method-src"><div><span class="pub">${esc(s.publisher)}</span> — ${link}</div>`
+      return `<div class="method-src"><div><span class="pub">${esc(s.publisher)}</span> · ${link}</div>`
         + (meta ? `<div class="meta">${meta}</div>` : "")
         + (desc ? `<div class="desc">${desc}</div>` : "") + `</div>`;
     }).join("");
