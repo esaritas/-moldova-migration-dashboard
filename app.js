@@ -8,6 +8,18 @@
 
   const DATA  = window.MIGRATION_DATA;
   const WORLD = window.WORLD_GEO;
+  const MOLDOVA = window.MOLDOVA_ADM1;   // geoBoundaries MDA ADM1 (districts)
+
+  // Sequential blues for the TP choropleth (humanitarian-neutral; avoid alarm-red).
+  const TP_SCALE = ["#E6EEF5", "#B9D2E6", "#7FB0D4", "#3E86BC", "#1F5A8C"];
+  const NO_DATA_FILL = "#EFEDE7";
+  // Normalize a district name for joining: strip diacritics + admin prefixes, lowercase.
+  function normName(s) {
+    return (s || "")
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/^(municipiul|raionul|uta|ato)\s+/i, "")
+      .toLowerCase().trim();
+  }
 
   let mode = "emigration";
   let year = null;
@@ -74,13 +86,21 @@
   const projection = d3.geoNaturalEarth1().fitExtent([[6, 12], [W - 6, H - 12]], WORLD);
   const path = d3.geoPath(projection);
 
+  // Moldova districts choropleth uses its own projection, framed to the geometry
+  // (no manual scale tuning). Leaves room on the left for the colour legend.
+  const mdaProjection = MOLDOVA
+    ? d3.geoMercator().fitExtent([[150, 16], [W - 16, H - 16]], MOLDOVA) : null;
+  const mdaPath = mdaProjection ? d3.geoPath(mdaProjection) : null;
+
   // Single zoom layer holds everything that should pan/zoom together.
   const defs       = svg.append("defs");
   const gZoom      = svg.append("g").attr("class", "zoomLayer");
   const gCountries = gZoom.append("g").attr("class", "countries");
   const gArcs      = gZoom.append("g").attr("class", "arcs");
   const gNodes     = gZoom.append("g").attr("class", "nodes");
-  const gLegend    = svg.append("g").attr("class", "size-legend");  // fixed, not zoomed
+  const gDistricts = gZoom.append("g").attr("class", "districts");   // Moldova choropleth
+  const gLegend    = svg.append("g").attr("class", "size-legend");   // fixed, not zoomed
+  const gChoroLegend = svg.append("g").attr("class", "choro-legend"); // fixed, not zoomed
 
   // Tooltip lives over the map card (created once).
   const tip = document.createElement("div");
@@ -118,6 +138,15 @@
     svg.transition().duration(600).call(zoom.transform, t);
   }
   function fullView() { svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity); }
+
+  // Frame the map for the active mode: the world flow-modes open on Europe; the
+  // districts choropleth (immigration) is framed to its own fitExtent (identity).
+  function applyMapFraming() {
+    if (mode === "immigration" && MOLDOVA)
+      svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+    else
+      europeView();
+  }
 
   document.getElementById("zoomIn").addEventListener("click",
     () => svg.transition().duration(250).call(zoom.scaleBy, 1.5));
@@ -260,8 +289,15 @@
 
   // ---- Renderers -----------------------------------------------------------
   function renderMap() {
+    // "Refugees from Ukraine" swaps the world flow-map for a Moldova districts
+    // choropleth of Temporary Protection holders (see renderChoropleth).
+    if (mode === "immigration" && MOLDOVA) { renderChoropleth(); return; }
+    showWorldLayers();
+
     const m = DATA.modes[mode];
-    const rows = currentRows();
+    // Rows without a map coordinate (e.g. the emigration "Other destinations"
+    // residual) belong in the table only — never drawn as a bubble.
+    const rows = currentRows().filter(d => DATA.coords[d.country]);
     currentWScale = widthScaleFor(mode);
     currentBubble = bubbleScaleFor(mode);
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -344,6 +380,121 @@
       (topRows ? `Top countries: ${topRows}${rows.length > 3 ? ", and more" : ""}.` : "No data."));
   }
 
+  // ---- Moldova districts choropleth (Temporary Protection holders) ----------
+  // Shown for the "Refugees from Ukraine" mode in place of the world flow-map.
+  // Subject is TP holders only (92,405, UNHCR 27 Apr 2026) — never the UN DESA migrant stock.
+  function showWorldLayers() {
+    gCountries.style("display", null); gArcs.style("display", null);
+    gNodes.style("display", null); gLegend.style("display", null);
+    gDistricts.style("display", "none"); gChoroLegend.style("display", "none");
+  }
+  function showChoroLayers() {
+    gCountries.style("display", "none"); gArcs.style("display", "none");
+    gNodes.style("display", "none"); gLegend.style("display", "none");
+    gDistricts.style("display", null); gChoroLegend.style("display", null);
+  }
+
+  // Build the district lookup + colour scale once (data is static).
+  let _choro = null;
+  function choroModel() {
+    if (_choro) return _choro;
+    const tp = DATA.tp_choropleth;
+    const byName = new Map();
+    tp.districts.forEach(d => byName.set(d.match, d));
+    const vals = tp.districts.map(d => d.tpHolders).filter(v => v != null);
+    const maxV = d3.max(vals) || 1, minV = d3.min(vals) || 0;
+    // Quantile (even-count bins): the split is heavily skewed by Chișinău, so a
+    // linear scale would flatten every other district into one class (spec §7).
+    const color = d3.scaleQuantile().domain(vals).range(TP_SCALE);
+    const total = tp.meta.nationalTotal || d3.sum(vals);
+    _choro = { tp, byName, minV, maxV, color, total };
+    return _choro;
+  }
+
+  function renderChoropleth() {
+    showChoroLayers();
+    const { byName, minV, maxV, color, total } = choroModel();
+    const feats = (MOLDOVA && MOLDOVA.features) || [];
+
+    gDistricts.selectAll("path.district")
+      .data(feats, f => f.properties.shapeName)
+      .join(
+        enter => enter.append("path").attr("class", "district")
+          .attr("vector-effect", "non-scaling-stroke"),
+        update => update,
+        exit => exit.remove()
+      )
+      .attr("d", mdaPath)
+      .attr("fill", f => {
+        const rec = byName.get(normName(f.properties.shapeName));
+        return rec && rec.tpHolders != null ? color(rec.tpHolders) : NO_DATA_FILL;
+      })
+      .each(function (f) {
+        const name = f.properties.shapeName;
+        const key = normName(name);
+        const rec = byName.get(key);
+        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, total); };
+        this.onmousemove = moveTip;
+        this.onmouseleave = () => { clearDistrictHighlight(); hideTip(); };
+      });
+
+    renderChoroLegend(color, minV, maxV);
+
+    const top = DATA.tp_choropleth.districts.slice()
+      .sort((a, b) => b.tpHolders - a.tpHolders).slice(0, 3)
+      .map(d => `${d.name}: ${fmt(d.tpHolders)}`).join(", ");
+    svg.attr("aria-label",
+      "Choropleth of Ukrainian Temporary Protection holders by Moldovan district " +
+      `(${fmt(total)} holders, UNHCR 27 Apr 2026). Highest: ${top}. ` +
+      "Full figures are listed in the table beside the map.");
+  }
+
+  function highlightDistrict(key) {
+    gDistricts.selectAll("path.district")
+      .classed("dim", f => normName(f.properties.shapeName) !== key);
+    tableBody.selectAll("tr").classed("hot", function () { return this.dataset.district === key; });
+  }
+  function clearDistrictHighlight() {
+    gDistricts.selectAll("path.district").classed("dim", false);
+    tableBody.selectAll("tr").classed("hot", false);
+  }
+  function showDistrictTip(rec, name, total) {
+    const disp = rec ? rec.name : name;
+    let body;
+    if (!rec) body = "no join match — check name";
+    else if (rec.tpHolders == null) body = "no data";
+    else {
+      const pct = total ? Math.round(rec.tpHolders / total * 100) : null;
+      body = `${fmt(rec.tpHolders)} TP holders` + (pct != null ? ` · ${pct}% of national` : "");
+    }
+    tip.innerHTML = `<strong>${esc(disp)}</strong>${esc(body)}`;
+    tip.hidden = false;
+  }
+
+  // Colour legend: 5 even-count (quantile) classes low→high + a grey "no data" swatch.
+  function renderChoroLegend(color, minV, maxV) {
+    const g = gChoroLegend;
+    g.selectAll("*").remove();
+    g.attr("transform", "translate(18, 30)");
+    const sw = 17, gap = 4;
+    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text("TP holders");
+    // scaleQuantile exposes quantiles(); scaleQuantize would expose thresholds().
+    const brk = color.quantiles ? color.quantiles() : (color.thresholds ? color.thresholds() : []);
+    TP_SCALE.forEach((c, i) => {
+      const lo = i === 0 ? minV : brk[i - 1];
+      const hi = i === TP_SCALE.length - 1 ? maxV : brk[i];
+      const y = i * (sw + gap);
+      g.append("rect").attr("x", 0).attr("y", y).attr("width", sw).attr("height", sw)
+        .attr("rx", 3).attr("fill", c);
+      g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", y + sw - 4)
+        .text(`${fmtShort(Math.round(lo))}–${fmtShort(Math.round(hi))}`);
+    });
+    const yNd = TP_SCALE.length * (sw + gap) + 6;
+    g.append("rect").attr("x", 0).attr("y", yNd).attr("width", sw).attr("height", sw)
+      .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#d8d8d2").attr("stroke-width", 1);
+    g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", yNd + sw - 4).text("no data");
+  }
+
   // Graduated-circle size legend (fixed corner, like the Migration Data Portal).
   function renderLegend(m) {
     const maxV = currentBubble.domain()[1] || 1;
@@ -388,7 +539,48 @@
     });
   }
 
+  // Fallback data table for the choropleth: districts ranked by TP holders.
+  // Doubles as the accessible alternative to the map (acceptance §8).
+  function renderDistrictTable() {
+    const { tp, total } = choroModel();
+    const asOf = fmtDate(tp.meta.asOf) || tp.meta.asOf || "";
+    valueHead.textContent = "TP holders";
+    mapCaption.textContent = "TP holders by district · UNHCR " + asOf + " · scroll to zoom, drag to pan";
+    const srcObj = { source_ids: ["unhcr", "geoboundaries"] };
+    const mapSrc = document.getElementById("mapSource");
+    if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
+    sourceLine.textContent = citationsFor(srcObj);
+
+    const rows = tp.districts.slice().filter(d => d.tpHolders != null)
+      .sort((a, b) => b.tpHolders - a.tpHolders);
+    const max = d3.max(rows, d => d.tpHolders) || 1;
+    totalValue.textContent = fmt(total);
+    totalLabel.textContent = `${fmt(total)} TP holders · UNHCR ${asOf} (official)`;
+
+    tableBody.selectAll("tr").data(rows, d => d.match).join(
+      enter => {
+        const tr = enter.append("tr").attr("data-district", d => d.match)
+          .on("mouseenter", (e, d) => highlightDistrict(d.match))
+          .on("mouseleave", clearDistrictHighlight);
+        tr.append("td").attr("class", "c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
+        tr.append("td").attr("class", "c-bar-cell").append("div").attr("class", "c-bar-track")
+          .append("div").attr("class", "c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
+        tr.append("td").attr("class", "c-value").text(d => fmt(d.tpHolders));
+        return tr;
+      },
+      update => {
+        update.attr("data-district", d => d.match);
+        update.select(".c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
+        update.select(".c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
+        update.select(".c-value").text(d => fmt(d.tpHolders));
+        return update;
+      },
+      exit => exit.remove()
+    );
+  }
+
   function renderTable() {
+    if (mode === "immigration" && MOLDOVA) { renderDistrictTable(); return; }
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
@@ -447,6 +639,12 @@
     el.addEventListener("mouseleave", () => { clearHighlight(); hideTip(); });
   }
   function highlight(country) {
+    // A row with no map coordinate (e.g. "Other destinations") only lights its
+    // table row — don't dim every flow to highlight a bubble that isn't drawn.
+    if (!DATA.coords[country]) {
+      tableBody.selectAll("tr").classed("hot", function () { return this.dataset.country === country; });
+      return;
+    }
     gArcs.selectAll("g.flow").classed("hot", d => d.country === country).classed("dim", d => d.country !== country);
     gNodes.selectAll("circle.node").classed("dim", d => d.country !== country);
     gNodes.selectAll("text.bubble-label").classed("dim", d => d.country !== country);
@@ -601,19 +799,21 @@
       // so switching a filter never blanks the table.
       year = nearestDataYear(year);
       setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
-      updateHash();
+      applyMapFraming(); updateHash();
     });
   });
 
   // Jump straight to a (mode, year) — used by the trend charts.
   function gotoModeYear(name, y) {
     stopPlay();
-    if (mode !== name) {
+    const changed = mode !== name;
+    if (changed) {
       mode = name;
       document.querySelectorAll(".mode-btn").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === name)));
       setAccent(); buildTimeline();
     }
     setYear(y);
+    if (changed) applyMapFraming();
   }
 
   // ---- Economics panel: one big mode-relevant chart + indicator cards ------
@@ -734,12 +934,12 @@
 
     } else if (mode === "immigration") {
       // C. Per-capita refugee hosting: 1 in N unit cluster
-      const refugees = 140140;   // UNHCR Jan-2026
+      const refugees = 141058;   // UNHCR 31 May 2026 (Ukrainians remaining)
       const ratio = Math.round(m.population_resident / refugees);  // ~17
       pwUnitCluster(el, {
         ratio, accent, reduceMotion: rm,
         readout: `Moldova hosts about 1 Ukrainian refugee for every ${ratio} residents — among Europe's highest per-capita rates.`,
-        denomLabel: "● = 1 person · UNHCR Jan-2026 + NBS 2024 Census (usually-resident)"
+        denomLabel: "● = 1 person · UNHCR May-2026 + NBS 2024 Census (usually-resident)"
       });
       el.hidden = false;
 
@@ -1050,14 +1250,14 @@
   applyHashToState();   // open the mode+year from the URL hash, if present
   setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
   updateHash();         // normalise the hash to the resolved view
-  europeView();   // open zoomed into Europe
+  applyMapFraming();    // Europe view for flow-modes, fitted choropleth for refugees
   document.addEventListener("mouseleave", clearHighlight);
 
   // Touch: a tap on a bubble/arc shows its tip (via synthesized mouse events);
   // a tap anywhere else dismisses it and clears any highlight.
   document.addEventListener("touchstart", (e) => {
-    if (!e.target.closest || !e.target.closest("g.flow, circle.node, text.bubble-label")) {
-      hideTip(); clearHighlight();
+    if (!e.target.closest || !e.target.closest("g.flow, circle.node, text.bubble-label, path.district")) {
+      hideTip(); clearHighlight(); clearDistrictHighlight();
     }
   }, { passive: true });
 
@@ -1065,5 +1265,6 @@
   window.addEventListener("hashchange", () => {
     applyHashToState();
     setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
+    applyMapFraming();
   });
 })();

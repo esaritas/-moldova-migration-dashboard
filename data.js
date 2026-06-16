@@ -10,7 +10,8 @@
                    breakdown lives only in NBM's interactive database (DBP4).
                    => Latest fully-published by-country year: 2020.
    - immigration : UN DESA migrant stock (2020) + UNHCR residing-refugee counts
-                   (2023 ≈115k, 2024 ≈136k, Jan-2026 ≈140k). FRESHEST mode.
+                   (2023 ≈115k, 2024 ≈136k, May-2026 ≈141k). Map = per-district TP
+                   holders (UNHCR Power BI, 27 Apr 2026). FRESHEST mode.
    - emigration  : OFFICIAL UN DESA Int'l Migrant Stock 2024 (bilateral, by
                    country of birth). Germany/US/UK report by citizenship, not
                    birthplace, so UN DESA has no Moldova-born cell for them and
@@ -54,6 +55,71 @@ window.MIGRATION_DATA = {
   scope_note: "Scope: resident population excludes the Transnistria region " +
               "(NBS 2024 Census); international sources may differ in scope. " +
               "Population-based ratios use resident population.",
+
+  // ---- Temporary Protection choropleth (Ukrainian refugees, by district) ----
+  // Subject = TP HOLDERS only (92,405 enrolled, UNHCR 27 Apr 2026). This is a
+  // DIFFERENT, much smaller series than the UN DESA migrant stock — never drive
+  // this map off the 752k / 864k figures (those belong to the diaspora tab).
+  //
+  // OFFICIAL figures: per-district TP beneficiaries pulled from UNHCR Moldova's
+  // public Power BI report ("disaggregated_data" / Sum(Value) by Raion, current
+  // snapshot 27 Apr 2026). National total (= weekly_snapshot "individuals
+  // enrolled for TP") reconciles to the district sum: 92,405.
+  // Report: https://app.powerbi.com/view?r=eyJrIjoiN2Y1MmRmOWItMjE5MS00YjNhLWEzYTYtM2E4NzRiZmVjNGMyIiwidCI6ImU1YzM3OTgxLTY2NjQtNDEzNC04YTBjLTY1NDNkMmFmODBiZSIsImMiOjh9
+  //
+  // `match` = normalized geoBoundaries ADM1 shapeName (lowercase, diacritics
+  // stripped) so every one of the 37 map features joins to a record. geoBoundaries
+  // splits the Transnistria region into "Transnistria" (UAT din Stînga Nistrului)
+  // + "Bender" (Tighina) — both carry their own TP figure from the report.
+  tp_choropleth: {
+    meta: {
+      subject: "Temporary Protection holders (Ukrainian refugees)",
+      nationalTotal: 92405,
+      asOf: "2026-04-27",
+      source_ids: ["unhcr", "geoboundaries"],
+      geometry: "geoBoundaries MDA ADM1 (CC-BY 4.0)",
+      dataStatus: "OFFICIAL — UNHCR Power BI, 27 Apr 2026"
+    },
+    districts: [
+      { match: "chisinau",      name: "Chișinău",          type: "municipality",  tpHolders: 56428 },
+      { match: "balti",         name: "Bălți",             type: "municipality",  tpHolders: 3659 },
+      { match: "gagauzia",      name: "Găgăuzia",          type: "autonomous",    tpHolders: 5122 },
+      { match: "transnistria",  name: "Transnistria",      type: "transnistria",  tpHolders: 6472 },
+      { match: "bender",        name: "Bender (Tighina)",  type: "transnistria",  tpHolders: 1349 },
+      { match: "anenii noi",    name: "Anenii Noi",        type: "raion",         tpHolders: 801 },
+      { match: "basarabeasca",  name: "Basarabeasca",      type: "raion",         tpHolders: 585 },
+      { match: "briceni",       name: "Briceni",           type: "raion",         tpHolders: 369 },
+      { match: "cahul",         name: "Cahul",             type: "raion",         tpHolders: 2295 },
+      { match: "cantemir",      name: "Cantemir",          type: "raion",         tpHolders: 205 },
+      { match: "calarasi",      name: "Călărași",          type: "raion",         tpHolders: 333 },
+      { match: "causeni",       name: "Căușeni",           type: "raion",         tpHolders: 1088 },
+      { match: "cimislia",      name: "Cimișlia",          type: "raion",         tpHolders: 296 },
+      { match: "criuleni",      name: "Criuleni",          type: "raion",         tpHolders: 622 },
+      { match: "donduseni",     name: "Dondușeni",         type: "raion",         tpHolders: 1351 },
+      { match: "drochia",       name: "Drochia",           type: "raion",         tpHolders: 390 },
+      { match: "dubasari",      name: "Dubăsari",          type: "raion",         tpHolders: 396 },
+      { match: "edinet",        name: "Edineț",            type: "raion",         tpHolders: 420 },
+      { match: "falesti",       name: "Fălești",           type: "raion",         tpHolders: 256 },
+      { match: "floresti",      name: "Florești",          type: "raion",         tpHolders: 216 },
+      { match: "glodeni",       name: "Glodeni",           type: "raion",         tpHolders: 386 },
+      { match: "hincesti",      name: "Hîncești",          type: "raion",         tpHolders: 507 },
+      { match: "ialoveni",      name: "Ialoveni",          type: "raion",         tpHolders: 432 },
+      { match: "leova",         name: "Leova",             type: "raion",         tpHolders: 98 },
+      { match: "nisporeni",     name: "Nisporeni",         type: "raion",         tpHolders: 201 },
+      { match: "ocnita",        name: "Ocnița",            type: "raion",         tpHolders: 3072 },
+      { match: "orhei",         name: "Orhei",             type: "raion",         tpHolders: 691 },
+      { match: "rezina",        name: "Rezina",            type: "raion",         tpHolders: 233 },
+      { match: "riscani",       name: "Rîșcani",           type: "raion",         tpHolders: 242 },
+      { match: "singerei",      name: "Sîngerei",          type: "raion",         tpHolders: 275 },
+      { match: "soroca",        name: "Soroca",            type: "raion",         tpHolders: 420 },
+      { match: "straseni",      name: "Strășeni",          type: "raion",         tpHolders: 362 },
+      { match: "soldanesti",    name: "Șoldănești",        type: "raion",         tpHolders: 83 },
+      { match: "stefan voda",   name: "Ștefan Vodă",       type: "raion",         tpHolders: 1194 },
+      { match: "taraclia",      name: "Taraclia",          type: "raion",         tpHolders: 874 },
+      { match: "telenesti",     name: "Telenești",         type: "raion",         tpHolders: 268 },
+      { match: "ungheni",       name: "Ungheni",           type: "raion",         tpHolders: 414 }
+    ]
+  },
 
   // Neutral, factual per-country footnotes surfaced in the hover tooltip. These
   // are mobility/scope facts, NOT identity or geopolitical framing. `modes`
@@ -111,6 +177,18 @@ window.MIGRATION_DATA = {
       scope: "From 2022 this population is predominantly people fleeing the war in Ukraine.",
       note: "Reported in UNHCR's terms — refugees / people fleeing the war in Ukraine — " +
             "not merged into general 'immigrants'."
+    },
+    geoboundaries: {
+      label: "geoBoundaries — Moldova administrative boundaries (ADM1)",
+      publisher: "geoBoundaries (Runfola et al., 2020)",
+      url: "https://www.geoboundaries.org/",
+      indicator_code: "gbOpen MDA ADM1 · simplified · commit 9469f09",
+      accessed: "2026-06-16",
+      definition: "Open district (raion) boundary geometry for Moldova, used to draw the " +
+                  "Temporary Protection choropleth.",
+      scope: "37 ADM1 units (raions + municipalities + Găgăuzia + Transnistria/Bender). " +
+             "Geometry only — carries no population or refugee values.",
+      note: "CC-BY 4.0. Mirrored on the Humanitarian Data Exchange (HDX)."
     },
     nbm_transfers: {
       label: "Money transfers from abroad in favour of individuals via banks (net settlements)",
@@ -332,17 +410,17 @@ window.MIGRATION_DATA = {
       ]
     },
     immigration: {
-      takeaway: "Since early 2022 Moldova has hosted over 140,000 Ukrainians fleeing the war — one of Europe's highest per-capita refugee-hosting rates (about 1 in every 17 residents).",
+      takeaway: "Since early 2022 Moldova has hosted over 141,000 Ukrainians fleeing the war — one of Europe's highest per-capita refugee-hosting rates (about 1 in every 17 residents). The map shows where their Temporary Protection holders live.",
       headline: "After Russia's full-scale invasion of Ukraine in February 2022, Moldova received " +
-                "one of the largest refugee inflows per capita in Europe. As of January 2026 UNHCR " +
-                "records 140,140 Ukrainian refugees residing in Moldova and 88,383 holding " +
-                "Temporary Protection status (valid to March 2027). These are UNHCR operational " +
-                "figures — a different count from the 52,400 Ukraine-born usual residents recorded " +
-                "in the 2024 census (see the Foreign-born residents tab for that measure).",
+                "one of the largest refugee inflows per capita in Europe. UNHCR records 141,058 " +
+                "Ukrainian refugees remaining in Moldova (31 May 2026) and 92,405 enrolled in " +
+                "Temporary Protection (27 Apr 2026; status valid to March 2027). These are UNHCR " +
+                "operational figures — a different count from the 52,400 Ukraine-born usual residents " +
+                "recorded in the 2024 census (see the Foreign-born residents tab for that measure).",
       indicators: [
-        { term: "Residing (Jan 2026)", value: "140,140", sub: "Ukrainian refugees · UNHCR Jan 2026", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
-        { term: "Temporary Protection", value: "88,383", sub: "TP holders Jan 2026 (UNHCR); valid to Mar 2027", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
-        { term: "Per capita", value: "1 in 17", sub: "residents per refugee · 2024 Census vs UNHCR Jan 2026", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" }
+        { term: "Residing (May 2026)", value: "141,058", sub: "Ukrainian refugees remaining · UNHCR 31 May 2026", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
+        { term: "Temporary Protection", value: "92,405", sub: "TP enrolled 27 Apr 2026 (UNHCR); valid to Mar 2027", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
+        { term: "Per capita", value: "1 in 17", sub: "residents per refugee · 2024 Census vs UNHCR May 2026", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" }
       ]
     },
     immigration_census: {
@@ -442,7 +520,11 @@ window.MIGRATION_DATA = {
           { country: "Ukraine", value: 154284 }, { country: "Romania", value: 80610 },
           { country: "France", value: 54287 }, { country: "Spain", value: 25841 },
           { country: "Portugal", value: 25458 }, { country: "Turkey", value: 16824 },
-          { country: "Israel", value: 10053 }
+          { country: "Israel", value: 10053 },
+          // Residual so the breakdown reconciles to UN DESA's 864,257 total (100%),
+          // not just the 752,138 (87%) carried by the nine named destinations above.
+          // No map coordinate — renders in the table only, never as a bubble.
+          { country: "Other destinations", value: 112119, residual: true }
         ]
       }
     },
@@ -454,14 +536,14 @@ window.MIGRATION_DATA = {
       sublabel: "UNHCR humanitarian count",
       unit: "people",
       direction: "in",
-      vintage: "UNHCR Jan-2026",
+      vintage: "UNHCR May-2026",
       source_ids: ["unhcr"],
       years: {
         // Ukrainian refugees only — UNHCR Moldova situation reports.
         2022: [{ country: "Ukraine", value: 100000 }],
         2023: [{ country: "Ukraine", value: 115000 }],
         2024: [{ country: "Ukraine", value: 136000 }],  // UNHCR end-2024
-        2026: [{ country: "Ukraine", value: 140140 }]   // UNHCR Jan-2026 (residing)
+        2026: [{ country: "Ukraine", value: 141058 }]   // UNHCR 31 May 2026 (remaining/residing)
       }
     },
 

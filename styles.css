@@ -218,6 +218,11 @@ h1 {
 .country { fill: var(--land); stroke: var(--land-edge); stroke-width: .5px; }
 .country.moldova { fill: #DCDACE; }
 
+/* Moldova districts choropleth (Temporary Protection holders) */
+.districts path.district { stroke: #fff; stroke-width: .6px; cursor: pointer; transition: opacity .12s ease; }
+.districts path.district:hover { stroke: #23262b; stroke-width: 1.3px; }
+.districts path.district.dim { opacity: .35; }
+
 .flow { transition: opacity .18s ease; }
 .flow.dim { opacity: .12; }
 .flow-rail {
