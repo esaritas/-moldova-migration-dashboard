@@ -10,8 +10,10 @@
   const WORLD = window.WORLD_GEO;
   const MOLDOVA = rewindForD3(window.MOLDOVA_ADM1);   // geoBoundaries MDA ADM1 (districts)
 
-  // Sequential blues for the TP choropleth (humanitarian-neutral; avoid alarm-red).
-  const TP_SCALE = ["#E6EEF5", "#B9D2E6", "#7FB0D4", "#3E86BC", "#1F5A8C"];
+  // Sequential oranges for the TP choropleth — refugees = orange in the
+  // dashboard-wide colour logic (diaspora=blue, refugees=orange, pop=green,
+  // remittances=purple).
+  const TP_SCALE = ["#FBE9D6", "#F6CFA1", "#EDA85F", "#DD8330", "#B05E12"];
   const NO_DATA_FILL = "#EFEDE7";
   // Normalize a district name for joining: strip diacritics + admin prefixes, lowercase.
   function normName(s) {
@@ -47,11 +49,16 @@
   let currentK = 1;             // current zoom scale
   let hoverCountry = null;      // for the tooltip
 
+  // Phenomenon colour logic: diaspora/emigration=blue, refugees=orange,
+  // population/foreign-born=green, remittances=purple. Flow modes inherit the
+  // related phenomenon's hue but desaturated, to read as secondary series.
   const ACCENTS = {
-    emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E",
-    immigration_census: "#2E7D62",  // darker teal — same family as immigration, different measure
-    // NBS official-flow modes: muted/earthy tones to read as secondary series.
-    emigration_flow: "#A8743A", immigration_flow: "#5E7488"
+    emigration: "#2B6CA8",          // diaspora abroad — blue
+    immigration: "#E08A2E",         // refugees hosted — orange
+    immigration_census: "#2E8B6B",  // foreign-born residents — green
+    remittances: "#6E4FA3",         // remittances — purple
+    emigration_flow: "#5C7FA8",     // registered emigration — muted blue
+    immigration_flow: "#5E8C76"     // registered immigration — muted green
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
@@ -821,7 +828,9 @@
     });
   });
 
-  // Jump straight to a (mode, year) — used by the trend charts.
+  // Jump straight to a (mode, year) — used by the trend charts and the
+  // "key numbers at a glance" cards. When the mode changes we refresh the
+  // whole analysis panel too (the trend-dot caller stays on the same mode).
   function gotoModeYear(name, y) {
     stopPlay();
     const changed = mode !== name;
@@ -831,7 +840,11 @@
       setAccent(); buildTimeline();
     }
     setYear(y);
-    if (changed) applyMapFraming();
+    if (changed) { renderContext(); applyMapFraming(); }
+  }
+  function latestYearOf(name) {
+    const ys = Object.keys(DATA.modes[name].years).map(Number).sort((a, b) => a - b);
+    return ys[ys.length - 1];
   }
 
   // ---- Economics panel: one big mode-relevant chart + indicator cards ------
@@ -912,6 +925,7 @@
     updateContextHighlight();
     renderPartWhole();
     renderCtxDefs(ctx);
+    updateModeWarning();
 
     // Panel-level source note (e.g. remittances: two different sources for map vs chart).
     const pnEl = document.getElementById("ctxPanelNote");
@@ -1251,6 +1265,22 @@
     return String(s == null ? "" : s).replace(/[&<>"]/g, c =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
+  // How often each source is refreshed — surfaced in the methodology panel so
+  // users can judge currency. Keyed by source id; falls back to s.frequency.
+  const SOURCE_FREQUENCY = {
+    undesa_2024: "every ~5 years (with revisions)",
+    unhcr: "weekly / monthly (operational)",
+    unhcr_tp: "periodic operational snapshots",
+    geoboundaries: "static (boundary geometry)",
+    nbm_transfers: "annual (by-country to 2020; totals ongoing)",
+    wb_remit_gdp: "annual",
+    wb_remit_total: "annual",
+    nbs_census_2024: "decennial census",
+    nbs_census_migration: "decennial census",
+    nbs_migration: "annual",
+    eurostat_migr: "annual (1 January reference)",
+    mof_budget: "annual (budget execution)"
+  };
   function buildMethodology() {
     const body = document.getElementById("methodBody");
     if (!body) return;
@@ -1261,7 +1291,9 @@
       const link = s.url
         ? `<a href="${encodeURI(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a>`
         : esc(s.label);
-      const meta = [s.indicator_code, s.accessed ? "as of " + s.accessed : ""].filter(Boolean).map(esc).join(" · ");
+      const freq = SOURCE_FREQUENCY[id] || s.frequency || "";
+      const meta = [s.indicator_code, freq ? "updated " + freq : "", s.accessed ? "as of " + s.accessed : ""]
+        .filter(Boolean).map(esc).join(" · ");
       const desc = [s.definition, s.scope, s.note].filter(Boolean).map(esc).join(" ");
       return `<div class="method-src"><div><span class="pub">${esc(s.publisher)}</span> · ${link}</div>`
         + (meta ? `<div class="meta">${meta}</div>` : "")
@@ -1288,11 +1320,109 @@
     });
   }
 
+  // ---- Key numbers at a glance ---------------------------------------------
+  // Headline figures up front, colour-coded by phenomenon. Each card that maps
+  // to a view is a button that switches the dashboard to it (and scrolls to the
+  // map). Values mirror DATA so the strip can never drift from the panels.
+  function buildGlance() {
+    const grid = document.getElementById("glanceGrid");
+    if (!grid) return;
+    const m = DATA.context.moldova;
+    const tp = (DATA.tp_choropleth && DATA.tp_choropleth.meta) || {};
+    const KPIS = [
+      { label: "Moldova-born abroad", value: d3.format(",")(m.diaspora_estimate),
+        sub: "Diaspora stock · UN DESA 2024", tone: "c-blue", mode: "emigration" },
+      { label: "Resident population", value: "2.41M",
+        sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: null },
+      { label: "Foreign-born residents", value: "106,700",
+        sub: "4.4% of residents · NBS 2024 Census", tone: "c-green", mode: "immigration_census" },
+      { label: "Ukrainian refugees", value: "141,058",
+        sub: "Residing · UNHCR 31 May 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Temporary Protection", value: d3.format(",")(tp.nationalTotal || 92405),
+        sub: "Enrolled · UNHCR 27 Apr 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Annual remittances", value: "$1.92bn",
+        sub: "10.5% of GDP · World Bank 2024", tone: "c-purple", mode: "remittances" },
+      { label: "Emigrants / year", value: "≈4,000",
+        sub: "Registered flow · NBS 2024", tone: "c-blue", mode: "emigration_flow" },
+      { label: "Immigrants / year", value: "≈6,600",
+        sub: "Registered flow · NBS 2024", tone: "c-green", mode: "immigration_flow" }
+    ];
+    grid.innerHTML = KPIS.map(k => {
+      const tag = k.mode ? "button" : "div";
+      const attr = k.mode ? ` type="button" data-goto="${k.mode}"` : "";
+      return `<${tag} class="kpi ${k.tone}"${attr}>`
+        + `<div class="kpi-label">${esc(k.label)}</div>`
+        + `<div class="kpi-value">${esc(k.value)}</div>`
+        + `<div class="kpi-sub">${esc(k.sub)}</div>`
+        + `</${tag}>`;
+    }).join("");
+    grid.querySelectorAll("button.kpi[data-goto]").forEach(b => {
+      b.addEventListener("click", () => {
+        const target = b.dataset.goto;
+        gotoModeYear(target, latestYearOf(target));
+        updateHash();
+        const panel = document.querySelector(".panel");
+        if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+
+  // ---- Historical milestones (1991–2026) -----------------------------------
+  // The drivers behind the trends, as a compact scrollable strip.
+  function buildMilestones() {
+    const strip = document.getElementById("milestoneStrip");
+    if (!strip) return;
+    const MS = [
+      { year: "1991", tone: "c-blue", event: "Independence",
+        note: "Borders open; labour emigration begins, at first eastward to Russia and Ukraine." },
+      { year: "1998", tone: "c-blue", event: "Russian financial crisis",
+        note: "Recession at home pushes labour migration; remittances become a household lifeline." },
+      { year: "2007", tone: "c-blue", event: "Romania joins the EU",
+        note: "Many Moldovans take up Romanian citizenship, opening onward free movement in the EU." },
+      { year: "2014", tone: "c-blue", event: "EU visa-free travel",
+        note: "Visa liberalisation and the DCFTA reorient migration and trade toward the European Union." },
+      { year: "2020", tone: "c-grey", event: "COVID-19 pandemic",
+        note: "Temporary returns and disrupted flows; remittances prove surprisingly resilient." },
+      { year: "2022", tone: "c-orange", event: "Russia invades Ukraine",
+        note: "Moldova becomes one of Europe's largest refugee hosts per capita almost overnight." },
+      { year: "2024", tone: "c-green", event: "Census & EU accession path",
+        note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." }
+    ];
+    strip.innerHTML = MS.map(s =>
+      `<div class="milestone ${s.tone}">`
+      + `<div class="milestone-year">${esc(s.year)}</div>`
+      + `<div class="milestone-event">${esc(s.event)}</div>`
+      + `<div class="milestone-note">${esc(s.note)}</div>`
+      + `</div>`).join("");
+  }
+
+  // ---- Mode interpretation warning -----------------------------------------
+  // Only remittances carries one for now: the per-country split is a historical
+  // 2020 breakdown, distinct from the current (and accurate) headline totals.
+  function updateModeWarning() {
+    const el = document.getElementById("modeWarning");
+    if (!el) return;
+    if (mode === "remittances") {
+      el.innerHTML =
+        `<div><strong>Reading the remittance map.</strong> The per-country split is the latest `
+        + `<em>published</em> geographic breakdown (NBM 2020 net settlements) and is shown as history, `
+        + `not today's pattern: since the 2022 sanctions, transfers from Russia have collapsed and EU `
+        + `sources now dominate. The headline totals on this view (10.5% of GDP, $1.92bn in 2024) are `
+        + `current — only the country geography is historical.</div>`;
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
+  }
+
   // ---- Inject UI icons -----------------------------------------------------
   function injectIcons() {
     document.querySelectorAll(".mode-btn").forEach(b => {
       const slot = b.querySelector(".ico");
       if (slot) slot.innerHTML = icon(MODE_ICON[b.dataset.mode], 16);
+    });
+    document.querySelectorAll(".concept-ico[data-ico]").forEach(s => {
+      s.innerHTML = icon(s.dataset.ico, 22);
     });
     const reset = document.getElementById("zoomReset");
     if (reset) reset.innerHTML = icon("expand", 15);
@@ -1302,6 +1432,8 @@
 
   // ---- Boot ----------------------------------------------------------------
   injectIcons();
+  buildGlance();
+  buildMilestones();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
   const stampEl = document.getElementById("dataStamp");

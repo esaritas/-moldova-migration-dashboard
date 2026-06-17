@@ -41,6 +41,71 @@
       <p class="modes-note">The last two views come from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year. That is a far smaller thing than the diaspora and refugee <em>stocks</em> on the left, so read them on their own terms.</p>
     </header>
 
+    <!-- ===== KEY MIGRATION NUMBERS AT A GLANCE ===============================
+         Headline figures up front, colour-coded by phenomenon (diaspora=blue,
+         refugees=orange, population/foreign-born=green, remittances=purple).
+         Each tile that maps to a view is a button that switches the dashboard
+         to it. Values are wired from DATA by app.js so they never drift. -->
+    <section class="glance" aria-label="Key migration numbers at a glance">
+      <h2 class="section-title">Key migration numbers at a glance</h2>
+      <div class="glance-grid" id="glanceGrid"><!-- built by app.js --></div>
+      <p class="glance-foot">Four interlinked but distinct realities: a large diaspora abroad, a shrinking resident population, refugee hosting since 2022, and an economy underpinned by remittances. Tap any card to explore it.</p>
+    </section>
+
+    <!-- ===== MIGRATION CONCEPTS EXPLAINED ====================================
+         Plain-language clarity on the six things users routinely conflate,
+         with two worked examples that pre-empt the most common errors. -->
+    <details class="concepts" open>
+      <summary class="section-title">Migration concepts explained <span class="summary-hint">(stock vs flow, refugees vs residents)</span></summary>
+      <div class="concepts-body">
+        <p class="concepts-lede">A <strong>stock</strong> is a count at one moment (how many people are abroad today). A <strong>flow</strong> is movement during a period (how many registered a move this year). Stocks are large and slow; flows are small and yearly. Mixing them is the most common mistake in reading migration data.</p>
+
+        <div class="concept-grid">
+          <div class="concept-card c-blue">
+            <span class="concept-ico" data-ico="users"></span>
+            <h3>Diaspora stock</h3>
+            <p>People <em>born in Moldova</em> now living abroad, counted at one moment. <strong>864,257</strong> (UN DESA 2024). Built up over decades — not a single year's departures.</p>
+          </div>
+          <div class="concept-card c-green">
+            <span class="concept-ico" data-ico="globe"></span>
+            <h3>Foreign-born residents</h3>
+            <p>People <em>living in Moldova</em> who were born elsewhere. <strong>106,700</strong> at the 2024 census (4.4%). A residence stock — most hold Moldovan citizenship.</p>
+          </div>
+          <div class="concept-card c-orange">
+            <span class="concept-ico" data-ico="tent"></span>
+            <h3>Refugees hosted</h3>
+            <p>People who <em>fled to Moldova</em> and are protected here. <strong>141,058</strong> Ukrainians (UNHCR, May 2026). A humanitarian count — not the same as foreign-born residents.</p>
+          </div>
+          <div class="concept-card c-grey">
+            <span class="concept-ico" data-ico="route"></span>
+            <h3>Registered flows</h3>
+            <p>People who <em>formally registered</em> a move in a single year — a few thousand (NBS). A flow; tiny next to the stocks, because most who leave never deregister.</p>
+          </div>
+        </div>
+
+        <div class="concept-egs">
+          <p class="concept-eg"><span class="eg-tag">Read it right</span> 864,000 Moldova-born people abroad does <strong>not</strong> mean 864,000 emigrated this year. It is a lifetime stock accumulated over decades.</p>
+          <p class="concept-eg"><span class="eg-tag">Read it right</span> 141,000 refugees in Moldova are <strong>not</strong> the same as the foreign-born residents in the census — different definitions, different sources, different people.</p>
+        </div>
+
+        <!-- Relative scale: emigration is Moldova's largest migration reality -->
+        <div class="scale-compare">
+          <h3 class="scale-title">How the three stocks compare</h3>
+          <div class="scale-row"><span class="scale-lbl">Diaspora abroad</span><div class="scale-bar c-blue" style="width:100%"><span>864,257</span></div></div>
+          <div class="scale-row"><span class="scale-lbl">Refugees hosted</span><div class="scale-bar c-orange" style="width:16.3%"><span>141,058</span></div></div>
+          <div class="scale-row"><span class="scale-lbl">Foreign-born residents</span><div class="scale-bar c-green" style="width:12.3%"><span>106,700</span></div></div>
+          <p class="scale-insight">Emigration remains Moldova's largest migration reality: the diaspora abroad is roughly <strong>six times</strong> the refugee population it hosts and <strong>eight times</strong> its foreign-born residents.</p>
+        </div>
+      </div>
+    </details>
+
+    <!-- ===== HISTORICAL TIMELINE 1991–2026 ===================================
+         Drivers behind the trends, as a compact milestone strip. -->
+    <details class="milestones">
+      <summary class="section-title">What drove the trends: 1991&ndash;2026 <span class="summary-hint">(independence to the Ukraine war)</span></summary>
+      <div class="milestone-strip" id="milestoneStrip"><!-- built by app.js --></div>
+    </details>
+
     <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
     <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
 
@@ -49,6 +114,10 @@
       <strong>How to read this:</strong>
       Stock &ne; flow &nbsp;&middot;&nbsp; Refugee count &ne; immigrant stock &nbsp;&middot;&nbsp; Bank transfers &ne; total remittances &nbsp;&middot;&nbsp; Shown countries &ne; national total
     </div>
+
+    <!-- Mode-specific interpretation warning (e.g. remittances: the per-country
+         split is a historical 2020 breakdown, not the current geography). -->
+    <div class="mode-warning" id="modeWarning" hidden></div>
 
     <!-- Map + table side by side -->
     <div class="panel">

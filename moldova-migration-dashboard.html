@@ -29,12 +29,22 @@
   --ink-soft:      #6B7470;   /* secondary text */
   --ink-faint:     #9AA09C;   /* captions */
 
-  /* One accent per mode */
-  --c-out:   #C7402F;   /* leaving Moldova   (red)   */
-  --c-in:    #1E8C72;   /* coming to Moldova (teal-green; safer for red-green CVD) */
-  --c-money: #2B6F9E;   /* money sent home   (blue)  */
+  /* Phenomenon colour logic (consistent across the whole dashboard):
+       diaspora / emigration   = blue
+       refugees                = orange
+       population / foreign-born = green
+       remittances             = purple                                   */
+  --c-diaspora: #2B6CA8;   /* blue   — diaspora abroad / emigration       */
+  --c-refugee:  #E08A2E;   /* orange — refugees hosted                    */
+  --c-pop:      #2E8B6B;   /* green  — population / foreign-born residents */
+  --c-money:    #6E4FA3;   /* purple — remittances                        */
+  --c-flow:     #6B7682;   /* slate  — registered administrative flows    */
 
-  --accent:  var(--c-out);   /* set per mode at runtime */
+  /* Back-compat aliases (older rules referenced these) */
+  --c-out:   var(--c-diaspora);
+  --c-in:    var(--c-refugee);
+
+  --accent:  var(--c-diaspora);   /* set per mode at runtime */
 
   --radius: 10px;
   --shadow: 0 1px 2px rgba(31, 36, 33, 0.04), 0 6px 24px rgba(31, 36, 33, 0.04);
@@ -735,6 +745,153 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 }
 .howto-strip strong { color: var(--ink); }
 
+/* ============================================================================
+   PUBLIC-PROFILE SECTIONS (glance / concepts / milestones / warning)
+   ========================================================================== */
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 17px; letter-spacing: -0.01em;
+  color: var(--ink); margin: 0 0 12px;
+}
+.summary-hint { font-family: var(--font-body); font-weight: 400; font-size: 12.5px; color: var(--ink-faint); }
+
+/* Phenomenon colour helpers (border + value tint) */
+.c-blue   { --tone: var(--c-diaspora); }
+.c-orange { --tone: var(--c-refugee); }
+.c-green  { --tone: var(--c-pop); }
+.c-purple { --tone: var(--c-money); }
+.c-grey   { --tone: var(--c-flow); }
+
+/* ---- Key numbers at a glance --------------------------------------------- */
+.glance { margin: 4px 0 22px; }
+.glance-grid {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+}
+.kpi {
+  display: block; text-align: left; width: 100%;
+  background: var(--surface); border: 1px solid var(--line);
+  border-top: 3px solid var(--tone, var(--line));
+  border-radius: var(--radius); padding: 13px 15px 14px;
+  cursor: default; font-family: inherit;
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+button.kpi { cursor: pointer; }
+button.kpi:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; }
+.kpi-label {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.kpi-value {
+  font-family: var(--font-display); font-weight: 600; font-size: 26px;
+  line-height: 1; letter-spacing: -.02em; color: var(--tone, var(--ink));
+}
+.kpi-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 5px; line-height: 1.4; }
+.glance-foot { font-size: 12.5px; color: var(--ink-soft); margin: 13px 0 0; max-width: 80ch; }
+
+/* ---- Concepts explained -------------------------------------------------- */
+.concepts, .milestones {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 16px 18px; margin: 0 0 18px;
+}
+.concepts > summary, .milestones > summary {
+  cursor: pointer; list-style: none; margin: 0;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.concepts > summary::-webkit-details-marker, .milestones > summary::-webkit-details-marker { display: none; }
+.concepts > summary::before, .milestones > summary::before {
+  content: "▸"; color: var(--ink-faint); font-size: 13px; transition: transform .15s ease;
+}
+.concepts[open] > summary::before, .milestones[open] > summary::before { transform: rotate(90deg); }
+.concepts > summary .section-title, .milestones > summary .section-title { margin: 0; display: inline; }
+.concepts-body { margin-top: 14px; }
+.concepts-lede { font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 0 0 16px; max-width: 90ch; }
+.concept-grid {
+  display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;
+}
+.concept-card {
+  background: var(--bg); border: 1px solid var(--line);
+  border-left: 3px solid var(--tone); border-radius: 8px; padding: 13px 14px;
+}
+.concept-card h3 { font-size: 13.5px; margin: 8px 0 5px; color: var(--ink); }
+.concept-card p { font-size: 12px; line-height: 1.5; color: var(--ink-soft); margin: 0; }
+.concept-card p strong { color: var(--tone); }
+.concept-ico { color: var(--tone); display: inline-flex; }
+.concept-egs { display: grid; gap: 8px; margin-bottom: 18px; }
+.concept-eg {
+  font-size: 12.5px; line-height: 1.5; color: var(--ink); margin: 0;
+  background: color-mix(in srgb, var(--c-refugee) 7%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--c-refugee) 25%, var(--line));
+  border-radius: 8px; padding: 9px 12px;
+}
+.eg-tag {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--c-refugee); font-weight: 600;
+  margin-right: 8px;
+}
+.concept-eg strong { color: var(--c-refugee); }
+
+/* ---- Relative-scale comparison ------------------------------------------- */
+.scale-compare { border-top: 1px solid var(--line); padding-top: 16px; }
+.scale-title { font-size: 13.5px; margin: 0 0 12px; color: var(--ink); }
+.scale-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.scale-lbl { flex: 0 0 150px; font-size: 12px; color: var(--ink-soft); text-align: right; }
+.scale-bar {
+  height: 26px; border-radius: 5px; background: var(--tone);
+  display: flex; align-items: center; min-width: 54px;
+  transition: width .5s ease;
+}
+.scale-bar span {
+  color: #fff; font-family: var(--font-mono); font-size: 11.5px; font-weight: 500;
+  padding-left: 9px; white-space: nowrap;
+}
+.scale-insight { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin: 12px 0 0; max-width: 85ch; }
+.scale-insight strong { color: var(--ink); }
+
+/* ---- Milestones strip ---------------------------------------------------- */
+.milestone-strip {
+  margin-top: 14px; display: flex; gap: 12px; overflow-x: auto;
+  padding-bottom: 8px; scroll-snap-type: x proximity;
+}
+.milestone {
+  flex: 0 0 200px; scroll-snap-align: start;
+  background: var(--bg); border: 1px solid var(--line);
+  border-top: 3px solid var(--tone, var(--c-flow)); border-radius: 8px; padding: 12px 13px;
+}
+.milestone-year {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+  color: var(--tone, var(--ink)); margin-bottom: 4px;
+}
+.milestone-event { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 4px; line-height: 1.3; }
+.milestone-note { font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; }
+
+/* ---- Mode interpretation warning ----------------------------------------- */
+.mode-warning {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: color-mix(in srgb, var(--c-money) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--c-money) 32%, var(--line));
+  border-left: 4px solid var(--c-money);
+  border-radius: 8px; padding: 10px 14px; margin: 0 0 14px;
+  font-size: 12.5px; line-height: 1.5; color: var(--ink);
+}
+.mode-warning::before { content: "⚠"; color: var(--c-money); font-size: 15px; line-height: 1.3; }
+.mode-warning strong { color: var(--c-money); }
+
+/* ---- Responsive ---------------------------------------------------------- */
+@media (max-width: 880px) {
+  .glance-grid { grid-template-columns: repeat(2, 1fr); }
+  .concept-grid { grid-template-columns: repeat(2, 1fr); }
+  .scale-lbl { flex-basis: 110px; }
+}
+@media (max-width: 520px) {
+  .glance-grid { grid-template-columns: 1fr 1fr; }
+  .concept-grid { grid-template-columns: 1fr; }
+  .kpi-value { font-size: 22px; }
+}
+
 </style>
 </head>
 <body>
@@ -766,6 +923,71 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
       <p class="modes-note">The last two views come from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year. That is a far smaller thing than the diaspora and refugee <em>stocks</em> on the left, so read them on their own terms.</p>
     </header>
 
+    <!-- ===== KEY MIGRATION NUMBERS AT A GLANCE ===============================
+         Headline figures up front, colour-coded by phenomenon (diaspora=blue,
+         refugees=orange, population/foreign-born=green, remittances=purple).
+         Each tile that maps to a view is a button that switches the dashboard
+         to it. Values are wired from DATA by app.js so they never drift. -->
+    <section class="glance" aria-label="Key migration numbers at a glance">
+      <h2 class="section-title">Key migration numbers at a glance</h2>
+      <div class="glance-grid" id="glanceGrid"><!-- built by app.js --></div>
+      <p class="glance-foot">Four interlinked but distinct realities: a large diaspora abroad, a shrinking resident population, refugee hosting since 2022, and an economy underpinned by remittances. Tap any card to explore it.</p>
+    </section>
+
+    <!-- ===== MIGRATION CONCEPTS EXPLAINED ====================================
+         Plain-language clarity on the six things users routinely conflate,
+         with two worked examples that pre-empt the most common errors. -->
+    <details class="concepts" open>
+      <summary class="section-title">Migration concepts explained <span class="summary-hint">(stock vs flow, refugees vs residents)</span></summary>
+      <div class="concepts-body">
+        <p class="concepts-lede">A <strong>stock</strong> is a count at one moment (how many people are abroad today). A <strong>flow</strong> is movement during a period (how many registered a move this year). Stocks are large and slow; flows are small and yearly. Mixing them is the most common mistake in reading migration data.</p>
+
+        <div class="concept-grid">
+          <div class="concept-card c-blue">
+            <span class="concept-ico" data-ico="users"></span>
+            <h3>Diaspora stock</h3>
+            <p>People <em>born in Moldova</em> now living abroad, counted at one moment. <strong>864,257</strong> (UN DESA 2024). Built up over decades — not a single year's departures.</p>
+          </div>
+          <div class="concept-card c-green">
+            <span class="concept-ico" data-ico="globe"></span>
+            <h3>Foreign-born residents</h3>
+            <p>People <em>living in Moldova</em> who were born elsewhere. <strong>106,700</strong> at the 2024 census (4.4%). A residence stock — most hold Moldovan citizenship.</p>
+          </div>
+          <div class="concept-card c-orange">
+            <span class="concept-ico" data-ico="tent"></span>
+            <h3>Refugees hosted</h3>
+            <p>People who <em>fled to Moldova</em> and are protected here. <strong>141,058</strong> Ukrainians (UNHCR, May 2026). A humanitarian count — not the same as foreign-born residents.</p>
+          </div>
+          <div class="concept-card c-grey">
+            <span class="concept-ico" data-ico="route"></span>
+            <h3>Registered flows</h3>
+            <p>People who <em>formally registered</em> a move in a single year — a few thousand (NBS). A flow; tiny next to the stocks, because most who leave never deregister.</p>
+          </div>
+        </div>
+
+        <div class="concept-egs">
+          <p class="concept-eg"><span class="eg-tag">Read it right</span> 864,000 Moldova-born people abroad does <strong>not</strong> mean 864,000 emigrated this year. It is a lifetime stock accumulated over decades.</p>
+          <p class="concept-eg"><span class="eg-tag">Read it right</span> 141,000 refugees in Moldova are <strong>not</strong> the same as the foreign-born residents in the census — different definitions, different sources, different people.</p>
+        </div>
+
+        <!-- Relative scale: emigration is Moldova's largest migration reality -->
+        <div class="scale-compare">
+          <h3 class="scale-title">How the three stocks compare</h3>
+          <div class="scale-row"><span class="scale-lbl">Diaspora abroad</span><div class="scale-bar c-blue" style="width:100%"><span>864,257</span></div></div>
+          <div class="scale-row"><span class="scale-lbl">Refugees hosted</span><div class="scale-bar c-orange" style="width:16.3%"><span>141,058</span></div></div>
+          <div class="scale-row"><span class="scale-lbl">Foreign-born residents</span><div class="scale-bar c-green" style="width:12.3%"><span>106,700</span></div></div>
+          <p class="scale-insight">Emigration remains Moldova's largest migration reality: the diaspora abroad is roughly <strong>six times</strong> the refugee population it hosts and <strong>eight times</strong> its foreign-born residents.</p>
+        </div>
+      </div>
+    </details>
+
+    <!-- ===== HISTORICAL TIMELINE 1991–2026 ===================================
+         Drivers behind the trends, as a compact milestone strip. -->
+    <details class="milestones">
+      <summary class="section-title">What drove the trends: 1991&ndash;2026 <span class="summary-hint">(independence to the Ukraine war)</span></summary>
+      <div class="milestone-strip" id="milestoneStrip"><!-- built by app.js --></div>
+    </details>
+
     <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
     <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
 
@@ -774,6 +996,10 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
       <strong>How to read this:</strong>
       Stock &ne; flow &nbsp;&middot;&nbsp; Refugee count &ne; immigrant stock &nbsp;&middot;&nbsp; Bank transfers &ne; total remittances &nbsp;&middot;&nbsp; Shown countries &ne; national total
     </div>
+
+    <!-- Mode-specific interpretation warning (e.g. remittances: the per-country
+         split is a historical 2020 breakdown, not the current geography). -->
+    <div class="mode-warning" id="modeWarning" hidden></div>
 
     <!-- Map + table side by side -->
     <div class="panel">
@@ -1708,8 +1934,10 @@ window.MIGRATION_DATA = {
   const WORLD = window.WORLD_GEO;
   const MOLDOVA = rewindForD3(window.MOLDOVA_ADM1);   // geoBoundaries MDA ADM1 (districts)
 
-  // Sequential blues for the TP choropleth (humanitarian-neutral; avoid alarm-red).
-  const TP_SCALE = ["#E6EEF5", "#B9D2E6", "#7FB0D4", "#3E86BC", "#1F5A8C"];
+  // Sequential oranges for the TP choropleth — refugees = orange in the
+  // dashboard-wide colour logic (diaspora=blue, refugees=orange, pop=green,
+  // remittances=purple).
+  const TP_SCALE = ["#FBE9D6", "#F6CFA1", "#EDA85F", "#DD8330", "#B05E12"];
   const NO_DATA_FILL = "#EFEDE7";
   // Normalize a district name for joining: strip diacritics + admin prefixes, lowercase.
   function normName(s) {
@@ -1745,11 +1973,16 @@ window.MIGRATION_DATA = {
   let currentK = 1;             // current zoom scale
   let hoverCountry = null;      // for the tooltip
 
+  // Phenomenon colour logic: diaspora/emigration=blue, refugees=orange,
+  // population/foreign-born=green, remittances=purple. Flow modes inherit the
+  // related phenomenon's hue but desaturated, to read as secondary series.
   const ACCENTS = {
-    emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E",
-    immigration_census: "#2E7D62",  // darker teal — same family as immigration, different measure
-    // NBS official-flow modes: muted/earthy tones to read as secondary series.
-    emigration_flow: "#A8743A", immigration_flow: "#5E7488"
+    emigration: "#2B6CA8",          // diaspora abroad — blue
+    immigration: "#E08A2E",         // refugees hosted — orange
+    immigration_census: "#2E8B6B",  // foreign-born residents — green
+    remittances: "#6E4FA3",         // remittances — purple
+    emigration_flow: "#5C7FA8",     // registered emigration — muted blue
+    immigration_flow: "#5E8C76"     // registered immigration — muted green
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
@@ -2519,7 +2752,9 @@ window.MIGRATION_DATA = {
     });
   });
 
-  // Jump straight to a (mode, year) — used by the trend charts.
+  // Jump straight to a (mode, year) — used by the trend charts and the
+  // "key numbers at a glance" cards. When the mode changes we refresh the
+  // whole analysis panel too (the trend-dot caller stays on the same mode).
   function gotoModeYear(name, y) {
     stopPlay();
     const changed = mode !== name;
@@ -2529,7 +2764,11 @@ window.MIGRATION_DATA = {
       setAccent(); buildTimeline();
     }
     setYear(y);
-    if (changed) applyMapFraming();
+    if (changed) { renderContext(); applyMapFraming(); }
+  }
+  function latestYearOf(name) {
+    const ys = Object.keys(DATA.modes[name].years).map(Number).sort((a, b) => a - b);
+    return ys[ys.length - 1];
   }
 
   // ---- Economics panel: one big mode-relevant chart + indicator cards ------
@@ -2610,6 +2849,7 @@ window.MIGRATION_DATA = {
     updateContextHighlight();
     renderPartWhole();
     renderCtxDefs(ctx);
+    updateModeWarning();
 
     // Panel-level source note (e.g. remittances: two different sources for map vs chart).
     const pnEl = document.getElementById("ctxPanelNote");
@@ -2949,6 +3189,22 @@ window.MIGRATION_DATA = {
     return String(s == null ? "" : s).replace(/[&<>"]/g, c =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
+  // How often each source is refreshed — surfaced in the methodology panel so
+  // users can judge currency. Keyed by source id; falls back to s.frequency.
+  const SOURCE_FREQUENCY = {
+    undesa_2024: "every ~5 years (with revisions)",
+    unhcr: "weekly / monthly (operational)",
+    unhcr_tp: "periodic operational snapshots",
+    geoboundaries: "static (boundary geometry)",
+    nbm_transfers: "annual (by-country to 2020; totals ongoing)",
+    wb_remit_gdp: "annual",
+    wb_remit_total: "annual",
+    nbs_census_2024: "decennial census",
+    nbs_census_migration: "decennial census",
+    nbs_migration: "annual",
+    eurostat_migr: "annual (1 January reference)",
+    mof_budget: "annual (budget execution)"
+  };
   function buildMethodology() {
     const body = document.getElementById("methodBody");
     if (!body) return;
@@ -2959,7 +3215,9 @@ window.MIGRATION_DATA = {
       const link = s.url
         ? `<a href="${encodeURI(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a>`
         : esc(s.label);
-      const meta = [s.indicator_code, s.accessed ? "as of " + s.accessed : ""].filter(Boolean).map(esc).join(" · ");
+      const freq = SOURCE_FREQUENCY[id] || s.frequency || "";
+      const meta = [s.indicator_code, freq ? "updated " + freq : "", s.accessed ? "as of " + s.accessed : ""]
+        .filter(Boolean).map(esc).join(" · ");
       const desc = [s.definition, s.scope, s.note].filter(Boolean).map(esc).join(" ");
       return `<div class="method-src"><div><span class="pub">${esc(s.publisher)}</span> · ${link}</div>`
         + (meta ? `<div class="meta">${meta}</div>` : "")
@@ -2986,11 +3244,109 @@ window.MIGRATION_DATA = {
     });
   }
 
+  // ---- Key numbers at a glance ---------------------------------------------
+  // Headline figures up front, colour-coded by phenomenon. Each card that maps
+  // to a view is a button that switches the dashboard to it (and scrolls to the
+  // map). Values mirror DATA so the strip can never drift from the panels.
+  function buildGlance() {
+    const grid = document.getElementById("glanceGrid");
+    if (!grid) return;
+    const m = DATA.context.moldova;
+    const tp = (DATA.tp_choropleth && DATA.tp_choropleth.meta) || {};
+    const KPIS = [
+      { label: "Moldova-born abroad", value: d3.format(",")(m.diaspora_estimate),
+        sub: "Diaspora stock · UN DESA 2024", tone: "c-blue", mode: "emigration" },
+      { label: "Resident population", value: "2.41M",
+        sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: null },
+      { label: "Foreign-born residents", value: "106,700",
+        sub: "4.4% of residents · NBS 2024 Census", tone: "c-green", mode: "immigration_census" },
+      { label: "Ukrainian refugees", value: "141,058",
+        sub: "Residing · UNHCR 31 May 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Temporary Protection", value: d3.format(",")(tp.nationalTotal || 92405),
+        sub: "Enrolled · UNHCR 27 Apr 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Annual remittances", value: "$1.92bn",
+        sub: "10.5% of GDP · World Bank 2024", tone: "c-purple", mode: "remittances" },
+      { label: "Emigrants / year", value: "≈4,000",
+        sub: "Registered flow · NBS 2024", tone: "c-blue", mode: "emigration_flow" },
+      { label: "Immigrants / year", value: "≈6,600",
+        sub: "Registered flow · NBS 2024", tone: "c-green", mode: "immigration_flow" }
+    ];
+    grid.innerHTML = KPIS.map(k => {
+      const tag = k.mode ? "button" : "div";
+      const attr = k.mode ? ` type="button" data-goto="${k.mode}"` : "";
+      return `<${tag} class="kpi ${k.tone}"${attr}>`
+        + `<div class="kpi-label">${esc(k.label)}</div>`
+        + `<div class="kpi-value">${esc(k.value)}</div>`
+        + `<div class="kpi-sub">${esc(k.sub)}</div>`
+        + `</${tag}>`;
+    }).join("");
+    grid.querySelectorAll("button.kpi[data-goto]").forEach(b => {
+      b.addEventListener("click", () => {
+        const target = b.dataset.goto;
+        gotoModeYear(target, latestYearOf(target));
+        updateHash();
+        const panel = document.querySelector(".panel");
+        if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+
+  // ---- Historical milestones (1991–2026) -----------------------------------
+  // The drivers behind the trends, as a compact scrollable strip.
+  function buildMilestones() {
+    const strip = document.getElementById("milestoneStrip");
+    if (!strip) return;
+    const MS = [
+      { year: "1991", tone: "c-blue", event: "Independence",
+        note: "Borders open; labour emigration begins, at first eastward to Russia and Ukraine." },
+      { year: "1998", tone: "c-blue", event: "Russian financial crisis",
+        note: "Recession at home pushes labour migration; remittances become a household lifeline." },
+      { year: "2007", tone: "c-blue", event: "Romania joins the EU",
+        note: "Many Moldovans take up Romanian citizenship, opening onward free movement in the EU." },
+      { year: "2014", tone: "c-blue", event: "EU visa-free travel",
+        note: "Visa liberalisation and the DCFTA reorient migration and trade toward the European Union." },
+      { year: "2020", tone: "c-grey", event: "COVID-19 pandemic",
+        note: "Temporary returns and disrupted flows; remittances prove surprisingly resilient." },
+      { year: "2022", tone: "c-orange", event: "Russia invades Ukraine",
+        note: "Moldova becomes one of Europe's largest refugee hosts per capita almost overnight." },
+      { year: "2024", tone: "c-green", event: "Census & EU accession path",
+        note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." }
+    ];
+    strip.innerHTML = MS.map(s =>
+      `<div class="milestone ${s.tone}">`
+      + `<div class="milestone-year">${esc(s.year)}</div>`
+      + `<div class="milestone-event">${esc(s.event)}</div>`
+      + `<div class="milestone-note">${esc(s.note)}</div>`
+      + `</div>`).join("");
+  }
+
+  // ---- Mode interpretation warning -----------------------------------------
+  // Only remittances carries one for now: the per-country split is a historical
+  // 2020 breakdown, distinct from the current (and accurate) headline totals.
+  function updateModeWarning() {
+    const el = document.getElementById("modeWarning");
+    if (!el) return;
+    if (mode === "remittances") {
+      el.innerHTML =
+        `<div><strong>Reading the remittance map.</strong> The per-country split is the latest `
+        + `<em>published</em> geographic breakdown (NBM 2020 net settlements) and is shown as history, `
+        + `not today's pattern: since the 2022 sanctions, transfers from Russia have collapsed and EU `
+        + `sources now dominate. The headline totals on this view (10.5% of GDP, $1.92bn in 2024) are `
+        + `current — only the country geography is historical.</div>`;
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
+  }
+
   // ---- Inject UI icons -----------------------------------------------------
   function injectIcons() {
     document.querySelectorAll(".mode-btn").forEach(b => {
       const slot = b.querySelector(".ico");
       if (slot) slot.innerHTML = icon(MODE_ICON[b.dataset.mode], 16);
+    });
+    document.querySelectorAll(".concept-ico[data-ico]").forEach(s => {
+      s.innerHTML = icon(s.dataset.ico, 22);
     });
     const reset = document.getElementById("zoomReset");
     if (reset) reset.innerHTML = icon("expand", 15);
@@ -3000,6 +3356,8 @@ window.MIGRATION_DATA = {
 
   // ---- Boot ----------------------------------------------------------------
   injectIcons();
+  buildGlance();
+  buildMilestones();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
   const stampEl = document.getElementById("dataStamp");
