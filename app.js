@@ -1432,16 +1432,70 @@
     document.querySelectorAll(".path-chip").forEach(b =>
       b.addEventListener("click", () => {
         switch (b.dataset.path) {
-          case "facts":   setView("simple");  scrollToSel(".glance"); break;
+          case "facts":   setView("simple");  scrollToSel("#ch-glance"); break;
           case "policy":  gotoModeYear("emigration", latestYearOf("emigration"));
-                          updateHash(); scrollToSel(".context-card"); break;
+                          updateHash(); scrollToSel("#ch-explore"); break;
           case "research":setView("advanced");
                           { const d = document.getElementById("methodDialog");
                             if (d && typeof d.showModal === "function") d.showModal(); }
                           break;
-          case "data":    scrollToSel(".panel"); break;
+          case "data":    scrollToSel("#ch-explore"); break;
         }
       }));
+  }
+
+  // ---- Story map: nav rail, scroll progress, reveal-on-scroll --------------
+  function initStory() {
+    const chapters = Array.from(document.querySelectorAll(".chapter[data-nav]"));
+    const nav = document.getElementById("storyNav");
+    if (nav && chapters.length) {
+      nav.innerHTML = chapters.map(c =>
+        `<button type="button" class="story-dot" data-target="#${c.id}" aria-label="${esc(c.dataset.nav)}">`
+        + `<span class="dot"></span><span class="dot-label">${esc(c.dataset.nav)}</span></button>`).join("");
+      nav.querySelectorAll(".story-dot").forEach(b =>
+        b.addEventListener("click", () => scrollToSel(b.dataset.target)));
+    }
+
+    const supportsIO = "IntersectionObserver" in window;
+
+    // Active-chapter highlight on the nav rail.
+    if (supportsIO && nav) {
+      const dots = Array.from(nav.querySelectorAll(".story-dot"));
+      const byId = {};
+      dots.forEach(d => { byId[d.dataset.target.slice(1)] = d; });
+      const navObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          dots.forEach(d => d.classList.remove("active"));
+          const d = byId[e.target.id]; if (d) d.classList.add("active");
+        });
+      }, { rootMargin: "-45% 0px -45% 0px", threshold: 0 });
+      chapters.forEach(c => navObs.observe(c));
+    }
+
+    // Reveal-on-scroll — only opt in when IO is available, so without JS/IO the
+    // content stays fully visible (the CSS default).
+    if (supportsIO) {
+      document.body.classList.add("js-reveal");
+      const revObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) { e.target.classList.add("in"); revObs.unobserve(e.target); }
+        });
+      }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+      document.querySelectorAll(".reveal").forEach(el => revObs.observe(el));
+    }
+
+    // Scroll progress bar.
+    const bar = document.getElementById("storyProgressBar");
+    if (bar) {
+      const onScroll = () => {
+        const h = document.documentElement;
+        const max = h.scrollHeight - h.clientHeight;
+        bar.style.width = (max > 0 ? Math.min(100, (h.scrollTop / max) * 100) : 0) + "%";
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    }
   }
 
   // ---- Mode interpretation warning -----------------------------------------
@@ -1484,6 +1538,7 @@
   buildMilestones();
   renderLabourDest();
   wireAudience();
+  initStory();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
   const stampEl = document.getElementById("dataStamp");

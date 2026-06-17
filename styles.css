@@ -959,3 +959,75 @@ body.view-simple .scope-note { display: none !important; }
   .labour-grid { grid-template-columns: 1fr; gap: 18px; }
   .audience-bar { gap: 10px; }
 }
+
+/* ============================================================================
+   STORY MAP: chapters, nav rail, scroll progress, reveal-on-scroll
+   ========================================================================== */
+
+/* ---- Scroll progress bar (fixed, tinted by the active mode accent) ------- */
+.story-progress {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: transparent; z-index: 60; pointer-events: none;
+}
+#storyProgressBar { display: block; height: 100%; width: 0; background: var(--accent); transition: width .12s linear; }
+
+/* ---- Chapter navigation rail (fixed, right) ------------------------------ */
+.story-nav {
+  position: fixed; top: 50%; right: 18px; transform: translateY(-50%);
+  z-index: 55; display: flex; flex-direction: column; gap: 13px;
+}
+.story-dot {
+  display: flex; align-items: center; gap: 10px; flex-direction: row-reverse;
+  background: transparent; border: 0; cursor: pointer; padding: 2px;
+}
+.story-dot .dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid var(--ink-faint); background: transparent;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+.story-dot .dot-label {
+  font-size: 11px; color: var(--ink); white-space: nowrap; opacity: 0;
+  background: var(--surface); border: 1px solid var(--line);
+  padding: 2px 9px; border-radius: 6px; box-shadow: var(--shadow);
+  transition: opacity .2s ease;
+}
+.story-dot:hover .dot { border-color: var(--accent); }
+.story-dot:hover .dot-label { opacity: 1; }
+.story-dot:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+.story-dot.active .dot { border-color: var(--accent); background: var(--accent); transform: scale(1.3); }
+.story-dot.active .dot-label { opacity: 1; }
+@media (max-width: 1100px) { .story-nav { display: none; } }
+
+/* ---- Chapters ------------------------------------------------------------ */
+.chapter { padding: 48px 0; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+.chapter-intro-sec { border-top: 0; padding-top: 6px; }
+.chapter-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+.chapter-num {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+  letter-spacing: .1em; color: var(--accent);
+}
+.chapter-title {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(20px, 2.6vw, 28px); letter-spacing: -.02em;
+  margin: 0; color: var(--ink); line-height: 1.1;
+}
+.chapter-intro { font-size: 15px; line-height: 1.6; color: var(--ink-soft); max-width: 76ch; margin: 8px 0 24px; }
+.chapter-intro strong { color: var(--ink); }
+
+/* ---- Hero / intro -------------------------------------------------------- */
+.hero { margin-bottom: 22px; }
+.scroll-cue {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-faint); margin: 26px 0 0;
+}
+.scroll-cue-arrow { display: inline-block; margin-left: 6px; animation: cue-bob 1.8s ease-in-out infinite; }
+@keyframes cue-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+/* ---- Reveal-on-scroll (no-JS-safe: visible until JS opts in) ------------- */
+.reveal { opacity: 1; transform: none; }
+body.js-reveal .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+body.js-reveal .reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  body.js-reveal .reveal { opacity: 1 !important; transform: none !important; }
+  .scroll-cue-arrow { animation: none; }
+}
