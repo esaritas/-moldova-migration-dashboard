@@ -391,6 +391,10 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
   overflow: visible;
   font-family: var(--font-body);
 }
+/* The GDP waffle is 100 cells; cap it small so it reads as a tidy proportion
+   block rather than dominating the panel. The explanatory caption (.pw-cap)
+   keeps its full width below. */
+.pw-svg.pw-waffle { max-width: 208px; }
 /* Readout + denominator note live in HTML (not SVG) so long lines wrap. */
 .pw-cap { max-width: 520px; margin-top: 8px; }
 .pw-readout { font-size: 12px; font-weight: 500; color: var(--ink); line-height: 1.4; }
@@ -416,6 +420,20 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 .ctx-yr { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-faint); }
 .ctx-ref { stroke: var(--ink-faint); stroke-width: 1px; stroke-dasharray: 4 4; }
 .ctx-ref-label { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-faint); }
+
+/* ---- Per-mode plain-language glossary (visible on the page) -------------- */
+.ctx-defs { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.ctx-defs-title {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 11px;
+}
+.ctx-defs-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 11px 26px;
+}
+.ctx-def { margin: 0; }
+.ctx-def dt { font-weight: 600; font-size: 12.5px; color: var(--ink); margin-bottom: 2px; }
+.ctx-def dd { margin: 0; font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
 
 .context-stats { display: flex; flex-direction: column; gap: 12px; }
 .stat {

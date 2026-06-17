@@ -911,6 +911,7 @@
     });
     updateContextHighlight();
     renderPartWhole();
+    renderCtxDefs(ctx);
 
     // Panel-level source note (e.g. remittances: two different sources for map vs chart).
     const pnEl = document.getElementById("ctxPanelNote");
@@ -918,6 +919,31 @@
       if (ctx.panel_note) { pnEl.textContent = ctx.panel_note; pnEl.hidden = false; }
       else { pnEl.hidden = true; }
     }
+  }
+
+  // ---- Per-mode plain-language glossary ------------------------------------
+  // Surfaces the definitions for the terms used on the current view's stat
+  // cards, on the page itself, so a general reader understands "stock", "net
+  // settlements", "registered emigrant" etc. without hovering or opening the
+  // modal. Reuses DATA.glossary (single source of truth), deduped by id.
+  function renderCtxDefs(ctx) {
+    const el = document.getElementById("ctxDefs");
+    if (!el) return;
+    const seen = new Set();
+    const defs = [];
+    (ctx.indicators || []).forEach(it => {
+      const d = defById(it.def_id);
+      if (d && !seen.has(d.id)) { seen.add(d.id); defs.push(d); }
+    });
+    if (!defs.length) { el.hidden = true; el.innerHTML = ""; return; }
+    el.innerHTML =
+      `<div class="ctx-defs-title">What these terms mean</div>`
+      + `<div class="ctx-defs-grid">`
+      + defs.map(d =>
+          `<dl class="ctx-def"><dt>${esc(d.term)}</dt><dd>${esc(d.definition)}</dd></dl>`
+        ).join("")
+      + `</div>`;
+    el.hidden = false;
   }
 
   // ---- Part-to-whole comparison visuals ------------------------------------
@@ -1122,8 +1148,10 @@
         const isRefEdge = valueIdx === refFilled - 1;
         const x = col * (cell + pad), y = row * (cell + pad);
         svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
-          .attr("rx", 3)
-          .attr("fill", isFilled ? o.accent : "#e0e0d8").attr("opacity", isFilled ? 0.88 : 0.55);
+          .attr("rx", 2.5)
+          // Filled cells carry the story; empties recede to near-white so the
+          // ~10 accent squares read at a glance instead of a wall of 100 cubes.
+          .attr("fill", isFilled ? o.accent : "#ececE5").attr("opacity", isFilled ? 0.9 : 0.4);
         if (isRefEdge)
           svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
             .attr("rx", 3).attr("fill", "none")

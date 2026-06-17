@@ -406,6 +406,10 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
   overflow: visible;
   font-family: var(--font-body);
 }
+/* The GDP waffle is 100 cells; cap it small so it reads as a tidy proportion
+   block rather than dominating the panel. The explanatory caption (.pw-cap)
+   keeps its full width below. */
+.pw-svg.pw-waffle { max-width: 208px; }
 /* Readout + denominator note live in HTML (not SVG) so long lines wrap. */
 .pw-cap { max-width: 520px; margin-top: 8px; }
 .pw-readout { font-size: 12px; font-weight: 500; color: var(--ink); line-height: 1.4; }
@@ -431,6 +435,20 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 .ctx-yr { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-faint); }
 .ctx-ref { stroke: var(--ink-faint); stroke-width: 1px; stroke-dasharray: 4 4; }
 .ctx-ref-label { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-faint); }
+
+/* ---- Per-mode plain-language glossary (visible on the page) -------------- */
+.ctx-defs { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.ctx-defs-title {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 11px;
+}
+.ctx-defs-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 11px 26px;
+}
+.ctx-def { margin: 0; }
+.ctx-def dt { font-weight: 600; font-size: 12.5px; color: var(--ink); margin-bottom: 2px; }
+.ctx-def dd { margin: 0; font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
 
 .context-stats { display: flex; flex-direction: column; gap: 12px; }
 .stat {
@@ -818,6 +836,10 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
         </div>
         <div class="context-stats" id="ctxStats"></div>
       </div>
+      <!-- Plain-language glossary for the terms used on this view, surfaced on
+           the page (built from DATA.glossary by app.js) so readers don't have to
+           hover the cards or open the methodology modal. -->
+      <div class="ctx-defs" id="ctxDefs" hidden></div>
     </div>
 
     <footer>
@@ -2577,6 +2599,7 @@ window.MIGRATION_DATA = {
     });
     updateContextHighlight();
     renderPartWhole();
+    renderCtxDefs(ctx);
 
     // Panel-level source note (e.g. remittances: two different sources for map vs chart).
     const pnEl = document.getElementById("ctxPanelNote");
@@ -2584,6 +2607,31 @@ window.MIGRATION_DATA = {
       if (ctx.panel_note) { pnEl.textContent = ctx.panel_note; pnEl.hidden = false; }
       else { pnEl.hidden = true; }
     }
+  }
+
+  // ---- Per-mode plain-language glossary ------------------------------------
+  // Surfaces the definitions for the terms used on the current view's stat
+  // cards, on the page itself, so a general reader understands "stock", "net
+  // settlements", "registered emigrant" etc. without hovering or opening the
+  // modal. Reuses DATA.glossary (single source of truth), deduped by id.
+  function renderCtxDefs(ctx) {
+    const el = document.getElementById("ctxDefs");
+    if (!el) return;
+    const seen = new Set();
+    const defs = [];
+    (ctx.indicators || []).forEach(it => {
+      const d = defById(it.def_id);
+      if (d && !seen.has(d.id)) { seen.add(d.id); defs.push(d); }
+    });
+    if (!defs.length) { el.hidden = true; el.innerHTML = ""; return; }
+    el.innerHTML =
+      `<div class="ctx-defs-title">What these terms mean</div>`
+      + `<div class="ctx-defs-grid">`
+      + defs.map(d =>
+          `<dl class="ctx-def"><dt>${esc(d.term)}</dt><dd>${esc(d.definition)}</dd></dl>`
+        ).join("")
+      + `</div>`;
+    el.hidden = false;
   }
 
   // ---- Part-to-whole comparison visuals ------------------------------------
@@ -2788,8 +2836,10 @@ window.MIGRATION_DATA = {
         const isRefEdge = valueIdx === refFilled - 1;
         const x = col * (cell + pad), y = row * (cell + pad);
         svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
-          .attr("rx", 3)
-          .attr("fill", isFilled ? o.accent : "#e0e0d8").attr("opacity", isFilled ? 0.88 : 0.55);
+          .attr("rx", 2.5)
+          // Filled cells carry the story; empties recede to near-white so the
+          // ~10 accent squares read at a glance instead of a wall of 100 cubes.
+          .attr("fill", isFilled ? o.accent : "#ececE5").attr("opacity", isFilled ? 0.9 : 0.4);
         if (isRefEdge)
           svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
             .attr("rx", 3).attr("fill", "none")
