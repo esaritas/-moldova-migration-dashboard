@@ -227,7 +227,9 @@ window.MIGRATION_DATA = {
       definition: "Remittance dependency, measured as personal remittances received as a share of " +
                   "GDP (BPM6).",
       scope: "National accounts basis; excludes Transnistria.",
-      note: "Earlier years approximate; refresh via fetch_data.py."
+      note: "Earlier years approximate; refresh via fetch_data.py. The ~5% benchmark is the " +
+            "unweighted average remittances-to-GDP across about 174 countries (WDI), not the " +
+            "GDP-weighted world aggregate (which is far lower)."
     },
     wb_remit_total: {
       label: "Personal remittances received (current US$)",
@@ -394,16 +396,16 @@ window.MIGRATION_DATA = {
   // migration-economics framing with world-average benchmarks.
   context: {
     world: {
-      migrant_share_pct: 3.7,          // UN DESA 2024: share of people who are intl migrants
-      refugees_total_m: 36.9,          // UNHCR end-2024 (million)
-      remittances_gdp_pct: 5.13        // World Bank: world avg remittances-to-GDP
+      migrant_share_pct: 3.7,          // UN DESA 2024: share of people who are intl migrants (304M of ~8.2bn)
+      refugees_total_m: 36.8,          // UNHCR Global Trends 2024 (refugees under UNHCR's mandate, end-2024)
+      remittances_gdp_pct: 5.13        // World Bank WDI: unweighted average remittances-to-GDP across ~174 countries
     },
     moldova: {
       population_resident: 2409207,    // NBS 2024 Census, FINAL usually-resident, 8 Apr 2024
       population_2014_census: 2789205, // NBS 2014 Census, usually-resident (NBS final; for depopulation visual)
       gdp_usd_bn: 18.2,               // World Bank 2024
       gdp_mdl_bn: 342.1,              // [VERIFY] forecast-style; needs primary MDL GDP source
-      nbm_avg_rate_2024: 18.0,        // NBM average USD/MDL exchange rate 2024 (approx.)
+      nbm_avg_rate_2024: 17.7,        // NBM average USD/MDL exchange rate 2024 (~17.72; last full USD-anchored year before NBM switched to EUR ref on 2 Jan 2025)
       state_budget_revenue_mdl_bn: 66.98,  // executed 2024, per MoF
       diaspora_estimate: 864257,  // UN DESA 2024, Moldovan-born abroad (all destinations)
       // NBS's own population concepts: "de jure resident" (registered, incl. those
@@ -418,11 +420,11 @@ window.MIGRATION_DATA = {
                 "2024 edition counts 864,257 people born in Moldova who now live abroad. It is " +
                 "a strict count by country of birth, so it leaves out places that report by " +
                 "citizenship instead (Germany, the US and the UK) and quietly loses anyone who " +
-                "has since naturalised. It is worth knowing that earlier 2020 releases cited " +
-                "about 1.16 million and the 2024 edition revised that down to roughly 813,000, " +
-                "so the gap reflects a reassessment of the data rather than people actually " +
-                "coming home. Moldova's own population gap of about 0.86 million suggests the " +
-                "real diaspora sits somewhere between 1.0 and 1.2 million.",
+                "has since naturalised. On that birthplace basis the number has been climbing, " +
+                "from 812,653 in 2020 to 864,257 in 2024. Counted by nationality rather than " +
+                "birthplace the diaspora is larger still: the Prague Process puts Moldovan " +
+                "nationals abroad at about 1.16 million in 2020, and Moldova's own population gap " +
+                "of about 0.86 million points to a real diaspora of roughly 1.0 to 1.2 million.",
       indicators: [
         { term: "Diaspora (UN DESA 2024)", value: "864k", sub: "country-of-birth total · about 1.0 to 1.2M on a citizenship basis", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" },
         { term: "Share abroad", value: "≈26–32%", sub: "of all Moldovan-born people (basis-dependent)", world: null, icon: "globe", source_id: "undesa_2024", def_id: "diaspora_basis" },
@@ -452,7 +454,9 @@ window.MIGRATION_DATA = {
                 "followed by those born in Russia at around 32,500 (30.5% of the foreign-born). " +
                 "This census headcount is its own measure, separate from UNHCR's Ukrainian refugee " +
                 "count: not everyone born in Ukraine is a refugee, and not every refugee shows up " +
-                "as a usual resident.",
+                "as a usual resident. UN DESA's internationally comparable migrant stock, which " +
+                "counts the Ukrainian refugees inside the total, puts the 2024 figure higher still, " +
+                "at 188,207.",
       indicators: [
         { term: "Foreign-born residents", value: "106.7k", sub: "4.4% of usually-resident population · NBS 2024 Census", world: "3.7% global", icon: "users", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
         { term: "Ukraine-born", value: "52,400", sub: "49.1% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
@@ -469,11 +473,11 @@ window.MIGRATION_DATA = {
       gdp_series_source_id: "wb_remit_gdp",
       gdp_series: [
         { year: 2006, pct: 34.5 }, { year: 2010, pct: 22.0 }, { year: 2014, pct: 20.0 },
-        { year: 2018, pct: 16.0 }, { year: 2020, pct: 15.7 }, { year: 2022, pct: 14.0 },
+        { year: 2018, pct: 16.0 }, { year: 2020, pct: 15.8 }, { year: 2022, pct: 14.0 },
         { year: 2023, pct: 12.3 }, { year: 2024, pct: 10.5 }
       ],
       indicators: [
-        { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "≈5% LMIC avg", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
+        { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "≈5% country average", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
         { term: "Remittance inflows", value: "$1.92bn", sub: "2024", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
         { term: "vs. state budget", value: "≈54%", sub: "of 2024 executed state budget revenue (66.98bn MDL)", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
       ]

@@ -865,7 +865,7 @@
     if (mode === "remittances") {
       data = ctx.gdp_series.map(d => ({ year: d.year, total: d.pct }));
       unit = "pct";
-      refLine = { value: DATA.context.world.remittances_gdp_pct, label: "LMIC average ≈5%" };
+      refLine = { value: DATA.context.world.remittances_gdp_pct, label: "Country average ≈5%" };
       title = "Remittances as % of GDP";
     } else {
       data = modeTotals(mode);
