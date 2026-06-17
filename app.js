@@ -1396,6 +1396,54 @@
       + `</div>`).join("");
   }
 
+  // ---- Labour migration: data-driven destination bars ----------------------
+  // Reads the 2024 UN DESA diaspora breakdown (excluding the "Other" residual)
+  // so the destinations panel never drifts from the emigration map/table.
+  function renderLabourDest() {
+    const host = document.getElementById("labourDest");
+    if (!host) return;
+    const rows = (DATA.modes.emigration.years[2024] || [])
+      .filter(r => !r.residual)
+      .slice().sort((a, b) => b.value - a.value).slice(0, 8);
+    const max = d3.max(rows, r => r.value) || 1;
+    host.innerHTML = rows.map(r =>
+      `<div class="ldest-row">`
+      + `<span class="ldest-name">${esc(r.country)}</span>`
+      + `<span class="ldest-track"><span class="ldest-fill" style="width:${(r.value / max * 100).toFixed(1)}%"></span></span>`
+      + `<span class="ldest-val">${d3.format(",")(r.value)}</span>`
+      + `</div>`).join("");
+  }
+
+  // ---- Audience pathways + Simple/Advanced view ----------------------------
+  function setView(view) {
+    const adv = view === "advanced";
+    document.body.classList.toggle("view-advanced", adv);
+    document.body.classList.toggle("view-simple", !adv);
+    document.querySelectorAll(".vt-btn").forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset.view === view)));
+  }
+  function scrollToSel(sel) {
+    const el = document.querySelector(sel);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function wireAudience() {
+    document.querySelectorAll(".vt-btn").forEach(b =>
+      b.addEventListener("click", () => setView(b.dataset.view)));
+    document.querySelectorAll(".path-chip").forEach(b =>
+      b.addEventListener("click", () => {
+        switch (b.dataset.path) {
+          case "facts":   setView("simple");  scrollToSel(".glance"); break;
+          case "policy":  gotoModeYear("emigration", latestYearOf("emigration"));
+                          updateHash(); scrollToSel(".context-card"); break;
+          case "research":setView("advanced");
+                          { const d = document.getElementById("methodDialog");
+                            if (d && typeof d.showModal === "function") d.showModal(); }
+                          break;
+          case "data":    scrollToSel(".panel"); break;
+        }
+      }));
+  }
+
   // ---- Mode interpretation warning -----------------------------------------
   // Only remittances carries one for now: the per-country split is a historical
   // 2020 breakdown, distinct from the current (and accurate) headline totals.
@@ -1434,6 +1482,8 @@
   injectIcons();
   buildGlance();
   buildMilestones();
+  renderLabourDest();
+  wireAudience();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
   const stampEl = document.getElementById("dataStamp");

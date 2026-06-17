@@ -12,7 +12,7 @@
 
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="view-simple">
   <div class="wrap">
     <header>
       <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
@@ -40,6 +40,26 @@
       </div>
       <p class="modes-note">The last two views come from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year. That is a far smaller thing than the diaspora and refugee <em>stocks</em> on the left, so read them on their own terms.</p>
     </header>
+
+    <!-- ===== AUDIENCE PATHWAYS + DETAIL TOGGLE ===============================
+         Quick entry points for the six audiences, plus a Simple/Advanced
+         switch. Simple (default) keeps the page readable in 30 seconds for a
+         non-expert; Advanced reveals the provenance micro-captions and
+         methodology detail researchers want. -->
+    <div class="audience-bar">
+      <div class="pathways" role="group" aria-label="Choose a starting point">
+        <span class="pathways-lbl">Start here</span>
+        <button type="button" class="path-chip" data-path="facts">Quick facts</button>
+        <button type="button" class="path-chip" data-path="policy">Policy analysis</button>
+        <button type="button" class="path-chip" data-path="research">Research insights</button>
+        <button type="button" class="path-chip" data-path="data">Explore the data</button>
+      </div>
+      <div class="view-toggle" role="group" aria-label="Detail level">
+        <span class="vt-label">Detail</span>
+        <button type="button" class="vt-btn" data-view="simple" aria-pressed="true">Simple</button>
+        <button type="button" class="vt-btn" data-view="advanced" aria-pressed="false">Advanced</button>
+      </div>
+    </div>
 
     <!-- ===== KEY MIGRATION NUMBERS AT A GLANCE ===============================
          Headline figures up front, colour-coded by phenomenon (diaspora=blue,
@@ -104,6 +124,44 @@
     <details class="milestones">
       <summary class="section-title">What drove the trends: 1991&ndash;2026 <span class="summary-hint">(independence to the Ukraine war)</span></summary>
       <div class="milestone-strip" id="milestoneStrip"><!-- built by app.js --></div>
+    </details>
+
+    <!-- ===== LABOUR MIGRATION & THE MOLDOVAN DIASPORA ========================
+         Destinations are data-driven (UN DESA 2024). Trends, return and
+         brain-drain framing are synthesised; the limitations box is explicit
+         about what is NOT in the public data (occupations, skills, sectors). -->
+    <details class="labour adv-only">
+      <summary class="section-title">Labour migration &amp; the Moldovan diaspora <span class="summary-hint">(destinations, return, brain drain)</span></summary>
+      <div class="labour-body">
+        <p class="labour-lede">Most Moldovan emigration is, at root, <strong>labour migration</strong>: people leaving to work, often sending money home and frequently keeping one foot in both countries. The diaspora's centre of gravity has shifted from the post-Soviet east toward the European Union over the past two decades.</p>
+        <div class="labour-grid">
+          <div class="labour-col">
+            <h3>Main destinations &middot; 2024</h3>
+            <div id="labourDest"><!-- bars built from UN DESA 2024 by app.js --></div>
+            <p class="labour-note">Moldova-born stock, UN DESA 2024. Germany, the US and the UK report by citizenship, not birthplace, so they carry no Moldova-born cell here and are omitted.</p>
+          </div>
+          <div class="labour-col">
+            <h3>Trends, return &amp; brain circulation</h3>
+            <div class="labour-cards">
+              <div class="labour-card">
+                <h4>East &rarr; West shift</h4>
+                <p>Russia was the top destination through the 2010s; by 2024 Italy leads and the EU as a whole holds the majority of the recorded diaspora.</p>
+              </div>
+              <div class="labour-card">
+                <h4>Return migration is small</h4>
+                <p>Official repatriation is a thin counter-flow: <strong>332</strong> returnees in 2024, down from 1,462 in 2015 (NBS). Circular and seasonal returns are common but largely unrecorded.</p>
+              </div>
+              <div class="labour-card">
+                <h4>Brain drain vs brain circulation</h4>
+                <p><strong>Brain drain</strong> is the permanent loss of skilled and young workers; <strong>brain circulation</strong> is the more hopeful idea that migrants return with skills, capital and networks. Moldova leans toward drain: about <strong>68%</strong> of registered emigrants are under 35, concentrating the loss in working and child-bearing ages.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="labour-limits">
+          <strong>Data limitations.</strong> There is no comprehensive, regularly published public breakdown of the diaspora by <em>occupation, skill level or sector</em>. Qualitatively, Moldovans abroad are concentrated in construction, domestic and care work, agriculture, hospitality and transport, but this dashboard does not chart it for lack of an authoritative, current source. Registered NBS flows also undercount real movement, so labour-migration totals here should be read as lower bounds.
+        </div>
+      </div>
     </details>
 
     <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
