@@ -345,6 +345,9 @@ h1 {
   max-width: 18ch;
 }
 
+/* Long lists (e.g. the 37 refugee-hosting districts) scroll within the card
+   instead of stretching it; the header stays pinned. */
+.table-scroll { overflow-y: auto; max-height: 480px; }
 table { width: 100%; border-collapse: collapse; margin-top: 6px; }
 thead th {
   font-family: var(--font-mono);
@@ -355,6 +358,10 @@ thead th {
   text-align: left;
   font-weight: 500;
   padding: 8px 6px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
 }
 thead th.num { text-align: right; }
 
@@ -768,6 +775,7 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
           <span class="big" id="totalValue">—</span>
           <span class="label" id="totalLabel"></span>
         </div>
+        <div class="table-scroll">
         <table>
           <thead>
             <tr>
@@ -778,6 +786,7 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -922,7 +931,7 @@ window.MIGRATION_DATA = {
       subject: "Temporary Protection holders (Ukrainian refugees)",
       nationalTotal: 92405,
       asOf: "2026-04-27",
-      source_ids: ["unhcr", "geoboundaries"],
+      source_ids: ["unhcr_tp", "geoboundaries"],
       geometry: "geoBoundaries MDA ADM1 (CC-BY 4.0)",
       dataStatus: "OFFICIAL — UNHCR Power BI, 27 Apr 2026"
     },
@@ -1024,6 +1033,18 @@ window.MIGRATION_DATA = {
       scope: "From 2022 this population is predominantly people fleeing the war in Ukraine.",
       note: "Reported in UNHCR's terms, as refugees and people fleeing the war in Ukraine, " +
             "and not merged into general 'immigrants'."
+    },
+    unhcr_tp: {
+      label: "Temporary Protection beneficiaries by district",
+      publisher: "UNHCR data portal · Government of the Republic of Moldova",
+      url: "https://data.unhcr.org/en/country/mda",
+      indicator_code: "TP holders by raion (as of 27 Apr 2026)",
+      accessed: "2026-06-16",
+      definition: "People enrolled for Temporary Protection in Moldova, broken down by district, " +
+                  "from UNHCR Moldova's operational data portal with figures sourced from the " +
+                  "Government of the Republic of Moldova.",
+      scope: "92,405 TP holders nationally (27 Apr 2026); the district figures reconcile to that total.",
+      note: ""
     },
     geoboundaries: {
       label: "geoBoundaries: Moldova administrative boundaries (ADM1)",
@@ -1720,7 +1741,7 @@ window.MIGRATION_DATA = {
   // Moldova districts choropleth uses its own projection, framed to the geometry
   // (no manual scale tuning). Leaves room on the left for the colour legend.
   const mdaProjection = MOLDOVA
-    ? d3.geoMercator().fitExtent([[150, 16], [W - 16, H - 16]], MOLDOVA) : null;
+    ? d3.geoMercator().fitExtent([[120, 28], [W - 120, H - 22]], MOLDOVA) : null;
   const mdaPath = mdaProjection ? d3.geoPath(mdaProjection) : null;
 
   // Single zoom layer holds everything that should pan/zoom together.
@@ -2176,8 +2197,8 @@ window.MIGRATION_DATA = {
     const { tp, total } = choroModel();
     const asOf = fmtDate(tp.meta.asOf) || tp.meta.asOf || "";
     valueHead.textContent = "TP holders";
-    mapCaption.textContent = "TP holders by district · UNHCR " + asOf + " · scroll to zoom, drag to pan";
-    const srcObj = { source_ids: ["unhcr", "geoboundaries"] };
+    mapCaption.textContent = "TP holders by district · UNHCR data portal " + asOf + " · scroll to zoom, drag to pan";
+    const srcObj = { source_ids: ["unhcr_tp", "geoboundaries"] };
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
     sourceLine.textContent = citationsFor(srcObj);

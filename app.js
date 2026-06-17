@@ -107,7 +107,7 @@
   // Moldova districts choropleth uses its own projection, framed to the geometry
   // (no manual scale tuning). Leaves room on the left for the colour legend.
   const mdaProjection = MOLDOVA
-    ? d3.geoMercator().fitExtent([[150, 16], [W - 16, H - 16]], MOLDOVA) : null;
+    ? d3.geoMercator().fitExtent([[120, 28], [W - 120, H - 22]], MOLDOVA) : null;
   const mdaPath = mdaProjection ? d3.geoPath(mdaProjection) : null;
 
   // Single zoom layer holds everything that should pan/zoom together.
@@ -563,8 +563,8 @@
     const { tp, total } = choroModel();
     const asOf = fmtDate(tp.meta.asOf) || tp.meta.asOf || "";
     valueHead.textContent = "TP holders";
-    mapCaption.textContent = "TP holders by district · UNHCR " + asOf + " · scroll to zoom, drag to pan";
-    const srcObj = { source_ids: ["unhcr", "geoboundaries"] };
+    mapCaption.textContent = "TP holders by district · UNHCR data portal " + asOf + " · scroll to zoom, drag to pan";
+    const srcObj = { source_ids: ["unhcr_tp", "geoboundaries"] };
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
     sourceLine.textContent = citationsFor(srcObj);

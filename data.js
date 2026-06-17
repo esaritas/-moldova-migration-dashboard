@@ -77,7 +77,7 @@ window.MIGRATION_DATA = {
       subject: "Temporary Protection holders (Ukrainian refugees)",
       nationalTotal: 92405,
       asOf: "2026-04-27",
-      source_ids: ["unhcr", "geoboundaries"],
+      source_ids: ["unhcr_tp", "geoboundaries"],
       geometry: "geoBoundaries MDA ADM1 (CC-BY 4.0)",
       dataStatus: "OFFICIAL — UNHCR Power BI, 27 Apr 2026"
     },
@@ -179,6 +179,18 @@ window.MIGRATION_DATA = {
       scope: "From 2022 this population is predominantly people fleeing the war in Ukraine.",
       note: "Reported in UNHCR's terms, as refugees and people fleeing the war in Ukraine, " +
             "and not merged into general 'immigrants'."
+    },
+    unhcr_tp: {
+      label: "Temporary Protection beneficiaries by district",
+      publisher: "UNHCR data portal · Government of the Republic of Moldova",
+      url: "https://data.unhcr.org/en/country/mda",
+      indicator_code: "TP holders by raion (as of 27 Apr 2026)",
+      accessed: "2026-06-16",
+      definition: "People enrolled for Temporary Protection in Moldova, broken down by district, " +
+                  "from UNHCR Moldova's operational data portal with figures sourced from the " +
+                  "Government of the Republic of Moldova.",
+      scope: "92,405 TP holders nationally (27 Apr 2026); the district figures reconcile to that total.",
+      note: ""
     },
     geoboundaries: {
       label: "geoBoundaries: Moldova administrative boundaries (ADM1)",

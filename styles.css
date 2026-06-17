@@ -330,6 +330,9 @@ h1 {
   max-width: 18ch;
 }
 
+/* Long lists (e.g. the 37 refugee-hosting districts) scroll within the card
+   instead of stretching it; the header stays pinned. */
+.table-scroll { overflow-y: auto; max-height: 480px; }
 table { width: 100%; border-collapse: collapse; margin-top: 6px; }
 thead th {
   font-family: var(--font-mono);
@@ -340,6 +343,10 @@ thead th {
   text-align: left;
   font-weight: 500;
   padding: 8px 6px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
 }
 thead th.num { text-align: right; }
 
