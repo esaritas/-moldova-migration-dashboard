@@ -42,7 +42,7 @@ window.MIGRATION_DATA = {
     // "Data current as of" stamp. The pipeline overwrites `generated` on each run;
     // `updated` is a manual fallback for hand-edits. Per-series freshness lives in
     // each source's `accessed`.
-    updated: "2026-06-12",
+    updated: "2026-06-17",
     latest_year: { emigration: 2024, immigration: 2026, remittances: 2020 },
     note: "Remittances by-country is official/exact (NBM 2018 & 2020). " +
           "Immigration uses UNHCR refugee counts (to 2026). " +
@@ -142,7 +142,9 @@ window.MIGRATION_DATA = {
     { year: 2024, modes: ["immigration"],
       text: "Around 136,000 refugees from Ukraine are now living in Moldova (UNHCR)." },
     { year: 2020, modes: ["remittances"],
-      text: "Russia's share slips to third place as Israel becomes the top source (NBM, 2020)." },
+      text: "Russia's share slips to third place as Israel takes the top spot; EU countries together already account for more than a third of flows (NBM, 2020)." },
+    { year: 2022, modes: ["remittances"],
+      text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. EU sources — led by Italy, Germany, the UK and France — now account for most formal flows." },
     { year: 2024, modes: ["emigration"],
       text: "The recorded diaspora tilts toward the EU, with Italy now in the lead as the Russia-born count falls (UN DESA)." }
   ],
@@ -215,8 +217,10 @@ window.MIGRATION_DATA = {
       scope: "Excludes the Transnistria region (not under the authorities' control), so " +
              "figures are not comparable with counterpart-country statistics. They are not solely " +
              "labour remittances, and also include some salaries, pensions and other transfers. " +
-             "A full by-country breakdown was published annually only through 2020.",
-      note: "Exact official figures for 2018 and 2020."
+             "A full by-country breakdown was published annually only through 2020; from 2021 the " +
+             "breakdown lives only in NBM's interactive DBP4 database. The aggregate (all countries) " +
+             "continues to be published: ≈$1.63bn in 2023 (NBM net settlements).",
+      note: "Exact official figures for 2018 and 2020. 2023 aggregate ≈$1.63bn (NBM DBP4)."
     },
     wb_remit_gdp: {
       label: "Personal remittances received (% of GDP)",
@@ -387,9 +391,13 @@ window.MIGRATION_DATA = {
       "(5) each source defines a 'migrant' differently (UN DESA = country of birth, Eurostat = " +
       "citizenship, NBM = bank transfers, UNHCR = refugees, NBS = registered moves).",
     "A consequence of (2): by NBS registered counts, recorded immigration (about 6,600 a year) now " +
-      "exceeds recorded emigration (about 4,000 a year), not because more people arrive than leave, " +
+      "exceeds recorded emigration (about 3,500–4,000 a year), not because more people arrive than leave, " +
       "but because arrivals must register while departures rarely do. The real net flow is strongly " +
-      "outward, as the 13.6% fall in resident population shows (NBS 2024 Census)."
+      "outward, as the 13.6% fall in resident population shows (NBS 2024 Census). The NBS tables " +
+      "show only the top destination/origin countries; both totals are verified against NBS POP07300 " +
+      "(emigrants) and POP07100 (immigrants) for 2024, which include dozens of smaller-flow countries " +
+      "not listed here. Returnees (repatriates with Moldovan origin) numbered 332 in 2024, down from " +
+      "1,462 in 2015 (NBS POP07300)."
   ],
 
   // Economic context shown in the analysis panel below the map. Professional
@@ -421,29 +429,40 @@ window.MIGRATION_DATA = {
                 "a strict count by country of birth, so it leaves out places that report by " +
                 "citizenship instead (Germany, the US and the UK) and quietly loses anyone who " +
                 "has since naturalised. On that birthplace basis the number has been climbing, " +
-                "from 812,653 in 2020 to 864,257 in 2024. Counted by nationality rather than " +
-                "birthplace the diaspora is larger still: the Prague Process puts Moldovan " +
-                "nationals abroad at about 1.16 million in 2020, and Moldova's own population gap " +
-                "of about 0.86 million points to a real diaspora of roughly 1.0 to 1.2 million.",
+                "from 812,653 in 2020 to 864,257 in 2024. Eurostat's independent country-of-birth " +
+                "statistics (migr_pop3ctb) for EU member states alone confirm over 400,000 " +
+                "Moldova-born residents across Italy, Romania, France, Spain and Portugal — " +
+                "consistent with the five EU rows in this dashboard — with Germany adding " +
+                "roughly 35,000 more that UN DESA's bilateral matrix omits because Germany " +
+                "reports by citizenship. Counted by nationality rather than birthplace the diaspora " +
+                "is larger still: the Prague Process puts Moldovan nationals abroad at about " +
+                "1.16 million in 2020, and Moldova's own population gap of about 0.86 million " +
+                "points to a real diaspora of roughly 1.0 to 1.2 million.",
       indicators: [
         { term: "Diaspora (UN DESA 2024)", value: "864k", sub: "country-of-birth total · about 1.0 to 1.2M on a citizenship basis", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" },
+        { term: "EU alone (Eurostat)", value: "400k+", sub: "Moldova-born in EU27 (Eurostat migr_pop3ctb 2022) · Germany adds ~35k not in UN DESA", world: null, icon: "globe", source_id: "eurostat_migr", def_id: "diaspora_basis" },
         { term: "Share abroad", value: "≈26–32%", sub: "of all Moldovan-born people (basis-dependent)", world: null, icon: "globe", source_id: "undesa_2024", def_id: "diaspora_basis" },
         { term: "Resident population", value: "2.41M", sub: "−13.6% since 2014 (NBS 2024 Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" }
       ]
     },
     immigration: {
-      takeaway: "Since the early days of 2022, Moldova has taken in more than 141,000 Ukrainians fleeing the war, one of the highest shares anywhere in Europe at about one refugee for every 17 residents. The map shows where the people granted Temporary Protection have settled.",
+      takeaway: "Since the early days of 2022, Moldova has taken in more than 141,000 Ukrainians fleeing the war, one of the highest shares anywhere in Europe at about one refugee for every 17 residents. Roughly two in five are children. The map shows where the people granted Temporary Protection have settled.",
       headline: "When Russia launched its full-scale invasion of Ukraine in February 2022, Moldova " +
                 "found itself receiving one of the largest refugee inflows per person anywhere in " +
                 "Europe. As of 31 May 2026 UNHCR counts 141,058 Ukrainian refugees still in the " +
                 "country, with 92,405 of them enrolled in Temporary Protection (recorded 27 April " +
-                "2026 and valid through March 2027). These are UNHCR's operational figures, and they " +
-                "are a different thing from the 52,400 Ukraine-born usual residents the 2024 census " +
-                "recorded, which you can explore on the Foreign-born residents tab.",
+                "2026 and valid through March 2027). The population skews young and female: about " +
+                "38% of those in Moldova are children under 18, roughly 39% are adult women, and " +
+                "about 23% are adult men — a demographic pattern typical of conflict displacement, " +
+                "where men of military age often remain in or return to Ukraine. These are UNHCR's " +
+                "operational figures, and they are a different thing from the 52,400 Ukraine-born " +
+                "usual residents the 2024 census recorded, which you can explore on the " +
+                "Foreign-born residents tab.",
       indicators: [
         { term: "Residing (May 2026)", value: "141,058", sub: "Ukrainian refugees remaining · UNHCR 31 May 2026", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
         { term: "Temporary Protection", value: "92,405", sub: "TP enrolled 27 Apr 2026 (UNHCR); valid to Mar 2027", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
-        { term: "Per capita", value: "1 in 17", sub: "residents per refugee · 2024 Census vs UNHCR May 2026", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" }
+        { term: "Per capita", value: "1 in 17", sub: "residents per refugee · 2024 Census vs UNHCR May 2026", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" },
+        { term: "Children (under 18)", value: "~38%", sub: "of Ukrainian refugees in Moldova · adult women ~39% · adult men ~23% (UNHCR 2024)", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" }
       ]
     },
     immigration_census: {
@@ -464,11 +483,19 @@ window.MIGRATION_DATA = {
       ]
     },
     remittances: {
-      takeaway: "The money Moldovans abroad send home is worth about 10.5% of GDP, nearly double the global average and more than half the size of the state budget. This map shows where it comes from.",
-      panel_note: "Country breakdown: NBM 2020; economic indicators: World Bank 2024.",
+      takeaway: "The money Moldovans abroad send home is worth about 10.5% of GDP, nearly double the global average and more than half the size of the state budget. The map shows where it came from in 2020; since 2022 Russia's share has effectively collapsed.",
+      panel_note: "Country breakdown: NBM 2020 (last year with a published by-country breakdown). NBM aggregate net settlements 2023: ≈$1.63bn. World Bank broader BPM6 measure: $1.92bn (2024). Economic indicators: World Bank 2024.",
       headline: "Money sent home is one of the pillars of the economy. Even after sliding from its " +
-                "2006 peak of 34.5%, it still amounts to about 10.5% of GDP, roughly double the " +
-                "world average.",
+                "2006 peak of 34.5%, it still amounts to about 10.5% of GDP, roughly double the world " +
+                "average. The geography of those flows has also shifted dramatically. Russia was the " +
+                "single largest source from at least 2015 through 2019, contributing more than a " +
+                "quarter of all formal transfers. By 2020 Israel had overtaken it. Then, after " +
+                "Western financial sanctions on Russia in 2022, transfers from Russia through Moldovan " +
+                "banks essentially stopped — their share fell from around 14% in 2020 to near zero. " +
+                "EU member states, led by Italy, Germany, the United Kingdom and France, now account " +
+                "for the large majority of formal inflows. The NBM's total net settlements (a narrower " +
+                "bank-only measure) came to about $1.63bn in 2023; the World Bank's broader BPM6 " +
+                "series puts total remittances at $1.92bn in 2024.",
       // Remittances-to-GDP over time. Recent years exact; earlier approximate.
       gdp_series_source_id: "wb_remit_gdp",
       gdp_series: [
@@ -478,7 +505,8 @@ window.MIGRATION_DATA = {
       ],
       indicators: [
         { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "≈5% country average", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
-        { term: "Remittance inflows", value: "$1.92bn", sub: "2024", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
+        { term: "Remittance inflows", value: "$1.92bn", sub: "2024 (World Bank BPM6); NBM net settlements 2023: ≈$1.63bn", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
+        { term: "Russia's share", value: "14% → near zero", sub: "2020 to post-2022; EU + Israel now dominate formal flows (NBM)", world: null, icon: "route", source_id: "nbm_transfers", def_id: "net_settlements" },
         { term: "vs. state budget", value: "≈54%", sub: "of 2024 executed state budget revenue (66.98bn MDL)", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
       ]
     },
