@@ -951,8 +951,8 @@ body.view-simple .scope-note { display: none !important; }
 /* labour destination mini-bars (built by app.js) */
 .ldest-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
 .ldest-name { flex: 0 0 78px; font-size: 12px; color: var(--ink-soft); text-align: right; }
-.ldest-track { flex: 1; background: var(--bg); border-radius: 5px; height: 20px; overflow: hidden; }
-.ldest-fill { height: 100%; background: var(--c-diaspora); border-radius: 5px; transition: width .5s ease; }
+.ldest-track { flex: 1; background: color-mix(in srgb, var(--c-diaspora) 12%, var(--surface)); border: 1px solid var(--line); border-radius: 5px; height: 22px; overflow: hidden; }
+.ldest-fill { height: 100%; background: var(--c-diaspora); border-radius: 5px 0 0 5px; transition: width .5s ease; }
 .ldest-val { flex: 0 0 64px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); }
 
 @media (max-width: 720px) {
@@ -1058,23 +1058,6 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
 .mode-pill-dashed { border-style: dashed; background: transparent; }
 .jit-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .jit-link:hover { opacity: .8; }
-
-/* ---- #3 Money motif: dashed rail, no particles, hollow "coin" nodes ------ */
-.flow.money .flow-rail { stroke-dasharray: 7 5; }
-.flow.money .flow-stream { display: none; }
-.node.money { fill: var(--surface); fill-opacity: 1; stroke: var(--accent); stroke-width: 2px; }
-.bubble-label.money { fill: var(--ink); stroke: rgba(255,255,255,.8); stroke-width: 2.6px; }
-
-/* ---- #2 Ranked within-country breakdown (foreign-born residents) --------- */
-.bars-title { font-family: var(--font-display); font-weight: 600; font-size: 16px; fill: var(--ink); }
-.bars-sub { font-family: var(--font-body); font-size: 11.5px; fill: var(--ink-soft); }
-.bars-empty { font-family: var(--font-body); font-size: 14px; fill: var(--ink-faint); }
-.bar { cursor: pointer; transition: opacity .15s ease; }
-.bar.dim { opacity: .3; }
-.bar-name { font-family: var(--font-body); font-size: 12.5px; fill: var(--ink); }
-.bar-rect { transition: width .5s ease; }
-.bar.hot .bar-rect { filter: brightness(.92); }
-.bar-val { font-family: var(--font-mono); font-size: 12px; fill: var(--ink-soft); dominant-baseline: middle; }
 
 /* ---- #5 Scrubbable timeline: handle, readout, speed ---------------------- */
 .track { touch-action: none; cursor: pointer; border-radius: 6px; }
