@@ -103,6 +103,10 @@
   const stopsEl    = document.getElementById("stops");
   const trackFill  = document.getElementById("trackFill");
   const playBtn    = document.getElementById("playBtn");
+  const trackEl    = document.getElementById("track");
+  const handleEl   = document.getElementById("trackHandle");
+  const readoutEl  = document.getElementById("handleReadout");
+  let speedFactor  = 1;   // 0.5× / 1× / 2× playback
 
   // ---- Projection (larger canvas) ------------------------------------------
   const W = 820, H = 540;
@@ -126,6 +130,7 @@
   const gDistricts = gZoom.append("g").attr("class", "districts");   // Moldova choropleth
   const gLegend    = svg.append("g").attr("class", "size-legend");   // fixed, not zoomed
   const gChoroLegend = svg.append("g").attr("class", "choro-legend"); // fixed, not zoomed
+  const gBars      = svg.append("g").attr("class", "bars");          // ranked breakdown (within-country); fixed, not zoomed
 
   // Tooltip lives over the map card (created once).
   const tip = document.createElement("div");
@@ -167,7 +172,9 @@
   // Frame the map for the active mode: the world flow-modes open on Europe; the
   // districts choropleth (immigration) is framed to its own fitExtent (identity).
   function applyMapFraming() {
-    if (mode === "immigration" && MOLDOVA)
+    // The choropleth (refugees) and the ranked breakdown (foreign-born) are not
+    // pannable world maps, so reset to identity; flow modes open on Europe.
+    if (mode === "immigration_census" || (mode === "immigration" && MOLDOVA))
       svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
     else
       europeView();
@@ -317,9 +324,13 @@
     // "Refugees from Ukraine" swaps the world flow-map for a Moldova districts
     // choropleth of Temporary Protection holders (see renderChoropleth).
     if (mode === "immigration" && MOLDOVA) { renderChoropleth(); return; }
+    // "Foreign-born residents" is an inside-the-country stock; show it as a
+    // ranked within-country breakdown rather than a cross-border flow map.
+    if (mode === "immigration_census") { renderRankedBreakdown(); return; }
     showWorldLayers();
 
     const m = DATA.modes[mode];
+    const isMoney = m.unit === "usd_million";   // money gets a distinct motif
     // Rows without a map coordinate (e.g. the emigration "Other destinations"
     // residual) belong in the table only — never drawn as a bubble.
     const rows = currentRows().filter(d => DATA.coords[d.country]);
@@ -347,6 +358,8 @@
       });
 
     // Each flow = a group: a gradient "rail" (width = value) + a particle stream.
+    // Money uses a distinct motif: dashed rail + no flowing particles (people
+    // move; dollars settle), so the two quantities never read as the same thing.
     const flows = gArcs.selectAll("g.flow").data(rows, d => d.country).join(
       enter => {
         const g = enter.append("g").attr("class", "flow").each(function (d) { attachHover(this, d.country); });
@@ -356,13 +369,14 @@
       },
       update => update, exit => exit.remove()
     );
+    flows.classed("money", isMoney);
     flows.select(".flow-rail")
       .attr("d", pathFor)
       .attr("stroke", d => "url(#fg-" + slug(d.country) + ")")
       .attr("stroke-width", 2.5);   // constant — magnitude shown by bubble only
     flows.select(".flow-stream")
       .attr("d", pathFor)
-      .call(animateStream, reduceMotion);
+      .call(animateStream, reduceMotion || isMoney);   // money: no particle motion
 
     gNodes.selectAll("circle.node").data(rows, d => d.country).join(
       enter => enter.append("circle").attr("class", "node")
@@ -374,6 +388,10 @@
         .attr("cy", d => projection(coordOf(d.country))[1]),
       exit => exit.remove()
     );
+    // Money nodes read as hollow "coins" (distinct from solid people dots);
+    // their labels switch to dark ink so they stay legible on the light fill.
+    gNodes.selectAll("circle.node").classed("money", isMoney);
+    gNodes.selectAll("text.bubble-label").classed("money", isMoney);
 
     // Figures sitting on each bubble.
     gNodes.selectAll("text.bubble-label").data(rows, d => d.country).join(
@@ -412,11 +430,22 @@
     gCountries.style("display", null); gArcs.style("display", null);
     gNodes.style("display", null); gLegend.style("display", null);
     gDistricts.style("display", "none"); gChoroLegend.style("display", "none");
+    gBars.style("display", "none");
   }
   function showChoroLayers() {
     gCountries.style("display", "none"); gArcs.style("display", "none");
     gNodes.style("display", "none"); gLegend.style("display", "none");
     gDistricts.style("display", null); gChoroLegend.style("display", null);
+    gBars.style("display", "none");
+  }
+  // "Inside the country" view (foreign-born residents): a world flow-map would
+  // de-emphasise the very thing the view is about, so we render a clean ranked
+  // within-country breakdown instead (design brief, refinement #2).
+  function showBarsLayers() {
+    gCountries.style("display", "none"); gArcs.style("display", "none");
+    gNodes.style("display", "none"); gLegend.style("display", "none");
+    gDistricts.style("display", "none"); gChoroLegend.style("display", "none");
+    gBars.style("display", null);
   }
 
   // Build the district lookup + colour scale once (data is static).
@@ -520,6 +549,59 @@
     g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", yNd + sw - 4).text("no data");
   }
 
+  // ---- Ranked within-country breakdown (foreign-born residents) ------------
+  // A clean horizontal bar ranking drawn inside the map SVG; the linked table
+  // beside it keeps the exact figures. No world map, no zoom — this is an
+  // "inside Moldova" stock, by country of birth.
+  function renderRankedBreakdown() {
+    showBarsLayers();
+    const m = DATA.modes[mode];
+    const accent = ACCENTS[mode];
+    const rows = currentRows();              // already sorted desc
+    gBars.selectAll("*").remove();
+
+    const padL = 150, padR = 96, padT = 70, padB = 26;
+    gBars.append("text").attr("class", "bars-title")
+      .attr("x", padL).attr("y", 34)
+      .text("Foreign-born residents, by country of birth");
+    gBars.append("text").attr("class", "bars-sub")
+      .attr("x", padL).attr("y", 52)
+      .text("People living in Moldova who were born elsewhere — a within-country stock");
+
+    if (!rows.length) {
+      gBars.append("text").attr("class", "bars-empty")
+        .attr("x", W / 2).attr("y", H / 2).attr("text-anchor", "middle")
+        .text("No data for " + year);
+      svg.attr("aria-label", `Foreign-born residents, ${year}: no data.`);
+      return;
+    }
+
+    const max = d3.max(rows, d => d.value) || 1;
+    const n = rows.length;
+    const band = Math.min(48, (H - padT - padB) / n);
+    const barH = Math.min(26, band * 0.62);
+    const x = d3.scaleLinear().domain([0, max]).range([padL, W - padR]);
+
+    const g = gBars.selectAll("g.bar").data(rows, d => d.country).join("g")
+      .attr("class", "bar")
+      .attr("transform", (d, i) => `translate(0,${padT + i * band})`)
+      .each(function (d) { attachHover(this, d.country); });
+    g.append("text").attr("class", "bar-name")
+      .attr("x", padL - 12).attr("y", barH / 2 + 4).attr("text-anchor", "end")
+      .text(d => d.country);
+    g.append("rect").attr("class", "bar-rect")
+      .attr("x", padL).attr("y", 0).attr("height", barH).attr("rx", 4)
+      .attr("fill", accent).attr("width", d => Math.max(2, x(d.value) - padL));
+    g.append("text").attr("class", "bar-val")
+      .attr("x", d => x(d.value) + 8).attr("y", barH / 2 + 4)
+      .text(d => fmt(d.value, m.unit));
+
+    const top = rows.slice(0, 3).map(r => `${r.country}: ${fmt(r.value, m.unit)}`).join(", ");
+    svg.attr("aria-label",
+      `Ranked breakdown of foreign-born residents in Moldova by country of birth, ${year}. ` +
+      `Top: ${top}. Full figures are in the table beside the chart.`);
+  }
+
   // Graduated-circle size legend (fixed corner, like the Migration Data Portal).
   function renderLegend(m) {
     const maxV = currentBubble.domain()[1] || 1;
@@ -609,7 +691,10 @@
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
-    mapCaption.textContent = (m.vintage ? m.vintage + " · " : "") + "scroll to zoom, drag to pan";
+    mapCaption.textContent = (m.vintage ? m.vintage + " · " : "")
+      + (mode === "immigration_census" ? "within Moldova, by country of birth"
+         : m.unit === "usd_million" ? "money flows · drag to pan, scroll to zoom"
+         : "scroll to zoom, drag to pan");
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(m); mapSrc.title = citationsFor(m); }
     sourceLine.textContent = citationsFor(m);
@@ -664,6 +749,8 @@
     el.addEventListener("mouseleave", () => { clearHighlight(); hideTip(); });
   }
   function highlight(country) {
+    // Ranked-breakdown bars (foreign-born view) light their own bar + table row.
+    gBars.selectAll("g.bar").classed("hot", d => d.country === country).classed("dim", d => d.country !== country);
     // A row with no map coordinate (e.g. "Other destinations") only lights its
     // table row — don't dim every flow to highlight a bubble that isn't drawn.
     if (!DATA.coords[country]) {
@@ -679,6 +766,7 @@
     gArcs.selectAll("g.flow").classed("hot", false).classed("dim", false);
     gNodes.selectAll("circle.node").classed("dim", false);
     gNodes.selectAll("text.bubble-label").classed("dim", false);
+    gBars.selectAll("g.bar").classed("hot", false).classed("dim", false);
     tableBody.selectAll("tr").classed("hot", false);
   }
   function showTip(country) {
@@ -750,9 +838,23 @@
     if (note) { el.textContent = `${year}: ${note.text}`; el.hidden = false; }
     else { el.textContent = ""; el.hidden = true; }
   }
-  function updateTrackFill() {
+  function trackFraction() {
     const ys = years(), i = ys.indexOf(year);
-    trackFill.style.width = (ys.length > 1 ? (i / (ys.length - 1)) * 100 : 0) + "%";
+    return ys.length > 1 ? i / (ys.length - 1) : 0;
+  }
+  function updateTrackFill() {
+    const f = trackFraction();
+    trackFill.style.width = (f * 100) + "%";
+    if (handleEl) handleEl.style.left = (f * 100) + "%";
+    if (readoutEl) readoutEl.textContent = year;
+    if (trackEl) {
+      const ys = years();
+      trackEl.setAttribute("aria-valuemin", ys[0] || 0);
+      trackEl.setAttribute("aria-valuemax", ys[ys.length - 1] || 0);
+      trackEl.setAttribute("aria-valuenow", year || 0);
+      const has = !!DATA.modes[mode].years[year];
+      trackEl.setAttribute("aria-valuetext", year + (has ? "" : " (no data for this view)"));
+    }
   }
   function setYear(y) {
     year = y;
@@ -764,6 +866,23 @@
     updateTrackFill(); renderMap(); renderTable(); updateContextHighlight();
     updateTimelineNote(); updateHash();
   }
+  // Step to the previous/next year that actually has data for this mode.
+  function stepYear(dir) {
+    const ys = modeYears(); if (!ys.length) return;
+    let i = ys.indexOf(nearestDataYear(year));
+    if (i < 0) i = 0;
+    i = Math.max(0, Math.min(ys.length - 1, i + dir));
+    setYear(ys[i]);
+  }
+  // Map a pointer x to the nearest data-bearing year and select it.
+  function scrubToClientX(clientX) {
+    if (!trackEl) return;
+    const r = trackEl.getBoundingClientRect();
+    const f = Math.max(0, Math.min(1, (clientX - r.left) / (r.width || 1)));
+    const ys = years();
+    const target = ys[Math.round(f * (ys.length - 1))];
+    setYear(nearestDataYear(target));   // snap to nearest year with data
+  }
 
   function togglePlay() { timer ? stopPlay() : startPlay(); }
   function startPlay() {
@@ -771,11 +890,12 @@
       '<rect x="3" y="2.5" width="2.6" height="9" fill="currentColor"/><rect x="8.4" y="2.5" width="2.6" height="9" fill="currentColor"/>';
     const lbl = playBtn.querySelector(".play-label");
     if (lbl) lbl.textContent = "Pause";
+    if (timer) clearInterval(timer);
     timer = setInterval(() => {
       const ys = modeYears(); if (!ys.length) return;
       const i = ys.indexOf(year);
       setYear(ys[i < 0 ? 0 : (i + 1) % ys.length]);
-    }, 1600);
+    }, Math.round(1600 / speedFactor));
   }
   function stopPlay() {
     if (timer) { clearInterval(timer); timer = null; }
@@ -784,6 +904,35 @@
     if (lbl) lbl.textContent = "Play timeline";
   }
   playBtn.addEventListener("click", togglePlay);
+
+  // Scrubber: drag the handle/track, arrow-key the year, and pick a speed.
+  // Any manual interaction pauses playback (it should feel hand-driven).
+  if (trackEl) {
+    let dragging = false;
+    const onMove = e => { if (dragging) scrubToClientX(e.clientX); };
+    trackEl.addEventListener("pointerdown", e => {
+      if (e.target.closest(".stop")) return;   // year-pin buttons handle themselves
+      dragging = true; stopPlay();
+      try { trackEl.setPointerCapture(e.pointerId); } catch (_) {}
+      scrubToClientX(e.clientX);
+    });
+    trackEl.addEventListener("pointermove", onMove);
+    trackEl.addEventListener("pointerup",   () => { dragging = false; });
+    trackEl.addEventListener("pointercancel", () => { dragging = false; });
+    trackEl.addEventListener("keydown", e => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown") { stopPlay(); stepYear(-1); e.preventDefault(); }
+      else if (e.key === "ArrowRight" || e.key === "ArrowUp") { stopPlay(); stepYear(1); e.preventDefault(); }
+      else if (e.key === "Home") { stopPlay(); const ys = modeYears(); if (ys.length) setYear(ys[0]); e.preventDefault(); }
+      else if (e.key === "End")  { stopPlay(); const ys = modeYears(); if (ys.length) setYear(ys[ys.length - 1]); e.preventDefault(); }
+    });
+  }
+  document.querySelectorAll(".speed-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      speedFactor = parseFloat(b.dataset.speed) || 1;
+      document.querySelectorAll(".speed-btn").forEach(o => o.classList.toggle("is-on", o === b));
+      if (timer) startPlay();   // re-arm at the new speed
+    });
+  });
 
   // ---- Mode switching ------------------------------------------------------
   function nearestDataYear(y) {
@@ -1426,25 +1575,10 @@
     const el = document.querySelector(sel);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  function wireAudience() {
-    document.querySelectorAll(".vt-btn").forEach(b =>
-      b.addEventListener("click", () => setView(b.dataset.view)));
-    document.querySelectorAll(".path-chip").forEach(b =>
-      b.addEventListener("click", () => {
-        switch (b.dataset.path) {
-          case "facts":   setView("simple");  scrollToSel("#ch-glance"); break;
-          case "policy":  gotoModeYear("emigration", latestYearOf("emigration"));
-                          updateHash(); scrollToSel("#ch-explore"); break;
-          case "research":setView("advanced");
-                          { const d = document.getElementById("methodDialog");
-                            if (d && typeof d.showModal === "function") d.showModal(); }
-                          break;
-          case "data":    scrollToSel("#ch-explore"); break;
-        }
-      }));
-  }
-
   // ---- Story map: nav rail, scroll progress, reveal-on-scroll --------------
+  // Single primary control surface is the mode switcher; the detail-density
+  // toggle is demoted to a quiet, persistent control at the foot of the nav
+  // rail (design brief, refinement #1) rather than a hero element.
   function initStory() {
     const chapters = Array.from(document.querySelectorAll(".chapter[data-nav]"));
     const nav = document.getElementById("storyNav");
@@ -1454,6 +1588,15 @@
         + `<span class="dot"></span><span class="dot-label">${esc(c.dataset.nav)}</span></button>`).join("");
       nav.querySelectorAll(".story-dot").forEach(b =>
         b.addEventListener("click", () => scrollToSel(b.dataset.target)));
+      // Quiet Simple/Advanced detail toggle, persistent in the rail.
+      nav.insertAdjacentHTML("beforeend",
+        `<div class="nav-view" role="group" aria-label="Detail level">`
+        + `<span class="nav-view-lbl">Detail</span>`
+        + `<button type="button" class="vt-btn" data-view="simple" aria-pressed="true">Simple</button>`
+        + `<button type="button" class="vt-btn" data-view="advanced" aria-pressed="false">Advanced</button>`
+        + `</div>`);
+      nav.querySelectorAll(".vt-btn").forEach(b =>
+        b.addEventListener("click", () => setView(b.dataset.view)));
     }
 
     const supportsIO = "IntersectionObserver" in window;
@@ -1537,7 +1680,6 @@
   buildGlance();
   buildMilestones();
   renderLabourDest();
-  wireAudience();
   initStory();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";

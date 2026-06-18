@@ -25,26 +25,10 @@
       <header class="hero reveal">
         <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
         <h1>Moldova in Motion</h1>
-        <p class="story-subhead">Roughly one in four people born in Moldova now live somewhere else, yet their money, their families and the crises they pass through still tie them to home.</p>
-        <p class="lede">This is the story of where Moldovans go, who comes to Moldova, and how much money makes its way back &mdash; told in six short chapters. Scroll to follow it, or jump to any chapter using the dots on the right.</p>
+        <p class="story-subhead">Roughly one in four people born in Moldova now live somewhere else, yet their money, their families and the crises they pass through still tie them home.</p>
+        <p class="lede">Six short chapters on where Moldovans go, who comes to Moldova, and how much money makes its way back. Scroll to follow, or use the dots on the right.</p>
         <p class="scope-note" id="scopeNote"></p>
       </header>
-
-      <!-- Audience pathways + Simple/Advanced detail toggle -->
-      <div class="audience-bar reveal">
-        <div class="pathways" role="group" aria-label="Choose a starting point">
-          <span class="pathways-lbl">Start here</span>
-          <button type="button" class="path-chip" data-path="facts">Quick facts</button>
-          <button type="button" class="path-chip" data-path="policy">Policy analysis</button>
-          <button type="button" class="path-chip" data-path="research">Research insights</button>
-          <button type="button" class="path-chip" data-path="data">Explore the data</button>
-        </div>
-        <div class="view-toggle" role="group" aria-label="Detail level">
-          <span class="vt-label">Detail</span>
-          <button type="button" class="vt-btn" data-view="simple" aria-pressed="true">Simple</button>
-          <button type="button" class="vt-btn" data-view="advanced" aria-pressed="false">Advanced</button>
-        </div>
-      </div>
 
       <p class="scroll-cue reveal" aria-hidden="true">Scroll to begin <span class="scroll-cue-arrow">&darr;</span></p>
     </section>
@@ -113,23 +97,38 @@
       </div>
       <p class="chapter-intro reveal">Switch between the views below to see who leaves, who arrives, who is hosted, and how the money flows. Press play on the timeline to watch each story change over the years.</p>
 
-      <!-- Mode toggle: plain-language labels for a general audience -->
+      <!-- Grouped segmented control: taxonomy lives in the grouping + one quiet
+           label per group, not in per-button badges. The administrative NBS
+           register sits in its own dashed group to signal lower confidence. -->
       <div class="modes reveal" role="group" aria-label="Choose what to show">
-        <button class="mode-btn" data-mode="emigration"  aria-pressed="true">
-          <span class="ico"></span>Leaving Moldova<span class="mode-badge">STOCK</span></button>
-        <button class="mode-btn" data-mode="immigration" aria-pressed="false">
-          <span class="ico"></span>Refugees from Ukraine<span class="mode-badge">REFUGEE-HOSTING</span></button>
-        <button class="mode-btn" data-mode="immigration_census" aria-pressed="false">
-          <span class="ico"></span>Foreign-born residents<span class="mode-badge">STOCK</span></button>
-        <button class="mode-btn" data-mode="remittances" aria-pressed="false">
-          <span class="ico"></span>Money sent home<span class="mode-badge">MONEY-PROXY</span></button>
-        <span class="mode-sep" aria-hidden="true"></span>
-        <button class="mode-btn mode-btn-nbs" data-mode="emigration_flow" aria-pressed="false">
-          <span class="ico"></span>Emigrants / year<span class="mode-badge">REGISTERED-FLOW</span></button>
-        <button class="mode-btn mode-btn-nbs" data-mode="immigration_flow" aria-pressed="false">
-          <span class="ico"></span>Immigrants / year<span class="mode-badge">REGISTERED-FLOW</span></button>
+        <div class="mode-group">
+          <span class="mode-group-label">Who's abroad <span class="kind">stock</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="emigration" aria-pressed="true"><span class="ico"></span>Leaving Moldova</button>
+          </div>
+        </div>
+        <div class="mode-group">
+          <span class="mode-group-label">Who's here <span class="kind">stock</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="immigration" aria-pressed="false"><span class="ico"></span>Refugees from Ukraine</button>
+            <button class="mode-btn" data-mode="immigration_census" aria-pressed="false"><span class="ico"></span>Foreign-born residents</button>
+          </div>
+        </div>
+        <div class="mode-group">
+          <span class="mode-group-label">Money <span class="kind">bank-transfer proxy</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="remittances" aria-pressed="false"><span class="ico"></span>Money sent home</button>
+          </div>
+        </div>
+        <div class="mode-group mode-group-admin">
+          <span class="mode-group-label">Registered flows <span class="kind">NBS, per year</span></span>
+          <div class="mode-pill mode-pill-dashed">
+            <button class="mode-btn mode-btn-nbs" data-mode="emigration_flow" aria-pressed="false"><span class="ico"></span>Emigrants / year</button>
+            <button class="mode-btn mode-btn-nbs" data-mode="immigration_flow" aria-pressed="false"><span class="ico"></span>Immigrants / year</button>
+          </div>
+        </div>
       </div>
-      <p class="modes-note">The last two views come from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year. That is a far smaller thing than the diaspora and refugee <em>stocks</em> on the left, so read them on their own terms.</p>
+      <p class="modes-note">The dashed group comes from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year, a far smaller thing than the diaspora and refugee stocks. <a href="#ch-concepts" class="jit-link">What's a stock vs a flow?</a></p>
 
       <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
       <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
@@ -177,16 +176,26 @@
         </div>
       </div>
 
-      <!-- Timeline -->
+      <!-- Timeline: a genuine scrubber — draggable handle, live year readout,
+           arrow-key support, and a speed control; any manual move pauses play. -->
       <div class="card timeline-card">
         <button class="play" id="playBtn" aria-label="Play through years" title="Play">
           <svg width="14" height="14" viewBox="0 0 14 14" id="playIcon"><path d="M3 2 L12 7 L3 12 Z" fill="currentColor"/></svg>
           <span class="play-label">Play timeline</span>
         </button>
-        <div class="track">
+        <div class="track" id="track" role="slider" tabindex="0"
+             aria-label="Year" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="">
           <div class="track-line"></div>
           <div class="track-fill" id="trackFill"></div>
           <div class="stops" id="stops"></div>
+          <div class="track-handle" id="trackHandle" aria-hidden="true">
+            <span class="handle-readout" id="handleReadout"></span>
+          </div>
+        </div>
+        <div class="speed-ctrl" role="group" aria-label="Playback speed">
+          <button type="button" class="speed-btn" data-speed="0.5">0.5&times;</button>
+          <button type="button" class="speed-btn is-on" data-speed="1">1&times;</button>
+          <button type="button" class="speed-btn" data-speed="2">2&times;</button>
         </div>
       </div>
       <p class="timeline-note" id="timelineNote" aria-live="polite" hidden></p>
