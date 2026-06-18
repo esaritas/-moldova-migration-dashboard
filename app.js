@@ -1480,21 +1480,13 @@
   }
 
   // ---- Audience pathways + Simple/Advanced view ----------------------------
-  function setView(view) {
-    const adv = view === "advanced";
-    document.body.classList.toggle("view-advanced", adv);
-    document.body.classList.toggle("view-simple", !adv);
-    document.querySelectorAll(".vt-btn").forEach(b =>
-      b.setAttribute("aria-pressed", String(b.dataset.view === view)));
-  }
   function scrollToSel(sel) {
     const el = document.querySelector(sel);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   // ---- Story map: nav rail, scroll progress, reveal-on-scroll --------------
-  // Single primary control surface is the mode switcher; the detail-density
-  // toggle is demoted to a quiet, persistent control at the foot of the nav
-  // rail (design brief, refinement #1) rather than a hero element.
+  // The mode switcher is the single primary control surface; the nav rail just
+  // tracks chapters and offers quick jumps.
   function initStory() {
     const chapters = Array.from(document.querySelectorAll(".chapter[data-nav]"));
     const nav = document.getElementById("storyNav");
@@ -1504,15 +1496,6 @@
         + `<span class="dot"></span><span class="dot-label">${esc(c.dataset.nav)}</span></button>`).join("");
       nav.querySelectorAll(".story-dot").forEach(b =>
         b.addEventListener("click", () => scrollToSel(b.dataset.target)));
-      // Quiet Simple/Advanced detail toggle, persistent in the rail.
-      nav.insertAdjacentHTML("beforeend",
-        `<div class="nav-view" role="group" aria-label="Detail level">`
-        + `<span class="nav-view-lbl">Detail</span>`
-        + `<button type="button" class="vt-btn" data-view="simple" aria-pressed="true">Simple</button>`
-        + `<button type="button" class="vt-btn" data-view="advanced" aria-pressed="false">Advanced</button>`
-        + `</div>`);
-      nav.querySelectorAll(".vt-btn").forEach(b =>
-        b.addEventListener("click", () => setView(b.dataset.view)));
     }
 
     const supportsIO = "IntersectionObserver" in window;
