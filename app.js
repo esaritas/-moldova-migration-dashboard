@@ -14,6 +14,9 @@
   // dashboard-wide colour logic (diaspora=blue, refugees=orange, pop=green,
   // remittances=purple).
   const TP_SCALE = ["#FBE9D6", "#F6CFA1", "#EDA85F", "#DD8330", "#B05E12"];
+  // Sequential greens for the population choropleth — population/foreign-born =
+  // green in the same colour logic.
+  const POP_SCALE = ["#E1EFE8", "#B6DBC8", "#7FC0A1", "#46A079", "#1F7A55"];
   const NO_DATA_FILL = "#EFEDE7";
   // Normalize a district name for joining: strip diacritics + admin prefixes, lowercase.
   function normName(s) {
@@ -58,7 +61,8 @@
     immigration_census: "#2E8B6B",  // foreign-born residents — green
     remittances: "#6E4FA3",         // remittances — purple
     emigration_flow: "#5C7FA8",     // registered emigration — muted blue
-    immigration_flow: "#5E8C76"     // registered immigration — muted green
+    immigration_flow: "#5E8C76",    // registered immigration — muted green
+    population: "#2E8B6B"           // resident population — green (population family)
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
@@ -66,7 +70,8 @@
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     emigration_flow: "Registered emigrants per year (NBS)",
-    immigration_flow: "Registered immigrants per year (NBS)"
+    immigration_flow: "Registered immigrants per year (NBS)",
+    population: "Resident population, by census year (NBS)"
   };
 
   // Hand-built inline icons (24x24, stroke = currentColor). No dependency.
@@ -90,7 +95,29 @@
   const MODE_ICON = {
     emigration: "depart", immigration: "tent", remittances: "banknote",
     immigration_census: "users",
-    emigration_flow: "depart", immigration_flow: "arrive"
+    emigration_flow: "depart", immigration_flow: "arrive",
+    population: "landmark"
+  };
+
+  // Per-mode choropleth configuration. Both district maps (refugees + resident
+  // population) share the same machinery (choroModel / renderChoropleth /
+  // renderDistrictTable / tip + legend); only the data key, value field, colour
+  // ramp and labels differ. Add a district map by adding an entry here.
+  const CHORO = {
+    immigration: {
+      dataKey: "tp_choropleth", valueKey: "tpHolders", scale: () => TP_SCALE,
+      legendTitle: "TP holders", valueWord: "TP holders",
+      mapCaptionLead: "TP holders by district · UNHCR data portal ",
+      totalSuffix: asOf => `TP holders · UNHCR ${asOf} (official)`,
+      pctDecimals: 0
+    },
+    population: {
+      dataKey: "population_choropleth", valueKey: "population", scale: () => POP_SCALE,
+      legendTitle: "Residents", valueWord: "residents",
+      mapCaptionLead: "Resident population by district · NBS Census ",
+      totalSuffix: asOf => `usually-resident · NBS Census ${asOf} (official)`,
+      pctDecimals: 1
+    }
   };
 
   const svg        = d3.select("#map");
@@ -171,7 +198,7 @@
   // Frame the map for the active mode: the world flow-modes open on Europe; the
   // districts choropleth (immigration) is framed to its own fitExtent (identity).
   function applyMapFraming() {
-    if (mode === "immigration" && MOLDOVA)
+    if (CHORO[mode] && MOLDOVA)
       svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
     else
       europeView();
@@ -318,9 +345,9 @@
 
   // ---- Renderers -----------------------------------------------------------
   function renderMap() {
-    // "Refugees from Ukraine" swaps the world flow-map for a Moldova districts
-    // choropleth of Temporary Protection holders (see renderChoropleth).
-    if (mode === "immigration" && MOLDOVA) { renderChoropleth(); return; }
+    // District-choropleth modes (refugees, resident population) swap the world
+    // flow-map for a Moldova districts choropleth (see renderChoropleth).
+    if (CHORO[mode] && MOLDOVA) { renderChoropleth(CHORO[mode]); return; }
     showWorldLayers();
 
     const m = DATA.modes[mode];
@@ -423,26 +450,28 @@
     gDistricts.style("display", null); gChoroLegend.style("display", null);
   }
 
-  // Build the district lookup + colour scale once (data is static).
-  let _choro = null;
-  function choroModel() {
-    if (_choro) return _choro;
-    const tp = DATA.tp_choropleth;
+  // Build the district lookup + colour scale once per config (data is static).
+  const _choroCache = {};
+  function choroModel(cfg) {
+    if (_choroCache[cfg.dataKey]) return _choroCache[cfg.dataKey];
+    const src = DATA[cfg.dataKey];
+    const vk = cfg.valueKey;
     const byName = new Map();
-    tp.districts.forEach(d => byName.set(d.match, d));
-    const vals = tp.districts.map(d => d.tpHolders).filter(v => v != null);
+    src.districts.forEach(d => byName.set(d.match, d));
+    const vals = src.districts.map(d => d[vk]).filter(v => v != null);
     const maxV = d3.max(vals) || 1, minV = d3.min(vals) || 0;
-    // Quantile (even-count bins): the split is heavily skewed by Chișinău, so a
-    // linear scale would flatten every other district into one class (spec §7).
-    const color = d3.scaleQuantile().domain(vals).range(TP_SCALE);
-    const total = tp.meta.nationalTotal || d3.sum(vals);
-    _choro = { tp, byName, minV, maxV, color, total };
-    return _choro;
+    // Quantile (even-count bins): values are heavily skewed by Chișinău, so a
+    // linear scale would flatten every other district into one class.
+    const color = d3.scaleQuantile().domain(vals).range(cfg.scale());
+    const total = src.meta.nationalTotal || d3.sum(vals);
+    return (_choroCache[cfg.dataKey] = { src, cfg, byName, minV, maxV, color, total });
   }
 
-  function renderChoropleth() {
+  function renderChoropleth(cfg) {
     showChoroLayers();
-    const { byName, minV, maxV, color, total } = choroModel();
+    const model = choroModel(cfg);
+    const { byName, minV, maxV, color, total } = model;
+    const vk = cfg.valueKey;
     const feats = (MOLDOVA && MOLDOVA.features) || [];
 
     gDistricts.selectAll("path.district")
@@ -456,25 +485,25 @@
       .attr("d", mdaPath)
       .attr("fill", f => {
         const rec = byName.get(normName(f.properties.shapeName));
-        return rec && rec.tpHolders != null ? color(rec.tpHolders) : NO_DATA_FILL;
+        return rec && rec[vk] != null ? color(rec[vk]) : NO_DATA_FILL;
       })
       .each(function (f) {
         const name = f.properties.shapeName;
         const key = normName(name);
         const rec = byName.get(key);
-        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, total); };
+        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, model); };
         this.onmousemove = moveTip;
         this.onmouseleave = () => { clearDistrictHighlight(); hideTip(); };
       });
 
-    renderChoroLegend(color, minV, maxV);
+    renderChoroLegend(model);
 
-    const top = DATA.tp_choropleth.districts.slice()
-      .sort((a, b) => b.tpHolders - a.tpHolders).slice(0, 3)
-      .map(d => `${d.name}: ${fmt(d.tpHolders)}`).join(", ");
+    const top = model.src.districts.slice().filter(d => d[vk] != null)
+      .sort((a, b) => b[vk] - a[vk]).slice(0, 3)
+      .map(d => `${d.name}: ${fmt(d[vk])}`).join(", ");
     svg.attr("aria-label",
-      "Choropleth of Ukrainian Temporary Protection holders by Moldovan district " +
-      `(${fmt(total)} holders, UNHCR 27 Apr 2026). Highest: ${top}. ` +
+      `Choropleth of ${cfg.valueWord} by Moldovan district ` +
+      `(${fmt(total)} total). Highest: ${top}. ` +
       "Full figures are listed in the table beside the map.");
   }
 
@@ -487,38 +516,42 @@
     gDistricts.selectAll("path.district").classed("dim", false);
     tableBody.selectAll("tr").classed("hot", false);
   }
-  function showDistrictTip(rec, name, total) {
+  function showDistrictTip(rec, name, model) {
+    const { cfg, total } = model;
+    const vk = cfg.valueKey;
     const disp = rec ? rec.name : name;
     let body;
     if (!rec) body = "no join match — check name";
-    else if (rec.tpHolders == null) body = "no data";
+    else if (rec[vk] == null) body = "not enumerated (left bank)";
     else {
-      const pct = total ? Math.round(rec.tpHolders / total * 100) : null;
-      body = `${fmt(rec.tpHolders)} TP holders` + (pct != null ? ` · ${pct}% of national` : "");
+      const pct = total ? (rec[vk] / total * 100).toFixed(cfg.pctDecimals) : null;
+      body = `${fmt(rec[vk])} ${cfg.valueWord}` + (pct != null ? ` · ${pct}% of national` : "");
     }
     tip.innerHTML = `<strong>${esc(disp)}</strong>${esc(body)}`;
     tip.hidden = false;
   }
 
   // Colour legend: 5 even-count (quantile) classes low→high + a grey "no data" swatch.
-  function renderChoroLegend(color, minV, maxV) {
+  function renderChoroLegend(model) {
+    const { cfg, color, minV, maxV } = model;
+    const scale = cfg.scale();
     const g = gChoroLegend;
     g.selectAll("*").remove();
     g.attr("transform", "translate(18, 30)");
     const sw = 17, gap = 4;
-    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text("TP holders");
+    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text(cfg.legendTitle);
     // scaleQuantile exposes quantiles(); scaleQuantize would expose thresholds().
     const brk = color.quantiles ? color.quantiles() : (color.thresholds ? color.thresholds() : []);
-    TP_SCALE.forEach((c, i) => {
+    scale.forEach((c, i) => {
       const lo = i === 0 ? minV : brk[i - 1];
-      const hi = i === TP_SCALE.length - 1 ? maxV : brk[i];
+      const hi = i === scale.length - 1 ? maxV : brk[i];
       const y = i * (sw + gap);
       g.append("rect").attr("x", 0).attr("y", y).attr("width", sw).attr("height", sw)
         .attr("rx", 3).attr("fill", c);
       g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", y + sw - 4)
         .text(`${fmtShort(Math.round(lo))}–${fmtShort(Math.round(hi))}`);
     });
-    const yNd = TP_SCALE.length * (sw + gap) + 6;
+    const yNd = scale.length * (sw + gap) + 6;
     g.append("rect").attr("x", 0).attr("y", yNd).attr("width", sw).attr("height", sw)
       .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#d8d8d2").attr("stroke-width", 1);
     g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", yNd + sw - 4).text("no data");
@@ -568,23 +601,26 @@
     });
   }
 
-  // Fallback data table for the choropleth: districts ranked by TP holders.
+  // Fallback data table for the choropleth: districts ranked by value.
   // Doubles as the accessible alternative to the map (acceptance §8).
-  function renderDistrictTable() {
-    const { tp, total } = choroModel();
-    const asOf = fmtDate(tp.meta.asOf) || tp.meta.asOf || "";
-    valueHead.textContent = "TP holders";
-    mapCaption.textContent = "TP holders by district · UNHCR data portal " + asOf + " · scroll to zoom, drag to pan";
-    const srcObj = { source_ids: ["unhcr_tp", "geoboundaries"] };
+  function renderDistrictTable(cfg) {
+    const { src, total } = choroModel(cfg);
+    const vk = cfg.valueKey;
+    const meta = src.meta;
+    const asOf = fmtDate(meta.asOf) || meta.asOf || "";
+    const capWord = cfg.valueWord.charAt(0).toUpperCase() + cfg.valueWord.slice(1);
+    valueHead.textContent = capWord;
+    mapCaption.textContent = cfg.mapCaptionLead + asOf + " · scroll to zoom, drag to pan";
+    const srcObj = { source_ids: meta.source_ids };
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
     sourceLine.textContent = citationsFor(srcObj);
 
-    const rows = tp.districts.slice().filter(d => d.tpHolders != null)
-      .sort((a, b) => b.tpHolders - a.tpHolders);
-    const max = d3.max(rows, d => d.tpHolders) || 1;
+    const rows = src.districts.slice().filter(d => d[vk] != null)
+      .sort((a, b) => b[vk] - a[vk]);
+    const max = d3.max(rows, d => d[vk]) || 1;
     totalValue.textContent = fmt(total);
-    totalLabel.textContent = `${fmt(total)} TP holders · UNHCR ${asOf} (official)`;
+    totalLabel.textContent = `${fmt(total)} ${cfg.totalSuffix(asOf)}`;
 
     tableBody.selectAll("tr").data(rows, d => d.match).join(
       enter => {
@@ -593,15 +629,15 @@
           .on("mouseleave", clearDistrictHighlight);
         tr.append("td").attr("class", "c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
         tr.append("td").attr("class", "c-bar-cell").append("div").attr("class", "c-bar-track")
-          .append("div").attr("class", "c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
-        tr.append("td").attr("class", "c-value").text(d => fmt(d.tpHolders));
+          .append("div").attr("class", "c-bar").style("width", d => (d[vk] / max * 100) + "%");
+        tr.append("td").attr("class", "c-value").text(d => fmt(d[vk]));
         return tr;
       },
       update => {
         update.attr("data-district", d => d.match);
         update.select(".c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
-        update.select(".c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
-        update.select(".c-value").text(d => fmt(d.tpHolders));
+        update.select(".c-bar").style("width", d => (d[vk] / max * 100) + "%");
+        update.select(".c-value").text(d => fmt(d[vk]));
         return update;
       },
       exit => exit.remove()
@@ -609,7 +645,7 @@
   }
 
   function renderTable() {
-    if (mode === "immigration" && MOLDOVA) { renderDistrictTable(); return; }
+    if (CHORO[mode] && MOLDOVA) { renderDistrictTable(CHORO[mode]); return; }
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
@@ -945,6 +981,12 @@
       unit = "pct";
       refLine = { value: DATA.context.world.remittances_gdp_pct, label: "Country average ≈5%" };
       title = "Remittances as % of GDP";
+    } else if (mode === "population") {
+      // Census-year resident totals (population mode has no per-year flow rows).
+      data = ctx.pop_series.map(d => ({ year: d.year, total: d.pop }));
+      unit = "people";
+      refLine = null;
+      title = CHART_TITLES.population;
     } else {
       data = modeTotals(mode);
       unit = "people";
@@ -957,7 +999,10 @@
     // Caption under the economics chart: the source(s) behind THIS chart.
     // (remittances chart = the %GDP series source; stock charts = the mode source.)
     const chartSrcObj = mode === "remittances"
-      ? { source_id: ctx.gdp_series_source_id } : DATA.modes[mode];
+      ? { source_id: ctx.gdp_series_source_id }
+      : mode === "population"
+      ? { source_id: ctx.pop_series_source_id }
+      : DATA.modes[mode];
     const ctxSrc = document.getElementById("ctxSource");
     if (ctxSrc) { ctxSrc.textContent = captionsFor(chartSrcObj); ctxSrc.title = citationsFor(chartSrcObj); }
 
@@ -1077,6 +1122,23 @@
         accent,
         readout: "About 1 in 23 residents was born outside Moldova (4.4%).",
         denomLabel: "Whole = usually-resident population · NBS 2024 Census"
+      });
+      el.hidden = false;
+
+    } else if (mode === "population") {
+      // P1. Urban vs rural split of the resident population.
+      pwSplitBar(el, {
+        part: m.population_urban, whole: m.population_resident,
+        partLabel: "Urban", wholeLabel: "Rural",
+        accent,
+        readout: `Just under half of residents (${m.urban_pct}%) live in towns and cities; the rest is rural.`,
+        denomLabel: "Whole = usually-resident population · NBS 2024 Census (Table 4)"
+      });
+      // P2. Depopulation since 2014.
+      const pop14 = m.population_2014_census || (m.population_resident + 380000);
+      pwDepopBars(el, {
+        pop2014: pop14, pop2024: m.population_resident, accent,
+        readout: `Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents than in 2014, about 1 in 7 people.`
       });
       el.hidden = false;
 
@@ -1398,7 +1460,7 @@
       { label: "Moldova-born abroad", value: d3.format(",")(m.diaspora_estimate),
         sub: "Diaspora stock · UN DESA 2024", tone: "c-blue", mode: "emigration" },
       { label: "Resident population", value: "2.41M",
-        sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: null },
+        sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: "population" },
       { label: "Foreign-born residents", value: "106,700",
         sub: "4.4% of residents · NBS 2024 Census", tone: "c-green", mode: "immigration_census" },
       { label: "Ukrainian refugees", value: "141,058",

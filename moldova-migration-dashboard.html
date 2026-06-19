@@ -1176,6 +1176,12 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
           </div>
         </div>
         <div class="mode-group">
+          <span class="mode-group-label">Population <span class="kind">census</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="population" aria-pressed="false"><span class="ico"></span>By district</button>
+          </div>
+        </div>
+        <div class="mode-group">
           <span class="mode-group-label">Money <span class="kind">bank-transfer proxy</span></span>
           <div class="mode-pill">
             <button class="mode-btn" data-mode="remittances" aria-pressed="false"><span class="ico"></span>Money sent home</button>
@@ -1493,6 +1499,64 @@ window.MIGRATION_DATA = {
     ]
   },
 
+  // ---- Resident population choropleth (NBS 2024 Census, by district) ---------
+  // Subject = usually-resident population by ADM1 unit, from the 2024 Population
+  // and Housing Census (final data, Table 5; reference date 8 Apr 2024). Reuses
+  // the same `match` keys as tp_choropleth so every geoBoundaries feature joins.
+  // The Transnistria region + Bender are on the left bank of the Dniester and
+  // were NOT enumerated by the census → population: null (painted "no data").
+  // District values sum to the national resident total, 2,409,207.
+  // Source: https://statistica.gov.md/ (PHC 2024 final, Geographical characteristics).
+  population_choropleth: {
+    meta: {
+      subject: "Usually-resident population (2024 Census)",
+      nationalTotal: 2409207,
+      asOf: "2024-04-08",
+      source_ids: ["nbs_census_2024", "geoboundaries"],
+      geometry: "geoBoundaries MDA ADM1 (CC-BY 4.0)",
+      dataStatus: "OFFICIAL — NBS Census 2024 final data (Table 5)"
+    },
+    districts: [
+      { match: "chisinau",      name: "Chișinău",          type: "municipality",  population: 720128 },
+      { match: "balti",         name: "Bălți",             type: "municipality",  population: 94546 },
+      { match: "gagauzia",      name: "Găgăuzia",          type: "autonomous",    population: 103668 },
+      { match: "transnistria",  name: "Transnistria",      type: "transnistria",  population: null },
+      { match: "bender",        name: "Bender (Tighina)",  type: "transnistria",  population: null },
+      { match: "anenii noi",    name: "Anenii Noi",        type: "raion",         population: 57687 },
+      { match: "basarabeasca",  name: "Basarabeasca",      type: "raion",         population: 14914 },
+      { match: "briceni",       name: "Briceni",           type: "raion",         population: 46894 },
+      { match: "cahul",         name: "Cahul",             type: "raion",         population: 72775 },
+      { match: "cantemir",      name: "Cantemir",          type: "raion",         population: 33181 },
+      { match: "calarasi",      name: "Călărași",          type: "raion",         population: 43864 },
+      { match: "causeni",       name: "Căușeni",           type: "raion",         population: 57261 },
+      { match: "cimislia",      name: "Cimișlia",          type: "raion",         population: 30986 },
+      { match: "criuleni",      name: "Criuleni",          type: "raion",         population: 52926 },
+      { match: "donduseni",     name: "Dondușeni",         type: "raion",         population: 28108 },
+      { match: "drochia",       name: "Drochia",           type: "raion",         population: 53738 },
+      { match: "dubasari",      name: "Dubăsari",          type: "raion",         population: 21781 },
+      { match: "edinet",        name: "Edineț",            type: "raion",         population: 50429 },
+      { match: "falesti",       name: "Fălești",           type: "raion",         population: 56039 },
+      { match: "floresti",      name: "Florești",          type: "raion",         population: 53264 },
+      { match: "glodeni",       name: "Glodeni",           type: "raion",         population: 35829 },
+      { match: "hincesti",      name: "Hîncești",          type: "raion",         population: 69462 },
+      { match: "ialoveni",      name: "Ialoveni",          type: "raion",         population: 74458 },
+      { match: "leova",         name: "Leova",             type: "raion",         population: 28835 },
+      { match: "nisporeni",     name: "Nisporeni",         type: "raion",         population: 36413 },
+      { match: "ocnita",        name: "Ocnița",            type: "raion",         population: 31610 },
+      { match: "orhei",         name: "Orhei",             type: "raion",         population: 79242 },
+      { match: "rezina",        name: "Rezina",            type: "raion",         population: 30243 },
+      { match: "riscani",       name: "Rîșcani",           type: "raion",         population: 43652 },
+      { match: "singerei",      name: "Sîngerei",          type: "raion",         population: 55933 },
+      { match: "soroca",        name: "Soroca",            type: "raion",         population: 58609 },
+      { match: "straseni",      name: "Strășeni",          type: "raion",         population: 61362 },
+      { match: "soldanesti",    name: "Șoldănești",        type: "raion",         population: 25394 },
+      { match: "stefan voda",   name: "Ștefan Vodă",       type: "raion",         population: 42285 },
+      { match: "taraclia",      name: "Taraclia",          type: "raion",         population: 26435 },
+      { match: "telenesti",     name: "Telenești",         type: "raion",         population: 41452 },
+      { match: "ungheni",       name: "Ungheni",           type: "raion",         population: 75804 }
+    ]
+  },
+
   // Neutral, factual per-country footnotes surfaced in the hover tooltip. These
   // are mobility/scope facts, NOT identity or geopolitical framing. `modes`
   // limits a note to where it's relevant (omit = all modes).
@@ -1782,6 +1846,10 @@ window.MIGRATION_DATA = {
     moldova: {
       population_resident: 2409207,    // NBS 2024 Census, FINAL usually-resident, 8 Apr 2024
       population_2014_census: 2789205, // NBS 2014 Census, usually-resident (NBS final; for depopulation visual)
+      population_urban: 1118967,       // NBS 2024 Census (Table 4), usually-resident urban
+      population_rural: 1290240,       // NBS 2024 Census (Table 4), usually-resident rural
+      urban_pct: 46.4,                 // 1,118,967 / 2,409,207
+      rural_pct: 53.6,                 // 1,290,240 / 2,409,207
       gdp_usd_bn: 18.2,               // World Bank 2024
       gdp_mdl_bn: 342.1,              // [VERIFY] forecast-style; needs primary MDL GDP source
       nbm_avg_rate_2024: 17.7,        // NBM average USD/MDL exchange rate 2024 (~17.72; last full USD-anchored year before NBM switched to EUR ref on 2 Jan 2025)
@@ -1851,6 +1919,28 @@ window.MIGRATION_DATA = {
         { term: "Foreign-born residents", value: "106.7k", sub: "4.4% of usually-resident population · NBS 2024 Census", world: "3.7% global", icon: "users", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
         { term: "Ukraine-born", value: "52,400", sub: "49.1% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
         { term: "Russia-born", value: "≈32,500", sub: "30.5% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" }
+      ]
+    },
+    population: {
+      takeaway: "The 2024 census counted 2,409,207 people usually living in Moldova, down 13.6% from 2014. Nearly one in three live in the capital, Chișinău, and just over half the country is still rural. The map shades every district by how many residents it has.",
+      headline: "Moldova's 2024 Population and Housing Census counted 2,409,207 usual residents on " +
+                "8 April 2024, 379,998 fewer than in 2014, a fall of 13.6% in a decade. The decline " +
+                "is uneven across the country: the capital, Chișinău, actually grew (to 720,128, " +
+                "nearly 30% of the whole population), while the northern and southern raions lost " +
+                "more than a fifth of their people. Just under half the population, 46.4%, lives in " +
+                "towns and cities; the remaining 53.6% is rural. These are usually-resident figures " +
+                "for the territory the census could enumerate, so they exclude the Transnistria " +
+                "region and the city of Bender on the left bank of the Dniester.",
+      // Census-year resident totals for the trend chart (NBS 2024, Table 5).
+      pop_series_source_id: "nbs_census_2024",
+      pop_series: [
+        { year: 2004, pop: 3383332 }, { year: 2014, pop: 2789205 }, { year: 2024, pop: 2409207 }
+      ],
+      indicators: [
+        { term: "Resident population", value: "2.41M", sub: "Usually-resident · 8 Apr 2024 (NBS Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Change since 2014", value: "−13.6%", sub: "−379,998 residents vs 2014 census", world: null, icon: "users", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Urban", value: "46.4%", sub: "1,118,967 residents · NBS 2024 Census", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Rural", value: "53.6%", sub: "1,290,240 residents · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_2024", def_id: "depopulation" }
       ]
     },
     remittances: {
@@ -2185,6 +2275,23 @@ window.MIGRATION_DATA = {
           { country: "Spain", value: 9 }, { country: "Portugal", value: 5 }
         ]
       }
+    },
+
+    // ---- RESIDENT POPULATION BY DISTRICT (NBS 2024 Census choropleth) --------
+    // A district choropleth, not a country flow-map: the map + table read from
+    // population_choropleth. The single 2024 census year gives the timeline a
+    // stop; per-district rows let renderTable fall back gracefully if needed.
+    population: {
+      label: "Population by district",
+      sublabel: "Usually-resident population, 2024 Census",
+      unit: "people",
+      direction: "in",
+      vintage: "NBS 2024 Census",
+      source_id: "nbs_census_2024",
+      known_totals: { 2024: { value: 2409207, label: "NBS 2024 Census resident total" } },
+      years: {
+        2024: []   // choropleth-driven; rows live in population_choropleth.districts
+      }
     }
   }
 };
@@ -2207,6 +2314,9 @@ window.MIGRATION_DATA = {
   // dashboard-wide colour logic (diaspora=blue, refugees=orange, pop=green,
   // remittances=purple).
   const TP_SCALE = ["#FBE9D6", "#F6CFA1", "#EDA85F", "#DD8330", "#B05E12"];
+  // Sequential greens for the population choropleth — population/foreign-born =
+  // green in the same colour logic.
+  const POP_SCALE = ["#E1EFE8", "#B6DBC8", "#7FC0A1", "#46A079", "#1F7A55"];
   const NO_DATA_FILL = "#EFEDE7";
   // Normalize a district name for joining: strip diacritics + admin prefixes, lowercase.
   function normName(s) {
@@ -2251,7 +2361,8 @@ window.MIGRATION_DATA = {
     immigration_census: "#2E8B6B",  // foreign-born residents — green
     remittances: "#6E4FA3",         // remittances — purple
     emigration_flow: "#5C7FA8",     // registered emigration — muted blue
-    immigration_flow: "#5E8C76"     // registered immigration — muted green
+    immigration_flow: "#5E8C76",    // registered immigration — muted green
+    population: "#2E8B6B"           // resident population — green (population family)
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
@@ -2259,7 +2370,8 @@ window.MIGRATION_DATA = {
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     emigration_flow: "Registered emigrants per year (NBS)",
-    immigration_flow: "Registered immigrants per year (NBS)"
+    immigration_flow: "Registered immigrants per year (NBS)",
+    population: "Resident population, by census year (NBS)"
   };
 
   // Hand-built inline icons (24x24, stroke = currentColor). No dependency.
@@ -2283,7 +2395,29 @@ window.MIGRATION_DATA = {
   const MODE_ICON = {
     emigration: "depart", immigration: "tent", remittances: "banknote",
     immigration_census: "users",
-    emigration_flow: "depart", immigration_flow: "arrive"
+    emigration_flow: "depart", immigration_flow: "arrive",
+    population: "landmark"
+  };
+
+  // Per-mode choropleth configuration. Both district maps (refugees + resident
+  // population) share the same machinery (choroModel / renderChoropleth /
+  // renderDistrictTable / tip + legend); only the data key, value field, colour
+  // ramp and labels differ. Add a district map by adding an entry here.
+  const CHORO = {
+    immigration: {
+      dataKey: "tp_choropleth", valueKey: "tpHolders", scale: () => TP_SCALE,
+      legendTitle: "TP holders", valueWord: "TP holders",
+      mapCaptionLead: "TP holders by district · UNHCR data portal ",
+      totalSuffix: asOf => `TP holders · UNHCR ${asOf} (official)`,
+      pctDecimals: 0
+    },
+    population: {
+      dataKey: "population_choropleth", valueKey: "population", scale: () => POP_SCALE,
+      legendTitle: "Residents", valueWord: "residents",
+      mapCaptionLead: "Resident population by district · NBS Census ",
+      totalSuffix: asOf => `usually-resident · NBS Census ${asOf} (official)`,
+      pctDecimals: 1
+    }
   };
 
   const svg        = d3.select("#map");
@@ -2364,7 +2498,7 @@ window.MIGRATION_DATA = {
   // Frame the map for the active mode: the world flow-modes open on Europe; the
   // districts choropleth (immigration) is framed to its own fitExtent (identity).
   function applyMapFraming() {
-    if (mode === "immigration" && MOLDOVA)
+    if (CHORO[mode] && MOLDOVA)
       svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
     else
       europeView();
@@ -2511,9 +2645,9 @@ window.MIGRATION_DATA = {
 
   // ---- Renderers -----------------------------------------------------------
   function renderMap() {
-    // "Refugees from Ukraine" swaps the world flow-map for a Moldova districts
-    // choropleth of Temporary Protection holders (see renderChoropleth).
-    if (mode === "immigration" && MOLDOVA) { renderChoropleth(); return; }
+    // District-choropleth modes (refugees, resident population) swap the world
+    // flow-map for a Moldova districts choropleth (see renderChoropleth).
+    if (CHORO[mode] && MOLDOVA) { renderChoropleth(CHORO[mode]); return; }
     showWorldLayers();
 
     const m = DATA.modes[mode];
@@ -2616,26 +2750,28 @@ window.MIGRATION_DATA = {
     gDistricts.style("display", null); gChoroLegend.style("display", null);
   }
 
-  // Build the district lookup + colour scale once (data is static).
-  let _choro = null;
-  function choroModel() {
-    if (_choro) return _choro;
-    const tp = DATA.tp_choropleth;
+  // Build the district lookup + colour scale once per config (data is static).
+  const _choroCache = {};
+  function choroModel(cfg) {
+    if (_choroCache[cfg.dataKey]) return _choroCache[cfg.dataKey];
+    const src = DATA[cfg.dataKey];
+    const vk = cfg.valueKey;
     const byName = new Map();
-    tp.districts.forEach(d => byName.set(d.match, d));
-    const vals = tp.districts.map(d => d.tpHolders).filter(v => v != null);
+    src.districts.forEach(d => byName.set(d.match, d));
+    const vals = src.districts.map(d => d[vk]).filter(v => v != null);
     const maxV = d3.max(vals) || 1, minV = d3.min(vals) || 0;
-    // Quantile (even-count bins): the split is heavily skewed by Chișinău, so a
-    // linear scale would flatten every other district into one class (spec §7).
-    const color = d3.scaleQuantile().domain(vals).range(TP_SCALE);
-    const total = tp.meta.nationalTotal || d3.sum(vals);
-    _choro = { tp, byName, minV, maxV, color, total };
-    return _choro;
+    // Quantile (even-count bins): values are heavily skewed by Chișinău, so a
+    // linear scale would flatten every other district into one class.
+    const color = d3.scaleQuantile().domain(vals).range(cfg.scale());
+    const total = src.meta.nationalTotal || d3.sum(vals);
+    return (_choroCache[cfg.dataKey] = { src, cfg, byName, minV, maxV, color, total });
   }
 
-  function renderChoropleth() {
+  function renderChoropleth(cfg) {
     showChoroLayers();
-    const { byName, minV, maxV, color, total } = choroModel();
+    const model = choroModel(cfg);
+    const { byName, minV, maxV, color, total } = model;
+    const vk = cfg.valueKey;
     const feats = (MOLDOVA && MOLDOVA.features) || [];
 
     gDistricts.selectAll("path.district")
@@ -2649,25 +2785,25 @@ window.MIGRATION_DATA = {
       .attr("d", mdaPath)
       .attr("fill", f => {
         const rec = byName.get(normName(f.properties.shapeName));
-        return rec && rec.tpHolders != null ? color(rec.tpHolders) : NO_DATA_FILL;
+        return rec && rec[vk] != null ? color(rec[vk]) : NO_DATA_FILL;
       })
       .each(function (f) {
         const name = f.properties.shapeName;
         const key = normName(name);
         const rec = byName.get(key);
-        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, total); };
+        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, model); };
         this.onmousemove = moveTip;
         this.onmouseleave = () => { clearDistrictHighlight(); hideTip(); };
       });
 
-    renderChoroLegend(color, minV, maxV);
+    renderChoroLegend(model);
 
-    const top = DATA.tp_choropleth.districts.slice()
-      .sort((a, b) => b.tpHolders - a.tpHolders).slice(0, 3)
-      .map(d => `${d.name}: ${fmt(d.tpHolders)}`).join(", ");
+    const top = model.src.districts.slice().filter(d => d[vk] != null)
+      .sort((a, b) => b[vk] - a[vk]).slice(0, 3)
+      .map(d => `${d.name}: ${fmt(d[vk])}`).join(", ");
     svg.attr("aria-label",
-      "Choropleth of Ukrainian Temporary Protection holders by Moldovan district " +
-      `(${fmt(total)} holders, UNHCR 27 Apr 2026). Highest: ${top}. ` +
+      `Choropleth of ${cfg.valueWord} by Moldovan district ` +
+      `(${fmt(total)} total). Highest: ${top}. ` +
       "Full figures are listed in the table beside the map.");
   }
 
@@ -2680,38 +2816,42 @@ window.MIGRATION_DATA = {
     gDistricts.selectAll("path.district").classed("dim", false);
     tableBody.selectAll("tr").classed("hot", false);
   }
-  function showDistrictTip(rec, name, total) {
+  function showDistrictTip(rec, name, model) {
+    const { cfg, total } = model;
+    const vk = cfg.valueKey;
     const disp = rec ? rec.name : name;
     let body;
     if (!rec) body = "no join match — check name";
-    else if (rec.tpHolders == null) body = "no data";
+    else if (rec[vk] == null) body = "not enumerated (left bank)";
     else {
-      const pct = total ? Math.round(rec.tpHolders / total * 100) : null;
-      body = `${fmt(rec.tpHolders)} TP holders` + (pct != null ? ` · ${pct}% of national` : "");
+      const pct = total ? (rec[vk] / total * 100).toFixed(cfg.pctDecimals) : null;
+      body = `${fmt(rec[vk])} ${cfg.valueWord}` + (pct != null ? ` · ${pct}% of national` : "");
     }
     tip.innerHTML = `<strong>${esc(disp)}</strong>${esc(body)}`;
     tip.hidden = false;
   }
 
   // Colour legend: 5 even-count (quantile) classes low→high + a grey "no data" swatch.
-  function renderChoroLegend(color, minV, maxV) {
+  function renderChoroLegend(model) {
+    const { cfg, color, minV, maxV } = model;
+    const scale = cfg.scale();
     const g = gChoroLegend;
     g.selectAll("*").remove();
     g.attr("transform", "translate(18, 30)");
     const sw = 17, gap = 4;
-    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text("TP holders");
+    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text(cfg.legendTitle);
     // scaleQuantile exposes quantiles(); scaleQuantize would expose thresholds().
     const brk = color.quantiles ? color.quantiles() : (color.thresholds ? color.thresholds() : []);
-    TP_SCALE.forEach((c, i) => {
+    scale.forEach((c, i) => {
       const lo = i === 0 ? minV : brk[i - 1];
-      const hi = i === TP_SCALE.length - 1 ? maxV : brk[i];
+      const hi = i === scale.length - 1 ? maxV : brk[i];
       const y = i * (sw + gap);
       g.append("rect").attr("x", 0).attr("y", y).attr("width", sw).attr("height", sw)
         .attr("rx", 3).attr("fill", c);
       g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", y + sw - 4)
         .text(`${fmtShort(Math.round(lo))}–${fmtShort(Math.round(hi))}`);
     });
-    const yNd = TP_SCALE.length * (sw + gap) + 6;
+    const yNd = scale.length * (sw + gap) + 6;
     g.append("rect").attr("x", 0).attr("y", yNd).attr("width", sw).attr("height", sw)
       .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#d8d8d2").attr("stroke-width", 1);
     g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", yNd + sw - 4).text("no data");
@@ -2761,23 +2901,26 @@ window.MIGRATION_DATA = {
     });
   }
 
-  // Fallback data table for the choropleth: districts ranked by TP holders.
+  // Fallback data table for the choropleth: districts ranked by value.
   // Doubles as the accessible alternative to the map (acceptance §8).
-  function renderDistrictTable() {
-    const { tp, total } = choroModel();
-    const asOf = fmtDate(tp.meta.asOf) || tp.meta.asOf || "";
-    valueHead.textContent = "TP holders";
-    mapCaption.textContent = "TP holders by district · UNHCR data portal " + asOf + " · scroll to zoom, drag to pan";
-    const srcObj = { source_ids: ["unhcr_tp", "geoboundaries"] };
+  function renderDistrictTable(cfg) {
+    const { src, total } = choroModel(cfg);
+    const vk = cfg.valueKey;
+    const meta = src.meta;
+    const asOf = fmtDate(meta.asOf) || meta.asOf || "";
+    const capWord = cfg.valueWord.charAt(0).toUpperCase() + cfg.valueWord.slice(1);
+    valueHead.textContent = capWord;
+    mapCaption.textContent = cfg.mapCaptionLead + asOf + " · scroll to zoom, drag to pan";
+    const srcObj = { source_ids: meta.source_ids };
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
     sourceLine.textContent = citationsFor(srcObj);
 
-    const rows = tp.districts.slice().filter(d => d.tpHolders != null)
-      .sort((a, b) => b.tpHolders - a.tpHolders);
-    const max = d3.max(rows, d => d.tpHolders) || 1;
+    const rows = src.districts.slice().filter(d => d[vk] != null)
+      .sort((a, b) => b[vk] - a[vk]);
+    const max = d3.max(rows, d => d[vk]) || 1;
     totalValue.textContent = fmt(total);
-    totalLabel.textContent = `${fmt(total)} TP holders · UNHCR ${asOf} (official)`;
+    totalLabel.textContent = `${fmt(total)} ${cfg.totalSuffix(asOf)}`;
 
     tableBody.selectAll("tr").data(rows, d => d.match).join(
       enter => {
@@ -2786,15 +2929,15 @@ window.MIGRATION_DATA = {
           .on("mouseleave", clearDistrictHighlight);
         tr.append("td").attr("class", "c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
         tr.append("td").attr("class", "c-bar-cell").append("div").attr("class", "c-bar-track")
-          .append("div").attr("class", "c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
-        tr.append("td").attr("class", "c-value").text(d => fmt(d.tpHolders));
+          .append("div").attr("class", "c-bar").style("width", d => (d[vk] / max * 100) + "%");
+        tr.append("td").attr("class", "c-value").text(d => fmt(d[vk]));
         return tr;
       },
       update => {
         update.attr("data-district", d => d.match);
         update.select(".c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
-        update.select(".c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
-        update.select(".c-value").text(d => fmt(d.tpHolders));
+        update.select(".c-bar").style("width", d => (d[vk] / max * 100) + "%");
+        update.select(".c-value").text(d => fmt(d[vk]));
         return update;
       },
       exit => exit.remove()
@@ -2802,7 +2945,7 @@ window.MIGRATION_DATA = {
   }
 
   function renderTable() {
-    if (mode === "immigration" && MOLDOVA) { renderDistrictTable(); return; }
+    if (CHORO[mode] && MOLDOVA) { renderDistrictTable(CHORO[mode]); return; }
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
@@ -3138,6 +3281,12 @@ window.MIGRATION_DATA = {
       unit = "pct";
       refLine = { value: DATA.context.world.remittances_gdp_pct, label: "Country average ≈5%" };
       title = "Remittances as % of GDP";
+    } else if (mode === "population") {
+      // Census-year resident totals (population mode has no per-year flow rows).
+      data = ctx.pop_series.map(d => ({ year: d.year, total: d.pop }));
+      unit = "people";
+      refLine = null;
+      title = CHART_TITLES.population;
     } else {
       data = modeTotals(mode);
       unit = "people";
@@ -3150,7 +3299,10 @@ window.MIGRATION_DATA = {
     // Caption under the economics chart: the source(s) behind THIS chart.
     // (remittances chart = the %GDP series source; stock charts = the mode source.)
     const chartSrcObj = mode === "remittances"
-      ? { source_id: ctx.gdp_series_source_id } : DATA.modes[mode];
+      ? { source_id: ctx.gdp_series_source_id }
+      : mode === "population"
+      ? { source_id: ctx.pop_series_source_id }
+      : DATA.modes[mode];
     const ctxSrc = document.getElementById("ctxSource");
     if (ctxSrc) { ctxSrc.textContent = captionsFor(chartSrcObj); ctxSrc.title = citationsFor(chartSrcObj); }
 
@@ -3270,6 +3422,23 @@ window.MIGRATION_DATA = {
         accent,
         readout: "About 1 in 23 residents was born outside Moldova (4.4%).",
         denomLabel: "Whole = usually-resident population · NBS 2024 Census"
+      });
+      el.hidden = false;
+
+    } else if (mode === "population") {
+      // P1. Urban vs rural split of the resident population.
+      pwSplitBar(el, {
+        part: m.population_urban, whole: m.population_resident,
+        partLabel: "Urban", wholeLabel: "Rural",
+        accent,
+        readout: `Just under half of residents (${m.urban_pct}%) live in towns and cities; the rest is rural.`,
+        denomLabel: "Whole = usually-resident population · NBS 2024 Census (Table 4)"
+      });
+      // P2. Depopulation since 2014.
+      const pop14 = m.population_2014_census || (m.population_resident + 380000);
+      pwDepopBars(el, {
+        pop2014: pop14, pop2024: m.population_resident, accent,
+        readout: `Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents than in 2014, about 1 in 7 people.`
       });
       el.hidden = false;
 
@@ -3591,7 +3760,7 @@ window.MIGRATION_DATA = {
       { label: "Moldova-born abroad", value: d3.format(",")(m.diaspora_estimate),
         sub: "Diaspora stock · UN DESA 2024", tone: "c-blue", mode: "emigration" },
       { label: "Resident population", value: "2.41M",
-        sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: null },
+        sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: "population" },
       { label: "Foreign-born residents", value: "106,700",
         sub: "4.4% of residents · NBS 2024 Census", tone: "c-green", mode: "immigration_census" },
       { label: "Ukrainian refugees", value: "141,058",

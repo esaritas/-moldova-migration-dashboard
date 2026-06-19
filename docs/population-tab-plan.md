@@ -1,9 +1,12 @@
-# Pending task — "Population by district" tab
+# Task — "Population by district" tab
 
-> **Status:** not yet implemented. Blocked only on network access in the session
-> where this was first attempted (the container was on the old "Trusted" egress
-> policy). The environment has since been set to **Full** network access, so a
-> **new** Claude Code web session on this branch can fetch the data and build it.
+> **Status: DONE.** Implemented on this branch. NBS 2024 census usually-resident
+> population by district was fetched from statistica.gov.md (PHC 2024 final data,
+> Geographical characteristics, Table 5) and wired into a green choropleth that
+> reuses the refugees-tab map machinery (now parametrised via the `CHORO[mode]`
+> config in app.js). District values sum exactly to 2,409,207; Transnistria +
+> Bender render as "no data" (left bank, not enumerated). The analysis panel
+> shows an urban/rural split (46.4% / 53.6%) and the 2014→2024 decline (−13.6%).
 >
 > Part 1 of the original request (removing the Simple/Advanced toggle) is **done**
 > and already on this branch (commit "Remove Simple/Advanced toggle…").

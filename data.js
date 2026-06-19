@@ -122,6 +122,64 @@ window.MIGRATION_DATA = {
     ]
   },
 
+  // ---- Resident population choropleth (NBS 2024 Census, by district) ---------
+  // Subject = usually-resident population by ADM1 unit, from the 2024 Population
+  // and Housing Census (final data, Table 5; reference date 8 Apr 2024). Reuses
+  // the same `match` keys as tp_choropleth so every geoBoundaries feature joins.
+  // The Transnistria region + Bender are on the left bank of the Dniester and
+  // were NOT enumerated by the census → population: null (painted "no data").
+  // District values sum to the national resident total, 2,409,207.
+  // Source: https://statistica.gov.md/ (PHC 2024 final, Geographical characteristics).
+  population_choropleth: {
+    meta: {
+      subject: "Usually-resident population (2024 Census)",
+      nationalTotal: 2409207,
+      asOf: "2024-04-08",
+      source_ids: ["nbs_census_2024", "geoboundaries"],
+      geometry: "geoBoundaries MDA ADM1 (CC-BY 4.0)",
+      dataStatus: "OFFICIAL — NBS Census 2024 final data (Table 5)"
+    },
+    districts: [
+      { match: "chisinau",      name: "Chișinău",          type: "municipality",  population: 720128 },
+      { match: "balti",         name: "Bălți",             type: "municipality",  population: 94546 },
+      { match: "gagauzia",      name: "Găgăuzia",          type: "autonomous",    population: 103668 },
+      { match: "transnistria",  name: "Transnistria",      type: "transnistria",  population: null },
+      { match: "bender",        name: "Bender (Tighina)",  type: "transnistria",  population: null },
+      { match: "anenii noi",    name: "Anenii Noi",        type: "raion",         population: 57687 },
+      { match: "basarabeasca",  name: "Basarabeasca",      type: "raion",         population: 14914 },
+      { match: "briceni",       name: "Briceni",           type: "raion",         population: 46894 },
+      { match: "cahul",         name: "Cahul",             type: "raion",         population: 72775 },
+      { match: "cantemir",      name: "Cantemir",          type: "raion",         population: 33181 },
+      { match: "calarasi",      name: "Călărași",          type: "raion",         population: 43864 },
+      { match: "causeni",       name: "Căușeni",           type: "raion",         population: 57261 },
+      { match: "cimislia",      name: "Cimișlia",          type: "raion",         population: 30986 },
+      { match: "criuleni",      name: "Criuleni",          type: "raion",         population: 52926 },
+      { match: "donduseni",     name: "Dondușeni",         type: "raion",         population: 28108 },
+      { match: "drochia",       name: "Drochia",           type: "raion",         population: 53738 },
+      { match: "dubasari",      name: "Dubăsari",          type: "raion",         population: 21781 },
+      { match: "edinet",        name: "Edineț",            type: "raion",         population: 50429 },
+      { match: "falesti",       name: "Fălești",           type: "raion",         population: 56039 },
+      { match: "floresti",      name: "Florești",          type: "raion",         population: 53264 },
+      { match: "glodeni",       name: "Glodeni",           type: "raion",         population: 35829 },
+      { match: "hincesti",      name: "Hîncești",          type: "raion",         population: 69462 },
+      { match: "ialoveni",      name: "Ialoveni",          type: "raion",         population: 74458 },
+      { match: "leova",         name: "Leova",             type: "raion",         population: 28835 },
+      { match: "nisporeni",     name: "Nisporeni",         type: "raion",         population: 36413 },
+      { match: "ocnita",        name: "Ocnița",            type: "raion",         population: 31610 },
+      { match: "orhei",         name: "Orhei",             type: "raion",         population: 79242 },
+      { match: "rezina",        name: "Rezina",            type: "raion",         population: 30243 },
+      { match: "riscani",       name: "Rîșcani",           type: "raion",         population: 43652 },
+      { match: "singerei",      name: "Sîngerei",          type: "raion",         population: 55933 },
+      { match: "soroca",        name: "Soroca",            type: "raion",         population: 58609 },
+      { match: "straseni",      name: "Strășeni",          type: "raion",         population: 61362 },
+      { match: "soldanesti",    name: "Șoldănești",        type: "raion",         population: 25394 },
+      { match: "stefan voda",   name: "Ștefan Vodă",       type: "raion",         population: 42285 },
+      { match: "taraclia",      name: "Taraclia",          type: "raion",         population: 26435 },
+      { match: "telenesti",     name: "Telenești",         type: "raion",         population: 41452 },
+      { match: "ungheni",       name: "Ungheni",           type: "raion",         population: 75804 }
+    ]
+  },
+
   // Neutral, factual per-country footnotes surfaced in the hover tooltip. These
   // are mobility/scope facts, NOT identity or geopolitical framing. `modes`
   // limits a note to where it's relevant (omit = all modes).
@@ -411,6 +469,10 @@ window.MIGRATION_DATA = {
     moldova: {
       population_resident: 2409207,    // NBS 2024 Census, FINAL usually-resident, 8 Apr 2024
       population_2014_census: 2789205, // NBS 2014 Census, usually-resident (NBS final; for depopulation visual)
+      population_urban: 1118967,       // NBS 2024 Census (Table 4), usually-resident urban
+      population_rural: 1290240,       // NBS 2024 Census (Table 4), usually-resident rural
+      urban_pct: 46.4,                 // 1,118,967 / 2,409,207
+      rural_pct: 53.6,                 // 1,290,240 / 2,409,207
       gdp_usd_bn: 18.2,               // World Bank 2024
       gdp_mdl_bn: 342.1,              // [VERIFY] forecast-style; needs primary MDL GDP source
       nbm_avg_rate_2024: 17.7,        // NBM average USD/MDL exchange rate 2024 (~17.72; last full USD-anchored year before NBM switched to EUR ref on 2 Jan 2025)
@@ -480,6 +542,28 @@ window.MIGRATION_DATA = {
         { term: "Foreign-born residents", value: "106.7k", sub: "4.4% of usually-resident population · NBS 2024 Census", world: "3.7% global", icon: "users", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
         { term: "Ukraine-born", value: "52,400", sub: "49.1% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
         { term: "Russia-born", value: "≈32,500", sub: "30.5% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" }
+      ]
+    },
+    population: {
+      takeaway: "The 2024 census counted 2,409,207 people usually living in Moldova, down 13.6% from 2014. Nearly one in three live in the capital, Chișinău, and just over half the country is still rural. The map shades every district by how many residents it has.",
+      headline: "Moldova's 2024 Population and Housing Census counted 2,409,207 usual residents on " +
+                "8 April 2024, 379,998 fewer than in 2014, a fall of 13.6% in a decade. The decline " +
+                "is uneven across the country: the capital, Chișinău, actually grew (to 720,128, " +
+                "nearly 30% of the whole population), while the northern and southern raions lost " +
+                "more than a fifth of their people. Just under half the population, 46.4%, lives in " +
+                "towns and cities; the remaining 53.6% is rural. These are usually-resident figures " +
+                "for the territory the census could enumerate, so they exclude the Transnistria " +
+                "region and the city of Bender on the left bank of the Dniester.",
+      // Census-year resident totals for the trend chart (NBS 2024, Table 5).
+      pop_series_source_id: "nbs_census_2024",
+      pop_series: [
+        { year: 2004, pop: 3383332 }, { year: 2014, pop: 2789205 }, { year: 2024, pop: 2409207 }
+      ],
+      indicators: [
+        { term: "Resident population", value: "2.41M", sub: "Usually-resident · 8 Apr 2024 (NBS Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Change since 2014", value: "−13.6%", sub: "−379,998 residents vs 2014 census", world: null, icon: "users", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Urban", value: "46.4%", sub: "1,118,967 residents · NBS 2024 Census", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Rural", value: "53.6%", sub: "1,290,240 residents · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_2024", def_id: "depopulation" }
       ]
     },
     remittances: {
@@ -813,6 +897,23 @@ window.MIGRATION_DATA = {
           { country: "France", value: 44 }, { country: "United Kingdom", value: 40 },
           { country: "Spain", value: 9 }, { country: "Portugal", value: 5 }
         ]
+      }
+    },
+
+    // ---- RESIDENT POPULATION BY DISTRICT (NBS 2024 Census choropleth) --------
+    // A district choropleth, not a country flow-map: the map + table read from
+    // population_choropleth. The single 2024 census year gives the timeline a
+    // stop; per-district rows let renderTable fall back gracefully if needed.
+    population: {
+      label: "Population by district",
+      sublabel: "Usually-resident population, 2024 Census",
+      unit: "people",
+      direction: "in",
+      vintage: "NBS 2024 Census",
+      source_id: "nbs_census_2024",
+      known_totals: { 2024: { value: 2409207, label: "NBS 2024 Census resident total" } },
+      years: {
+        2024: []   // choropleth-driven; rows live in population_choropleth.districts
       }
     }
   }
