@@ -8,10 +8,15 @@
 
   const DATA  = window.MIGRATION_DATA;
   const WORLD = window.WORLD_GEO;
-  const MOLDOVA = window.MOLDOVA_ADM1;   // geoBoundaries MDA ADM1 (districts)
+  const MOLDOVA = rewindForD3(window.MOLDOVA_ADM1);   // geoBoundaries MDA ADM1 (districts)
 
-  // Sequential blues for the TP choropleth (humanitarian-neutral; avoid alarm-red).
-  const TP_SCALE = ["#E6EEF5", "#B9D2E6", "#7FB0D4", "#3E86BC", "#1F5A8C"];
+  // Sequential oranges for the TP choropleth — refugees = orange in the
+  // dashboard-wide colour logic (diaspora=blue, refugees=orange, pop=green,
+  // remittances=purple).
+  const TP_SCALE = ["#FBE9D6", "#F6CFA1", "#EDA85F", "#DD8330", "#B05E12"];
+  // Sequential greens for the population choropleth — population/foreign-born =
+  // green in the same colour logic.
+  const POP_SCALE = ["#E1EFE8", "#B6DBC8", "#7FC0A1", "#46A079", "#1F7A55"];
   const NO_DATA_FILL = "#EFEDE7";
   // Normalize a district name for joining: strip diacritics + admin prefixes, lowercase.
   function normName(s) {
@@ -19,6 +24,24 @@
       .normalize("NFD").replace(/[̀-ͯ]/g, "")
       .replace(/^(municipiul|raionul|uta|ato)\s+/i, "")
       .toLowerCase().trim();
+  }
+
+  // The vendored geoBoundaries ADM1 rings are wound clockwise — the opposite of
+  // what d3's spherical geometry expects. Left as-is, d3.geoPath fills the
+  // *complement* of each district, so the choropleth paints as one solid block
+  // instead of a map. Reverse the rings of any feature whose spherical area
+  // exceeds a hemisphere (the tell-tale of inverted winding) so each district
+  // renders as itself. Idempotent and a no-op on correctly-wound data.
+  function rewindForD3(geo) {
+    if (!geo || !geo.features || typeof d3 === "undefined" || !d3.geoArea) return geo;
+    geo.features.forEach(f => {
+      if (d3.geoArea(f) <= 2 * Math.PI) return;
+      const g = f.geometry || {};
+      const polys = g.type === "Polygon" ? [g.coordinates]
+                  : g.type === "MultiPolygon" ? g.coordinates : [];
+      polys.forEach(poly => poly.forEach(ring => ring.reverse()));
+    });
+    return geo;
   }
 
   let mode = "emigration";
@@ -29,19 +52,26 @@
   let currentK = 1;             // current zoom scale
   let hoverCountry = null;      // for the tooltip
 
+  // Phenomenon colour logic: diaspora/emigration=blue, refugees=orange,
+  // population/foreign-born=green, remittances=purple. Flow modes inherit the
+  // related phenomenon's hue but desaturated, to read as secondary series.
   const ACCENTS = {
-    emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E",
-    immigration_census: "#2E7D62",  // darker teal — same family as immigration, different measure
-    // NBS official-flow modes: muted/earthy tones to read as secondary series.
-    emigration_flow: "#A8743A", immigration_flow: "#5E7488"
+    emigration: "#2B6CA8",          // diaspora abroad — blue
+    immigration: "#E08A2E",         // refugees hosted — orange
+    immigration_census: "#2E8B6B",  // foreign-born residents — green
+    remittances: "#6E4FA3",         // remittances — purple
+    emigration_flow: "#5C7FA8",     // registered emigration — muted blue
+    immigration_flow: "#5E8C76",    // registered immigration — muted green
+    population: "#2E8B6B"           // resident population — green (population family)
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
-    emigration: "Moldovans abroad — main destinations (stock)",
+    emigration: "Moldovans abroad, by main destination (stock)",
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     emigration_flow: "Registered emigrants per year (NBS)",
-    immigration_flow: "Registered immigrants per year (NBS)"
+    immigration_flow: "Registered immigrants per year (NBS)",
+    population: "Resident population, by census year (NBS)"
   };
 
   // Hand-built inline icons (24x24, stroke = currentColor). No dependency.
@@ -65,7 +95,29 @@
   const MODE_ICON = {
     emigration: "depart", immigration: "tent", remittances: "banknote",
     immigration_census: "users",
-    emigration_flow: "depart", immigration_flow: "arrive"
+    emigration_flow: "depart", immigration_flow: "arrive",
+    population: "landmark"
+  };
+
+  // Per-mode choropleth configuration. Both district maps (refugees + resident
+  // population) share the same machinery (choroModel / renderChoropleth /
+  // renderDistrictTable / tip + legend); only the data key, value field, colour
+  // ramp and labels differ. Add a district map by adding an entry here.
+  const CHORO = {
+    immigration: {
+      dataKey: "tp_choropleth", valueKey: "tpHolders", scale: () => TP_SCALE,
+      legendTitle: "TP holders", valueWord: "TP holders",
+      mapCaptionLead: "TP holders by district · UNHCR data portal ",
+      totalSuffix: asOf => `TP holders · UNHCR ${asOf} (official)`,
+      pctDecimals: 0
+    },
+    population: {
+      dataKey: "population_choropleth", valueKey: "population", scale: () => POP_SCALE,
+      legendTitle: "Residents", valueWord: "residents",
+      mapCaptionLead: "Resident population by district · NBS Census ",
+      totalSuffix: asOf => `usually-resident · NBS Census ${asOf} (official)`,
+      pctDecimals: 1
+    }
   };
 
   const svg        = d3.select("#map");
@@ -78,6 +130,10 @@
   const stopsEl    = document.getElementById("stops");
   const trackFill  = document.getElementById("trackFill");
   const playBtn    = document.getElementById("playBtn");
+  const trackEl    = document.getElementById("track");
+  const handleEl   = document.getElementById("trackHandle");
+  const readoutEl  = document.getElementById("handleReadout");
+  let speedFactor  = 1;   // 0.5× / 1× / 2× playback
 
   // ---- Projection (larger canvas) ------------------------------------------
   const W = 820, H = 540;
@@ -89,7 +145,7 @@
   // Moldova districts choropleth uses its own projection, framed to the geometry
   // (no manual scale tuning). Leaves room on the left for the colour legend.
   const mdaProjection = MOLDOVA
-    ? d3.geoMercator().fitExtent([[150, 16], [W - 16, H - 16]], MOLDOVA) : null;
+    ? d3.geoMercator().fitExtent([[120, 28], [W - 120, H - 22]], MOLDOVA) : null;
   const mdaPath = mdaProjection ? d3.geoPath(mdaProjection) : null;
 
   // Single zoom layer holds everything that should pan/zoom together.
@@ -142,7 +198,7 @@
   // Frame the map for the active mode: the world flow-modes open on Europe; the
   // districts choropleth (immigration) is framed to its own fitExtent (identity).
   function applyMapFraming() {
-    if (mode === "immigration" && MOLDOVA)
+    if (CHORO[mode] && MOLDOVA)
       svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
     else
       europeView();
@@ -203,11 +259,11 @@
     if (s.accessed) bits.push("as of " + s.accessed);
     return bits.join(" · ");
   }
-  // Fuller one-line citation for the footer: "Publisher, label (code) — as of date".
+  // Fuller one-line citation for the footer: "Publisher, label (code), as of date".
   function citation(s) {
     if (!s) return "";
     const code = s.indicator_code ? ` (${s.indicator_code})` : "";
-    return `${s.publisher}, ${s.label}${code} — as of ${s.accessed}`;
+    return `${s.publisher}, ${s.label}${code}, as of ${s.accessed}`;
   }
   function captionsFor(obj) {
     return sourceIdsFor(obj).map(id => sourceCaption(sourceById(id))).filter(Boolean).join("  ·  ");
@@ -289,9 +345,9 @@
 
   // ---- Renderers -----------------------------------------------------------
   function renderMap() {
-    // "Refugees from Ukraine" swaps the world flow-map for a Moldova districts
-    // choropleth of Temporary Protection holders (see renderChoropleth).
-    if (mode === "immigration" && MOLDOVA) { renderChoropleth(); return; }
+    // District-choropleth modes (refugees, resident population) swap the world
+    // flow-map for a Moldova districts choropleth (see renderChoropleth).
+    if (CHORO[mode] && MOLDOVA) { renderChoropleth(CHORO[mode]); return; }
     showWorldLayers();
 
     const m = DATA.modes[mode];
@@ -394,26 +450,28 @@
     gDistricts.style("display", null); gChoroLegend.style("display", null);
   }
 
-  // Build the district lookup + colour scale once (data is static).
-  let _choro = null;
-  function choroModel() {
-    if (_choro) return _choro;
-    const tp = DATA.tp_choropleth;
+  // Build the district lookup + colour scale once per config (data is static).
+  const _choroCache = {};
+  function choroModel(cfg) {
+    if (_choroCache[cfg.dataKey]) return _choroCache[cfg.dataKey];
+    const src = DATA[cfg.dataKey];
+    const vk = cfg.valueKey;
     const byName = new Map();
-    tp.districts.forEach(d => byName.set(d.match, d));
-    const vals = tp.districts.map(d => d.tpHolders).filter(v => v != null);
+    src.districts.forEach(d => byName.set(d.match, d));
+    const vals = src.districts.map(d => d[vk]).filter(v => v != null);
     const maxV = d3.max(vals) || 1, minV = d3.min(vals) || 0;
-    // Quantile (even-count bins): the split is heavily skewed by Chișinău, so a
-    // linear scale would flatten every other district into one class (spec §7).
-    const color = d3.scaleQuantile().domain(vals).range(TP_SCALE);
-    const total = tp.meta.nationalTotal || d3.sum(vals);
-    _choro = { tp, byName, minV, maxV, color, total };
-    return _choro;
+    // Quantile (even-count bins): values are heavily skewed by Chișinău, so a
+    // linear scale would flatten every other district into one class.
+    const color = d3.scaleQuantile().domain(vals).range(cfg.scale());
+    const total = src.meta.nationalTotal || d3.sum(vals);
+    return (_choroCache[cfg.dataKey] = { src, cfg, byName, minV, maxV, color, total });
   }
 
-  function renderChoropleth() {
+  function renderChoropleth(cfg) {
     showChoroLayers();
-    const { byName, minV, maxV, color, total } = choroModel();
+    const model = choroModel(cfg);
+    const { byName, minV, maxV, color, total } = model;
+    const vk = cfg.valueKey;
     const feats = (MOLDOVA && MOLDOVA.features) || [];
 
     gDistricts.selectAll("path.district")
@@ -427,25 +485,25 @@
       .attr("d", mdaPath)
       .attr("fill", f => {
         const rec = byName.get(normName(f.properties.shapeName));
-        return rec && rec.tpHolders != null ? color(rec.tpHolders) : NO_DATA_FILL;
+        return rec && rec[vk] != null ? color(rec[vk]) : NO_DATA_FILL;
       })
       .each(function (f) {
         const name = f.properties.shapeName;
         const key = normName(name);
         const rec = byName.get(key);
-        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, total); };
+        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, model); };
         this.onmousemove = moveTip;
         this.onmouseleave = () => { clearDistrictHighlight(); hideTip(); };
       });
 
-    renderChoroLegend(color, minV, maxV);
+    renderChoroLegend(model);
 
-    const top = DATA.tp_choropleth.districts.slice()
-      .sort((a, b) => b.tpHolders - a.tpHolders).slice(0, 3)
-      .map(d => `${d.name}: ${fmt(d.tpHolders)}`).join(", ");
+    const top = model.src.districts.slice().filter(d => d[vk] != null)
+      .sort((a, b) => b[vk] - a[vk]).slice(0, 3)
+      .map(d => `${d.name}: ${fmt(d[vk])}`).join(", ");
     svg.attr("aria-label",
-      "Choropleth of Ukrainian Temporary Protection holders by Moldovan district " +
-      `(${fmt(total)} holders, UNHCR 27 Apr 2026). Highest: ${top}. ` +
+      `Choropleth of ${cfg.valueWord} by Moldovan district ` +
+      `(${fmt(total)} total). Highest: ${top}. ` +
       "Full figures are listed in the table beside the map.");
   }
 
@@ -458,38 +516,42 @@
     gDistricts.selectAll("path.district").classed("dim", false);
     tableBody.selectAll("tr").classed("hot", false);
   }
-  function showDistrictTip(rec, name, total) {
+  function showDistrictTip(rec, name, model) {
+    const { cfg, total } = model;
+    const vk = cfg.valueKey;
     const disp = rec ? rec.name : name;
     let body;
     if (!rec) body = "no join match — check name";
-    else if (rec.tpHolders == null) body = "no data";
+    else if (rec[vk] == null) body = "not enumerated (left bank)";
     else {
-      const pct = total ? Math.round(rec.tpHolders / total * 100) : null;
-      body = `${fmt(rec.tpHolders)} TP holders` + (pct != null ? ` · ${pct}% of national` : "");
+      const pct = total ? (rec[vk] / total * 100).toFixed(cfg.pctDecimals) : null;
+      body = `${fmt(rec[vk])} ${cfg.valueWord}` + (pct != null ? ` · ${pct}% of national` : "");
     }
     tip.innerHTML = `<strong>${esc(disp)}</strong>${esc(body)}`;
     tip.hidden = false;
   }
 
   // Colour legend: 5 even-count (quantile) classes low→high + a grey "no data" swatch.
-  function renderChoroLegend(color, minV, maxV) {
+  function renderChoroLegend(model) {
+    const { cfg, color, minV, maxV } = model;
+    const scale = cfg.scale();
     const g = gChoroLegend;
     g.selectAll("*").remove();
     g.attr("transform", "translate(18, 30)");
     const sw = 17, gap = 4;
-    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text("TP holders");
+    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text(cfg.legendTitle);
     // scaleQuantile exposes quantiles(); scaleQuantize would expose thresholds().
     const brk = color.quantiles ? color.quantiles() : (color.thresholds ? color.thresholds() : []);
-    TP_SCALE.forEach((c, i) => {
+    scale.forEach((c, i) => {
       const lo = i === 0 ? minV : brk[i - 1];
-      const hi = i === TP_SCALE.length - 1 ? maxV : brk[i];
+      const hi = i === scale.length - 1 ? maxV : brk[i];
       const y = i * (sw + gap);
       g.append("rect").attr("x", 0).attr("y", y).attr("width", sw).attr("height", sw)
         .attr("rx", 3).attr("fill", c);
       g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", y + sw - 4)
         .text(`${fmtShort(Math.round(lo))}–${fmtShort(Math.round(hi))}`);
     });
-    const yNd = TP_SCALE.length * (sw + gap) + 6;
+    const yNd = scale.length * (sw + gap) + 6;
     g.append("rect").attr("x", 0).attr("y", yNd).attr("width", sw).attr("height", sw)
       .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#d8d8d2").attr("stroke-width", 1);
     g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", yNd + sw - 4).text("no data");
@@ -539,23 +601,26 @@
     });
   }
 
-  // Fallback data table for the choropleth: districts ranked by TP holders.
+  // Fallback data table for the choropleth: districts ranked by value.
   // Doubles as the accessible alternative to the map (acceptance §8).
-  function renderDistrictTable() {
-    const { tp, total } = choroModel();
-    const asOf = fmtDate(tp.meta.asOf) || tp.meta.asOf || "";
-    valueHead.textContent = "TP holders";
-    mapCaption.textContent = "TP holders by district · UNHCR " + asOf + " · scroll to zoom, drag to pan";
-    const srcObj = { source_ids: ["unhcr", "geoboundaries"] };
+  function renderDistrictTable(cfg) {
+    const { src, total } = choroModel(cfg);
+    const vk = cfg.valueKey;
+    const meta = src.meta;
+    const asOf = fmtDate(meta.asOf) || meta.asOf || "";
+    const capWord = cfg.valueWord.charAt(0).toUpperCase() + cfg.valueWord.slice(1);
+    valueHead.textContent = capWord;
+    mapCaption.textContent = cfg.mapCaptionLead + asOf + " · scroll to zoom, drag to pan";
+    const srcObj = { source_ids: meta.source_ids };
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
     sourceLine.textContent = citationsFor(srcObj);
 
-    const rows = tp.districts.slice().filter(d => d.tpHolders != null)
-      .sort((a, b) => b.tpHolders - a.tpHolders);
-    const max = d3.max(rows, d => d.tpHolders) || 1;
+    const rows = src.districts.slice().filter(d => d[vk] != null)
+      .sort((a, b) => b[vk] - a[vk]);
+    const max = d3.max(rows, d => d[vk]) || 1;
     totalValue.textContent = fmt(total);
-    totalLabel.textContent = `${fmt(total)} TP holders · UNHCR ${asOf} (official)`;
+    totalLabel.textContent = `${fmt(total)} ${cfg.totalSuffix(asOf)}`;
 
     tableBody.selectAll("tr").data(rows, d => d.match).join(
       enter => {
@@ -564,15 +629,15 @@
           .on("mouseleave", clearDistrictHighlight);
         tr.append("td").attr("class", "c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
         tr.append("td").attr("class", "c-bar-cell").append("div").attr("class", "c-bar-track")
-          .append("div").attr("class", "c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
-        tr.append("td").attr("class", "c-value").text(d => fmt(d.tpHolders));
+          .append("div").attr("class", "c-bar").style("width", d => (d[vk] / max * 100) + "%");
+        tr.append("td").attr("class", "c-value").text(d => fmt(d[vk]));
         return tr;
       },
       update => {
         update.attr("data-district", d => d.match);
         update.select(".c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
-        update.select(".c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
-        update.select(".c-value").text(d => fmt(d.tpHolders));
+        update.select(".c-bar").style("width", d => (d[vk] / max * 100) + "%");
+        update.select(".c-value").text(d => fmt(d[vk]));
         return update;
       },
       exit => exit.remove()
@@ -580,7 +645,7 @@
   }
 
   function renderTable() {
-    if (mode === "immigration" && MOLDOVA) { renderDistrictTable(); return; }
+    if (CHORO[mode] && MOLDOVA) { renderDistrictTable(CHORO[mode]); return; }
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
@@ -709,7 +774,7 @@
       b.className = "stop" + (has ? "" : " empty") + (note ? " annotated" : "");
       b.disabled = !has;                       // can't select a year with no data
       b.setAttribute("aria-current", String(y === year));
-      if (note) b.title = `${y} — ${note.text}`;
+      if (note) b.title = `${y}: ${note.text}`;
       b.innerHTML = `<span class="pin"></span><span class="yr">${y}</span>`;
       if (has) b.addEventListener("click", () => { stopPlay(); setYear(y); });
       stopsEl.appendChild(b);
@@ -722,12 +787,26 @@
     const el = document.getElementById("timelineNote");
     if (!el) return;
     const note = annotationFor(year);
-    if (note) { el.textContent = `${year} — ${note.text}`; el.hidden = false; }
+    if (note) { el.textContent = `${year}: ${note.text}`; el.hidden = false; }
     else { el.textContent = ""; el.hidden = true; }
   }
-  function updateTrackFill() {
+  function trackFraction() {
     const ys = years(), i = ys.indexOf(year);
-    trackFill.style.width = (ys.length > 1 ? (i / (ys.length - 1)) * 100 : 0) + "%";
+    return ys.length > 1 ? i / (ys.length - 1) : 0;
+  }
+  function updateTrackFill() {
+    const f = trackFraction();
+    trackFill.style.width = (f * 100) + "%";
+    if (handleEl) handleEl.style.left = (f * 100) + "%";
+    if (readoutEl) readoutEl.textContent = year;
+    if (trackEl) {
+      const ys = years();
+      trackEl.setAttribute("aria-valuemin", ys[0] || 0);
+      trackEl.setAttribute("aria-valuemax", ys[ys.length - 1] || 0);
+      trackEl.setAttribute("aria-valuenow", year || 0);
+      const has = !!DATA.modes[mode].years[year];
+      trackEl.setAttribute("aria-valuetext", year + (has ? "" : " (no data for this view)"));
+    }
   }
   function setYear(y) {
     year = y;
@@ -739,6 +818,23 @@
     updateTrackFill(); renderMap(); renderTable(); updateContextHighlight();
     updateTimelineNote(); updateHash();
   }
+  // Step to the previous/next year that actually has data for this mode.
+  function stepYear(dir) {
+    const ys = modeYears(); if (!ys.length) return;
+    let i = ys.indexOf(nearestDataYear(year));
+    if (i < 0) i = 0;
+    i = Math.max(0, Math.min(ys.length - 1, i + dir));
+    setYear(ys[i]);
+  }
+  // Map a pointer x to the nearest data-bearing year and select it.
+  function scrubToClientX(clientX) {
+    if (!trackEl) return;
+    const r = trackEl.getBoundingClientRect();
+    const f = Math.max(0, Math.min(1, (clientX - r.left) / (r.width || 1)));
+    const ys = years();
+    const target = ys[Math.round(f * (ys.length - 1))];
+    setYear(nearestDataYear(target));   // snap to nearest year with data
+  }
 
   function togglePlay() { timer ? stopPlay() : startPlay(); }
   function startPlay() {
@@ -746,11 +842,12 @@
       '<rect x="3" y="2.5" width="2.6" height="9" fill="currentColor"/><rect x="8.4" y="2.5" width="2.6" height="9" fill="currentColor"/>';
     const lbl = playBtn.querySelector(".play-label");
     if (lbl) lbl.textContent = "Pause";
+    if (timer) clearInterval(timer);
     timer = setInterval(() => {
       const ys = modeYears(); if (!ys.length) return;
       const i = ys.indexOf(year);
       setYear(ys[i < 0 ? 0 : (i + 1) % ys.length]);
-    }, 1600);
+    }, Math.round(1600 / speedFactor));
   }
   function stopPlay() {
     if (timer) { clearInterval(timer); timer = null; }
@@ -759,6 +856,35 @@
     if (lbl) lbl.textContent = "Play timeline";
   }
   playBtn.addEventListener("click", togglePlay);
+
+  // Scrubber: drag the handle/track, arrow-key the year, and pick a speed.
+  // Any manual interaction pauses playback (it should feel hand-driven).
+  if (trackEl) {
+    let dragging = false;
+    const onMove = e => { if (dragging) scrubToClientX(e.clientX); };
+    trackEl.addEventListener("pointerdown", e => {
+      if (e.target.closest(".stop")) return;   // year-pin buttons handle themselves
+      dragging = true; stopPlay();
+      try { trackEl.setPointerCapture(e.pointerId); } catch (_) {}
+      scrubToClientX(e.clientX);
+    });
+    trackEl.addEventListener("pointermove", onMove);
+    trackEl.addEventListener("pointerup",   () => { dragging = false; });
+    trackEl.addEventListener("pointercancel", () => { dragging = false; });
+    trackEl.addEventListener("keydown", e => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown") { stopPlay(); stepYear(-1); e.preventDefault(); }
+      else if (e.key === "ArrowRight" || e.key === "ArrowUp") { stopPlay(); stepYear(1); e.preventDefault(); }
+      else if (e.key === "Home") { stopPlay(); const ys = modeYears(); if (ys.length) setYear(ys[0]); e.preventDefault(); }
+      else if (e.key === "End")  { stopPlay(); const ys = modeYears(); if (ys.length) setYear(ys[ys.length - 1]); e.preventDefault(); }
+    });
+  }
+  document.querySelectorAll(".speed-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      speedFactor = parseFloat(b.dataset.speed) || 1;
+      document.querySelectorAll(".speed-btn").forEach(o => o.classList.toggle("is-on", o === b));
+      if (timer) startPlay();   // re-arm at the new speed
+    });
+  });
 
   // ---- Mode switching ------------------------------------------------------
   function nearestDataYear(y) {
@@ -803,7 +929,9 @@
     });
   });
 
-  // Jump straight to a (mode, year) — used by the trend charts.
+  // Jump straight to a (mode, year) — used by the trend charts and the
+  // "key numbers at a glance" cards. When the mode changes we refresh the
+  // whole analysis panel too (the trend-dot caller stays on the same mode).
   function gotoModeYear(name, y) {
     stopPlay();
     const changed = mode !== name;
@@ -813,7 +941,11 @@
       setAccent(); buildTimeline();
     }
     setYear(y);
-    if (changed) applyMapFraming();
+    if (changed) { renderContext(); applyMapFraming(); }
+  }
+  function latestYearOf(name) {
+    const ys = Object.keys(DATA.modes[name].years).map(Number).sort((a, b) => a - b);
+    return ys[ys.length - 1];
   }
 
   // ---- Economics panel: one big mode-relevant chart + indicator cards ------
@@ -847,8 +979,14 @@
     if (mode === "remittances") {
       data = ctx.gdp_series.map(d => ({ year: d.year, total: d.pct }));
       unit = "pct";
-      refLine = { value: DATA.context.world.remittances_gdp_pct, label: "LMIC average ≈5%" };
+      refLine = { value: DATA.context.world.remittances_gdp_pct, label: "Country average ≈5%" };
       title = "Remittances as % of GDP";
+    } else if (mode === "population") {
+      // Census-year resident totals (population mode has no per-year flow rows).
+      data = ctx.pop_series.map(d => ({ year: d.year, total: d.pop }));
+      unit = "people";
+      refLine = null;
+      title = CHART_TITLES.population;
     } else {
       data = modeTotals(mode);
       unit = "people";
@@ -861,7 +999,10 @@
     // Caption under the economics chart: the source(s) behind THIS chart.
     // (remittances chart = the %GDP series source; stock charts = the mode source.)
     const chartSrcObj = mode === "remittances"
-      ? { source_id: ctx.gdp_series_source_id } : DATA.modes[mode];
+      ? { source_id: ctx.gdp_series_source_id }
+      : mode === "population"
+      ? { source_id: ctx.pop_series_source_id }
+      : DATA.modes[mode];
     const ctxSrc = document.getElementById("ctxSource");
     if (ctxSrc) { ctxSrc.textContent = captionsFor(chartSrcObj); ctxSrc.title = citationsFor(chartSrcObj); }
 
@@ -893,6 +1034,8 @@
     });
     updateContextHighlight();
     renderPartWhole();
+    renderCtxDefs(ctx);
+    updateModeWarning();
 
     // Panel-level source note (e.g. remittances: two different sources for map vs chart).
     const pnEl = document.getElementById("ctxPanelNote");
@@ -900,6 +1043,31 @@
       if (ctx.panel_note) { pnEl.textContent = ctx.panel_note; pnEl.hidden = false; }
       else { pnEl.hidden = true; }
     }
+  }
+
+  // ---- Per-mode plain-language glossary ------------------------------------
+  // Surfaces the definitions for the terms used on the current view's stat
+  // cards, on the page itself, so a general reader understands "stock", "net
+  // settlements", "registered emigrant" etc. without hovering or opening the
+  // modal. Reuses DATA.glossary (single source of truth), deduped by id.
+  function renderCtxDefs(ctx) {
+    const el = document.getElementById("ctxDefs");
+    if (!el) return;
+    const seen = new Set();
+    const defs = [];
+    (ctx.indicators || []).forEach(it => {
+      const d = defById(it.def_id);
+      if (d && !seen.has(d.id)) { seen.add(d.id); defs.push(d); }
+    });
+    if (!defs.length) { el.hidden = true; el.innerHTML = ""; return; }
+    el.innerHTML =
+      `<div class="ctx-defs-title">What these terms mean</div>`
+      + `<div class="ctx-defs-grid">`
+      + defs.map(d =>
+          `<dl class="ctx-def"><dt>${esc(d.term)}</dt><dd>${esc(d.definition)}</dd></dl>`
+        ).join("")
+      + `</div>`;
+    el.hidden = false;
   }
 
   // ---- Part-to-whole comparison visuals ------------------------------------
@@ -928,7 +1096,7 @@
       const pop14 = m.population_2014_census || (m.population_resident + 380000);
       pwDepopBars(el, {
         pop2014: pop14, pop2024: m.population_resident, accent,
-        readout: `Since 2014 Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents — about 1 in 7 people.`
+        readout: `Since 2014 Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents, about 1 in 7 people.`
       });
       el.hidden = false;
 
@@ -938,7 +1106,7 @@
       const ratio = Math.round(m.population_resident / refugees);  // ~17
       pwUnitCluster(el, {
         ratio, accent, reduceMotion: rm,
-        readout: `Moldova hosts about 1 Ukrainian refugee for every ${ratio} residents — among Europe's highest per-capita rates.`,
+        readout: `Moldova hosts about 1 Ukrainian refugee for every ${ratio} residents, among the highest rates per person anywhere in Europe.`,
         denomLabel: "● = 1 person · UNHCR May-2026 + NBS 2024 Census (usually-resident)"
       });
       el.hidden = false;
@@ -957,6 +1125,23 @@
       });
       el.hidden = false;
 
+    } else if (mode === "population") {
+      // P1. Urban vs rural split of the resident population.
+      pwSplitBar(el, {
+        part: m.population_urban, whole: m.population_resident,
+        partLabel: "Urban", wholeLabel: "Rural",
+        accent,
+        readout: `Just under half of residents (${m.urban_pct}%) live in towns and cities; the rest is rural.`,
+        denomLabel: "Whole = usually-resident population · NBS 2024 Census (Table 4)"
+      });
+      // P2. Depopulation since 2014.
+      const pop14 = m.population_2014_census || (m.population_resident + 380000);
+      pwDepopBars(el, {
+        pop2014: pop14, pop2024: m.population_resident, accent,
+        readout: `Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents than in 2014, about 1 in 7 people.`
+      });
+      el.hidden = false;
+
     } else if (mode === "remittances") {
       // D1. GDP waffle: 10×10 = 100% of GDP
       const gdpSeries = DATA.context.remittances.gdp_series;
@@ -964,7 +1149,7 @@
       const worldPct = DATA.context.world.remittances_gdp_pct;
       pwWaffle(el, {
         pct: latestPct, refPct: worldPct, accent,
-        readout: `Roughly 1 in every 10 lei of GDP comes home as remittances — nearly double the world average.`,
+        readout: `Roughly 1 in every 10 lei of GDP comes home as remittances, nearly double the world average.`,
         denomLabel: `1 square = 1% of GDP · World Bank 2024 · World avg ≈${worldPct.toFixed(1)}% (dotted)`
       });
       // D2. Budget comparison bars (explicit NBM FX rate, both figures in MDL)
@@ -983,13 +1168,26 @@
     }
   }
 
+  // Shared HTML caption under each part-to-whole visual: the plain-language
+  // readout plus the denominator note. Kept in HTML rather than SVG text so a
+  // long line wraps instead of overflowing the viz's narrow viewBox (which used
+  // to clip on the choropleth mode and on narrow screens).
+  function pwCaption(box, readout, denom) {
+    let html = `<div class="pw-readout">${esc(readout)}</div>`;
+    if (denom) html += `<div class="pw-denom">${esc(denom)}</div>`;
+    const cap = document.createElement("div");
+    cap.className = "pw-cap";
+    cap.innerHTML = html;
+    box.appendChild(cap);
+  }
+
   // A. Horizontal proportional split bar.
   function pwSplitBar(el, o) {
     const W = 420, barH = 28;
     const pct = o.part / o.whole;
     const partPx = Math.max(4, Math.round(pct * W));
     const svg = d3.create("svg")
-      .attr("viewBox", `0 0 ${W} 64`).attr("class", "pw-svg")
+      .attr("viewBox", `0 0 ${W} 34`).attr("class", "pw-svg")
       .attr("role", "img").attr("aria-label", o.readout + " " + o.denomLabel);
     // grey whole
     svg.append("rect").attr("x", 0).attr("y", 0).attr("width", W).attr("height", barH).attr("rx", 5).attr("fill", "#d8d8d2");
@@ -1003,16 +1201,17 @@
       svg.append("text").attr("x", partPx + (W - partPx) / 2).attr("y", barH / 2 + 4.5).attr("text-anchor", "middle")
         .attr("fill", "#555").attr("font-size", 11)
         .text(`${o.wholeLabel} · ${fmtShort(o.whole - o.part)}`);
-    svg.append("text").attr("x", 0).attr("y", barH + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", barH + 32).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // B. Two-row bar: 2014 pop vs 2024 pop, loss shown as hatched.
   function pwDepopBars(el, o) {
     const W = 420, barH = 22, gap = 6, labelH = 14;
     const row2Y = labelH + barH + gap + labelH;
-    const totalH = row2Y + barH + 42;
+    const totalH = row2Y + barH + 6;
     const max = o.pop2014;
     const w2024 = Math.round(o.pop2024 / max * W);
     const wLoss = W - w2024;
@@ -1035,10 +1234,10 @@
         .attr("fill", o.accent).attr("font-size", 10)
         .text(`−${fmtShort(o.pop2014 - o.pop2024)} (−${Math.round((1 - o.pop2024 / o.pop2014) * 100)}%)`);
     svg.append("text").attr("x", w2024 - 4).attr("y", row2Y + barH / 2 + 4).attr("text-anchor", "end").attr("fill", "#fff").attr("font-size", 10).text(fmtShort(o.pop2024));
-    // readout
-    svg.append("text").attr("x", 0).attr("y", row2Y + barH + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", row2Y + barH + 32).attr("fill", "#9aa09c").attr("font-size", 10).text("vs 2014 census · NBS final results");
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, "vs 2014 census · NBS final results");
+    el.appendChild(box);
   }
 
   // C. Unit cluster: ratio grey icons + 1 accent icon ("1 in N").
@@ -1046,7 +1245,7 @@
     const n = o.ratio + 1;   // 18 total icons
     const cols = Math.min(n, 9), rows = Math.ceil(n / cols);
     const cell = 30, icoW = 14, icoH = 20;
-    const W = cols * cell, totalH = rows * cell + 50;
+    const W = cols * cell, totalH = rows * cell + 8;
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-cluster")
       .attr("role", "img").attr("aria-label", o.readout);
@@ -1066,9 +1265,10 @@
         .attr("width", icoW).attr("height", icoH)
         .attr("fill", isAccent ? o.accent : "#c8ccc6");
     }
-    svg.append("text").attr("x", 0).attr("y", rows * cell + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", rows * cell + 32).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // D1. 10×10 waffle: each cell = 1% of GDP; reference dotted at world avg.
@@ -1077,7 +1277,7 @@
     const filled = Math.round(o.pct);
     const refFilled = Math.round(o.refPct);
     const W = cols * (cell + pad) - pad;
-    const H = rows * (cell + pad) - pad + 52;
+    const H = rows * (cell + pad) - pad + 8;
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "pw-svg pw-waffle")
       .attr("role", "img").attr("aria-label", o.readout);
@@ -1089,8 +1289,10 @@
         const isRefEdge = valueIdx === refFilled - 1;
         const x = col * (cell + pad), y = row * (cell + pad);
         svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
-          .attr("rx", 3)
-          .attr("fill", isFilled ? o.accent : "#e0e0d8").attr("opacity", isFilled ? 0.88 : 0.55);
+          .attr("rx", 2.5)
+          // Filled cells carry the story; empties recede to near-white so the
+          // ~10 accent squares read at a glance instead of a wall of 100 cubes.
+          .attr("fill", isFilled ? o.accent : "#ececE5").attr("opacity", isFilled ? 0.9 : 0.4);
         if (isRefEdge)
           svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
             .attr("rx", 3).attr("fill", "none")
@@ -1104,16 +1306,16 @@
       .attr("x", refCol * (cell + pad) + cell / 2).attr("y", refRow * (cell + pad) - 4)
       .attr("text-anchor", "middle").attr("fill", o.accent).attr("font-size", 9).attr("opacity", 0.8)
       .text(`≈${o.refPct.toFixed(1)}% world avg`);
-    const textY = rows * (cell + pad) + 16;
-    svg.append("text").attr("x", 0).attr("y", textY).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", textY + 15).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // D2. Two comparison bars: remittances vs state budget (same MDL scale).
   function pwBudgetBars(el, o) {
     const W = 420, barH = 24, gap = 10, labelH = 13;
-    const totalH = labelH * 2 + barH * 2 + gap + 52;
+    const totalH = labelH * 2 + barH * 2 + gap + 24;
     const remitPx = Math.round(Math.min(o.remitMdl / o.budgetMdl, 1) * W);
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-budget")
@@ -1134,8 +1336,10 @@
     // FX note + readout
     const noteY = row2 + labelH + barH + 15;
     svg.append("text").attr("x", 0).attr("y", noteY).attr("fill", "#b0b4b0").attr("font-size", 9).text(`FX: ${o.fxLabel}`);
-    svg.append("text").attr("x", 0).attr("y", noteY + 16).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout);
+    el.appendChild(box);
   }
 
   function drawLineChart(svg, data, opts) {
@@ -1188,6 +1392,22 @@
     return String(s == null ? "" : s).replace(/[&<>"]/g, c =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
+  // How often each source is refreshed — surfaced in the methodology panel so
+  // users can judge currency. Keyed by source id; falls back to s.frequency.
+  const SOURCE_FREQUENCY = {
+    undesa_2024: "every ~5 years (with revisions)",
+    unhcr: "weekly / monthly (operational)",
+    unhcr_tp: "periodic operational snapshots",
+    geoboundaries: "static (boundary geometry)",
+    nbm_transfers: "annual (by-country to 2020; totals ongoing)",
+    wb_remit_gdp: "annual",
+    wb_remit_total: "annual",
+    nbs_census_2024: "decennial census",
+    nbs_census_migration: "decennial census",
+    nbs_migration: "annual",
+    eurostat_migr: "annual (1 January reference)",
+    mof_budget: "annual (budget execution)"
+  };
   function buildMethodology() {
     const body = document.getElementById("methodBody");
     if (!body) return;
@@ -1198,9 +1418,11 @@
       const link = s.url
         ? `<a href="${encodeURI(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a>`
         : esc(s.label);
-      const meta = [s.indicator_code, s.accessed ? "as of " + s.accessed : ""].filter(Boolean).map(esc).join(" · ");
+      const freq = SOURCE_FREQUENCY[id] || s.frequency || "";
+      const meta = [s.indicator_code, freq ? "updated " + freq : "", s.accessed ? "as of " + s.accessed : ""]
+        .filter(Boolean).map(esc).join(" · ");
       const desc = [s.definition, s.scope, s.note].filter(Boolean).map(esc).join(" ");
-      return `<div class="method-src"><div><span class="pub">${esc(s.publisher)}</span> — ${link}</div>`
+      return `<div class="method-src"><div><span class="pub">${esc(s.publisher)}</span> · ${link}</div>`
         + (meta ? `<div class="meta">${meta}</div>` : "")
         + (desc ? `<div class="desc">${desc}</div>` : "") + `</div>`;
     }).join("");
@@ -1225,11 +1447,188 @@
     });
   }
 
+  // ---- Key numbers at a glance ---------------------------------------------
+  // Headline figures up front, colour-coded by phenomenon. Each card that maps
+  // to a view is a button that switches the dashboard to it (and scrolls to the
+  // map). Values mirror DATA so the strip can never drift from the panels.
+  function buildGlance() {
+    const grid = document.getElementById("glanceGrid");
+    if (!grid) return;
+    const m = DATA.context.moldova;
+    const tp = (DATA.tp_choropleth && DATA.tp_choropleth.meta) || {};
+    const KPIS = [
+      { label: "Moldova-born abroad", value: d3.format(",")(m.diaspora_estimate),
+        sub: "Diaspora stock · UN DESA 2024", tone: "c-blue", mode: "emigration" },
+      { label: "Resident population", value: "2.41M",
+        sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: "population" },
+      { label: "Foreign-born residents", value: "106,700",
+        sub: "4.4% of residents · NBS 2024 Census", tone: "c-green", mode: "immigration_census" },
+      { label: "Ukrainian refugees", value: "141,058",
+        sub: "Residing · UNHCR 31 May 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Temporary Protection", value: d3.format(",")(tp.nationalTotal || 92405),
+        sub: "Enrolled · UNHCR 27 Apr 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Annual remittances", value: "$1.92bn",
+        sub: "10.5% of GDP · World Bank 2024", tone: "c-purple", mode: "remittances" },
+      { label: "Emigrants / year", value: "≈4,000",
+        sub: "Registered flow · NBS 2024", tone: "c-blue", mode: "emigration_flow" },
+      { label: "Immigrants / year", value: "≈6,600",
+        sub: "Registered flow · NBS 2024", tone: "c-green", mode: "immigration_flow" }
+    ];
+    grid.innerHTML = KPIS.map(k => {
+      const tag = k.mode ? "button" : "div";
+      const attr = k.mode ? ` type="button" data-goto="${k.mode}"` : "";
+      return `<${tag} class="kpi ${k.tone}"${attr}>`
+        + `<div class="kpi-label">${esc(k.label)}</div>`
+        + `<div class="kpi-value">${esc(k.value)}</div>`
+        + `<div class="kpi-sub">${esc(k.sub)}</div>`
+        + `</${tag}>`;
+    }).join("");
+    grid.querySelectorAll("button.kpi[data-goto]").forEach(b => {
+      b.addEventListener("click", () => {
+        const target = b.dataset.goto;
+        gotoModeYear(target, latestYearOf(target));
+        updateHash();
+        const panel = document.querySelector(".panel");
+        if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+
+  // ---- Historical milestones (1991–2026) -----------------------------------
+  // The drivers behind the trends, as a compact scrollable strip.
+  function buildMilestones() {
+    const strip = document.getElementById("milestoneStrip");
+    if (!strip) return;
+    const MS = [
+      { year: "1991", tone: "c-blue", event: "Independence",
+        note: "Borders open; labour emigration begins, at first eastward to Russia and Ukraine." },
+      { year: "1998", tone: "c-blue", event: "Russian financial crisis",
+        note: "Recession at home pushes labour migration; remittances become a household lifeline." },
+      { year: "2007", tone: "c-blue", event: "Romania joins the EU",
+        note: "Many Moldovans take up Romanian citizenship, opening onward free movement in the EU." },
+      { year: "2014", tone: "c-blue", event: "EU visa-free travel",
+        note: "Visa liberalisation and the DCFTA reorient migration and trade toward the European Union." },
+      { year: "2020", tone: "c-grey", event: "COVID-19 pandemic",
+        note: "Temporary returns and disrupted flows; remittances prove surprisingly resilient." },
+      { year: "2022", tone: "c-orange", event: "Russia invades Ukraine",
+        note: "Moldova becomes one of Europe's largest refugee hosts per capita almost overnight." },
+      { year: "2024", tone: "c-green", event: "Census & EU accession path",
+        note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." }
+    ];
+    strip.innerHTML = MS.map(s =>
+      `<div class="milestone ${s.tone}">`
+      + `<div class="milestone-year">${esc(s.year)}</div>`
+      + `<div class="milestone-event">${esc(s.event)}</div>`
+      + `<div class="milestone-note">${esc(s.note)}</div>`
+      + `</div>`).join("");
+  }
+
+  // ---- Labour migration: data-driven destination bars ----------------------
+  // Reads the 2024 UN DESA diaspora breakdown (excluding the "Other" residual)
+  // so the destinations panel never drifts from the emigration map/table.
+  function renderLabourDest() {
+    const host = document.getElementById("labourDest");
+    if (!host) return;
+    const rows = (DATA.modes.emigration.years[2024] || [])
+      .filter(r => !r.residual)
+      .slice().sort((a, b) => b.value - a.value).slice(0, 8);
+    const max = d3.max(rows, r => r.value) || 1;
+    host.innerHTML = rows.map(r =>
+      `<div class="ldest-row">`
+      + `<span class="ldest-name">${esc(r.country)}</span>`
+      + `<span class="ldest-track"><span class="ldest-fill" style="width:${(r.value / max * 100).toFixed(1)}%"></span></span>`
+      + `<span class="ldest-val">${d3.format(",")(r.value)}</span>`
+      + `</div>`).join("");
+  }
+
+  // ---- Audience pathways + Simple/Advanced view ----------------------------
+  function scrollToSel(sel) {
+    const el = document.querySelector(sel);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  // ---- Story map: nav rail, scroll progress, reveal-on-scroll --------------
+  // The mode switcher is the single primary control surface; the nav rail just
+  // tracks chapters and offers quick jumps.
+  function initStory() {
+    const chapters = Array.from(document.querySelectorAll(".chapter[data-nav]"));
+    const nav = document.getElementById("storyNav");
+    if (nav && chapters.length) {
+      nav.innerHTML = chapters.map(c =>
+        `<button type="button" class="story-dot" data-target="#${c.id}" aria-label="${esc(c.dataset.nav)}">`
+        + `<span class="dot"></span><span class="dot-label">${esc(c.dataset.nav)}</span></button>`).join("");
+      nav.querySelectorAll(".story-dot").forEach(b =>
+        b.addEventListener("click", () => scrollToSel(b.dataset.target)));
+    }
+
+    const supportsIO = "IntersectionObserver" in window;
+
+    // Active-chapter highlight on the nav rail.
+    if (supportsIO && nav) {
+      const dots = Array.from(nav.querySelectorAll(".story-dot"));
+      const byId = {};
+      dots.forEach(d => { byId[d.dataset.target.slice(1)] = d; });
+      const navObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          dots.forEach(d => d.classList.remove("active"));
+          const d = byId[e.target.id]; if (d) d.classList.add("active");
+        });
+      }, { rootMargin: "-45% 0px -45% 0px", threshold: 0 });
+      chapters.forEach(c => navObs.observe(c));
+    }
+
+    // Reveal-on-scroll — only opt in when IO is available, so without JS/IO the
+    // content stays fully visible (the CSS default).
+    if (supportsIO) {
+      document.body.classList.add("js-reveal");
+      const revObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) { e.target.classList.add("in"); revObs.unobserve(e.target); }
+        });
+      }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+      document.querySelectorAll(".reveal").forEach(el => revObs.observe(el));
+    }
+
+    // Scroll progress bar.
+    const bar = document.getElementById("storyProgressBar");
+    if (bar) {
+      const onScroll = () => {
+        const h = document.documentElement;
+        const max = h.scrollHeight - h.clientHeight;
+        bar.style.width = (max > 0 ? Math.min(100, (h.scrollTop / max) * 100) : 0) + "%";
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    }
+  }
+
+  // ---- Mode interpretation warning -----------------------------------------
+  // Only remittances carries one for now: the per-country split is a historical
+  // 2020 breakdown, distinct from the current (and accurate) headline totals.
+  function updateModeWarning() {
+    const el = document.getElementById("modeWarning");
+    if (!el) return;
+    if (mode === "remittances") {
+      el.innerHTML =
+        `<div><strong>Reading the remittance map.</strong> The per-country split is the latest `
+        + `<em>published</em> geographic breakdown (NBM 2020 net settlements) and is shown as history, `
+        + `not today's pattern: since the 2022 sanctions, transfers from Russia have collapsed and EU `
+        + `sources now dominate. The headline totals on this view (10.5% of GDP, $1.92bn in 2024) are `
+        + `current — only the country geography is historical.</div>`;
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
+  }
+
   // ---- Inject UI icons -----------------------------------------------------
   function injectIcons() {
     document.querySelectorAll(".mode-btn").forEach(b => {
       const slot = b.querySelector(".ico");
       if (slot) slot.innerHTML = icon(MODE_ICON[b.dataset.mode], 16);
+    });
+    document.querySelectorAll(".concept-ico[data-ico]").forEach(s => {
+      s.innerHTML = icon(s.dataset.ico, 22);
     });
     const reset = document.getElementById("zoomReset");
     if (reset) reset.innerHTML = icon("expand", 15);
@@ -1239,6 +1638,10 @@
 
   // ---- Boot ----------------------------------------------------------------
   injectIcons();
+  buildGlance();
+  buildMilestones();
+  renderLabourDest();
+  initStory();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
   const stampEl = document.getElementById("dataStamp");

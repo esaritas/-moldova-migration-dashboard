@@ -1,0 +1,49 @@
+name: Deploy dashboard to GitHub Pages
+
+# Publishes the static dashboard (index.html + its local assets) to GitHub Pages.
+# The site is plain HTML/CSS/JS — D3 and fonts load from CDNs — so there is no
+# build step; we just upload the repository as-is and deploy it.
+#
+# ONE-TIME SETUP (repo owner): GitHub → Settings → Pages → "Build and deployment"
+# → Source = "GitHub Actions". After that, every push to the branches below
+# republishes the live site at:
+#   https://esaritas.github.io/-moldova-migration-dashboard/
+
+on:
+  push:
+    branches:
+      - claude/eager-feynman-92z2ef   # current working branch (the live dashboard)
+      - main                          # keeps publishing after a future merge
+  workflow_dispatch:                  # lets you re-run it by hand from the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time; newer pushes supersede in-flight ones.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'   # repo root: index.html + styles.css + the four local scripts
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

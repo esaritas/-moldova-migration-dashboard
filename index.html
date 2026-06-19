@@ -13,121 +13,292 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+
+  <!-- Scroll progress + chapter navigation (built/driven by app.js) -->
+  <div class="story-progress" aria-hidden="true"><span id="storyProgressBar"></span></div>
+  <nav class="story-nav" id="storyNav" aria-label="Jump to a chapter"><!-- built by app.js --></nav>
+
   <div class="wrap">
-    <header>
-      <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
-      <h1>Moldova in Motion</h1>
-      <p class="story-subhead">About one in four Moldovan-born people live abroad &mdash; but their money, families and crises still connect back home.</p>
-      <p class="lede">Where Moldovans go, who comes to Moldova, and how much money flows home.
-        Bubble size is the number of people — or dollars — moving along each route.</p>
-      <p class="scope-note" id="scopeNote"></p>
 
-      <!-- Mode toggle: plain-language labels for a general audience -->
-      <div class="modes" role="group" aria-label="Choose what to show">
-        <button class="mode-btn" data-mode="emigration"  aria-pressed="true">
-          <span class="ico"></span>Leaving Moldova<span class="mode-badge">STOCK</span></button>
-        <button class="mode-btn" data-mode="immigration" aria-pressed="false">
-          <span class="ico"></span>Refugees from Ukraine<span class="mode-badge">REFUGEE-HOSTING</span></button>
-        <button class="mode-btn" data-mode="immigration_census" aria-pressed="false">
-          <span class="ico"></span>Foreign-born residents<span class="mode-badge">STOCK</span></button>
-        <button class="mode-btn" data-mode="remittances" aria-pressed="false">
-          <span class="ico"></span>Money sent home<span class="mode-badge">MONEY-PROXY</span></button>
-        <span class="mode-sep" aria-hidden="true"></span>
-        <button class="mode-btn mode-btn-nbs" data-mode="emigration_flow" aria-pressed="false">
-          <span class="ico"></span>Emigrants / year<span class="mode-badge">REGISTERED-FLOW</span></button>
-        <button class="mode-btn mode-btn-nbs" data-mode="immigration_flow" aria-pressed="false">
-          <span class="ico"></span>Immigrants / year<span class="mode-badge">REGISTERED-FLOW</span></button>
+    <!-- ===================== INTRO ===================== -->
+    <section class="chapter chapter-intro-sec" id="ch-intro" data-nav="Intro">
+      <header class="hero reveal">
+        <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
+        <h1>Moldova in Motion</h1>
+        <p class="story-subhead">Roughly one in four people born in Moldova now live somewhere else, yet their money, their families and the crises they pass through still tie them home.</p>
+        <p class="lede">Six short chapters on where Moldovans go, who comes to Moldova, and how much money makes its way back. Scroll to follow, or use the dots on the right.</p>
+        <p class="scope-note" id="scopeNote"></p>
+      </header>
+
+      <p class="scroll-cue reveal" aria-hidden="true">Scroll to begin <span class="scroll-cue-arrow">&darr;</span></p>
+    </section>
+
+    <!-- ===================== 01 · AT A GLANCE ===================== -->
+    <section class="chapter" id="ch-glance" data-nav="At a glance">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Key numbers at a glance</h2>
       </div>
-      <p class="modes-note">The last two are <strong>official NBS registered flows</strong> (a few thousand a year) — a different, much smaller measure than the diaspora &amp; refugee <em>stocks</em> on the left.</p>
-    </header>
+      <p class="chapter-intro reveal">Four interlinked but distinct realities define migration in Moldova: a large diaspora abroad, a shrinking resident population, refugee hosting since 2022, and an economy underpinned by remittances. Tap any card to explore it on the map.</p>
+      <div class="glance-grid reveal" id="glanceGrid"><!-- built by app.js --></div>
+    </section>
 
-    <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
-    <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
+    <!-- ===================== 02 · HOW TO READ THE NUMBERS ===================== -->
+    <section class="chapter" id="ch-concepts" data-nav="Concepts">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">How to read the numbers</h2>
+      </div>
+      <p class="chapter-intro reveal">A <strong>stock</strong> is a count at one moment (how many people are abroad today). A <strong>flow</strong> is movement during a period (how many registered a move this year). Stocks are large and slow; flows are small and yearly. Mixing them is the most common mistake in reading migration data.</p>
 
-    <!-- Definitions strip: one-line orientation for all audiences -->
-    <div class="howto-strip" role="note" aria-label="How to read this dashboard">
-      <strong>How to read this:</strong>
-      Stock &ne; flow &nbsp;&middot;&nbsp; Refugee count &ne; immigrant stock &nbsp;&middot;&nbsp; Bank transfers &ne; total remittances &nbsp;&middot;&nbsp; Shown countries &ne; national total
-    </div>
-
-    <!-- Map + table side by side -->
-    <div class="panel">
-      <div class="card map-card">
-        <svg id="map" role="img" aria-label="Map of migration flows"></svg>
-        <div class="zoom-ctrls">
-          <button class="zoom-btn" id="zoomIn" aria-label="Zoom in" title="Zoom in">+</button>
-          <button class="zoom-btn" id="zoomOut" aria-label="Zoom out" title="Zoom out">&minus;</button>
-          <button class="zoom-btn" id="zoomReset" aria-label="Reset to world view" title="Reset view">&#8862;</button>
+      <div class="concept-grid reveal">
+        <div class="concept-card c-blue">
+          <span class="concept-ico" data-ico="users"></span>
+          <h3>Diaspora stock</h3>
+          <p>People <em>born in Moldova</em> now living abroad, counted at one moment. <strong>864,257</strong> (UN DESA 2024). Built up over decades — not a single year's departures.</p>
         </div>
-        <div class="map-caption" id="mapCaption"></div>
-        <div class="src-caption" id="mapSource"></div>
-      </div>
-
-      <div class="card table-card">
-        <div class="total">
-          <span class="big" id="totalValue">—</span>
-          <span class="label" id="totalLabel"></span>
+        <div class="concept-card c-green">
+          <span class="concept-ico" data-ico="globe"></span>
+          <h3>Foreign-born residents</h3>
+          <p>People <em>living in Moldova</em> who were born elsewhere. <strong>106,700</strong> at the 2024 census (4.4%). A residence stock — most hold Moldovan citizenship.</p>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Country</th>
-              <th class="c-bar-cell"></th>
-              <th class="num" id="valueHead">People</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Timeline -->
-    <div class="card timeline-card">
-      <button class="play" id="playBtn" aria-label="Play through years" title="Play">
-        <svg width="14" height="14" viewBox="0 0 14 14" id="playIcon"><path d="M3 2 L12 7 L3 12 Z" fill="currentColor"/></svg>
-        <span class="play-label">Play timeline</span>
-      </button>
-      <div class="track">
-        <div class="track-line"></div>
-        <div class="track-fill" id="trackFill"></div>
-        <div class="stops" id="stops"></div>
-      </div>
-    </div>
-    <p class="timeline-note" id="timelineNote" aria-live="polite" hidden></p>
-
-    <!-- Economics: mode-aware analysis with world benchmarks -->
-    <div class="card context-card">
-      <p class="context-headline" id="contextHeadline"></p>
-      <p class="ctx-panel-note src-caption" id="ctxPanelNote" hidden></p>
-      <!-- Part-to-whole comparison strip: shows the proportion, not just the stat -->
-      <div id="partWholeViz" class="part-whole-strip" hidden></div>
-      <div class="context-body">
-        <div class="context-chart">
-          <div class="ctx-chart-title" id="ctxChartTitle"></div>
-          <svg id="ctxChart" role="img"></svg>
-          <div class="src-caption" id="ctxSource"></div>
+        <div class="concept-card c-orange">
+          <span class="concept-ico" data-ico="tent"></span>
+          <h3>Refugees hosted</h3>
+          <p>People who <em>fled to Moldova</em> and are protected here. <strong>141,058</strong> Ukrainians (UNHCR, May 2026). A humanitarian count — not the same as foreign-born residents.</p>
         </div>
-        <div class="context-stats" id="ctxStats"></div>
+        <div class="concept-card c-grey">
+          <span class="concept-ico" data-ico="route"></span>
+          <h3>Registered flows</h3>
+          <p>People who <em>formally registered</em> a move in a single year — a few thousand (NBS). A flow; tiny next to the stocks, because most who leave never deregister.</p>
+        </div>
       </div>
-    </div>
 
-    <footer>
-      <p><strong>Sources &amp; caveats.</strong> <span class="src" id="sourceLine"></span></p>
-      <p>Drawn from official sources — National Bank of Moldova, UN DESA International Migrant
-        Stock, UNHCR, the World Bank and Eurostat — with mixed confidence labelled throughout.
-        <button type="button" class="link-btn" id="openMethod">Methodology &amp; sources</button></p>
-      <p class="data-stamp" id="dataStamp"></p>
-    </footer>
-
-    <!-- Methodology & sources (native <dialog>: Esc + focus-trap built in) -->
-    <dialog id="methodDialog" class="method-dialog" aria-labelledby="methodTitle">
-      <div class="method-head">
-        <h2 id="methodTitle">Methodology &amp; sources</h2>
-        <button type="button" class="method-close" id="methodClose" aria-label="Close">&times;</button>
+      <div class="concept-egs reveal">
+        <p class="concept-eg"><span class="eg-tag">Read it right</span> 864,000 Moldova-born people abroad does <strong>not</strong> mean 864,000 emigrated this year. It is a lifetime stock accumulated over decades.</p>
+        <p class="concept-eg"><span class="eg-tag">Read it right</span> 141,000 refugees in Moldova are <strong>not</strong> the same as the foreign-born residents in the census — different definitions, different sources, different people.</p>
       </div>
-      <div class="method-body" id="methodBody"><!-- built from DATA by app.js --></div>
-    </dialog>
+
+      <!-- Relative scale: emigration is Moldova's largest migration reality -->
+      <div class="scale-compare reveal">
+        <h3 class="scale-title">How the three stocks compare</h3>
+        <div class="scale-row"><span class="scale-lbl">Diaspora abroad</span><div class="scale-bar c-blue" style="width:100%"><span>864,257</span></div></div>
+        <div class="scale-row"><span class="scale-lbl">Refugees hosted</span><div class="scale-bar c-orange" style="width:16.3%"><span>141,058</span></div></div>
+        <div class="scale-row"><span class="scale-lbl">Foreign-born residents</span><div class="scale-bar c-green" style="width:12.3%"><span>106,700</span></div></div>
+        <p class="scale-insight">Emigration remains Moldova's largest migration reality: the diaspora abroad is roughly <strong>six times</strong> the refugee population it hosts and <strong>eight times</strong> its foreign-born residents.</p>
+      </div>
+    </section>
+
+    <!-- ===================== 03 · EXPLORE THE DATA ===================== -->
+    <section class="chapter" id="ch-explore" data-nav="Explore the map">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">Explore the four realities</h2>
+      </div>
+      <p class="chapter-intro reveal">Switch between the views below to see who leaves, who arrives, who is hosted, and how the money flows. Press play on the timeline to watch each story change over the years.</p>
+
+      <!-- Grouped segmented control: taxonomy lives in the grouping + one quiet
+           label per group, not in per-button badges. The administrative NBS
+           register sits in its own dashed group to signal lower confidence. -->
+      <div class="modes reveal" role="group" aria-label="Choose what to show">
+        <div class="mode-group">
+          <span class="mode-group-label">Who's abroad <span class="kind">stock</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="emigration" aria-pressed="true"><span class="ico"></span>Leaving Moldova</button>
+          </div>
+        </div>
+        <div class="mode-group">
+          <span class="mode-group-label">Who's here <span class="kind">stock</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="immigration" aria-pressed="false"><span class="ico"></span>Refugees from Ukraine</button>
+            <button class="mode-btn" data-mode="immigration_census" aria-pressed="false"><span class="ico"></span>Foreign-born residents</button>
+          </div>
+        </div>
+        <div class="mode-group">
+          <span class="mode-group-label">Population <span class="kind">census</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="population" aria-pressed="false"><span class="ico"></span>By district</button>
+          </div>
+        </div>
+        <div class="mode-group">
+          <span class="mode-group-label">Money <span class="kind">bank-transfer proxy</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="remittances" aria-pressed="false"><span class="ico"></span>Money sent home</button>
+          </div>
+        </div>
+        <div class="mode-group mode-group-admin">
+          <span class="mode-group-label">Registered flows <span class="kind">NBS, per year</span></span>
+          <div class="mode-pill mode-pill-dashed">
+            <button class="mode-btn mode-btn-nbs" data-mode="emigration_flow" aria-pressed="false"><span class="ico"></span>Emigrants / year</button>
+            <button class="mode-btn mode-btn-nbs" data-mode="immigration_flow" aria-pressed="false"><span class="ico"></span>Immigrants / year</button>
+          </div>
+        </div>
+      </div>
+      <p class="modes-note">The dashed group comes from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year, a far smaller thing than the diaspora and refugee stocks. <a href="#ch-concepts" class="jit-link">What's a stock vs a flow?</a></p>
+
+      <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
+      <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
+
+      <!-- Definitions strip: one-line orientation for all audiences -->
+      <div class="howto-strip" role="note" aria-label="How to read this dashboard">
+        <strong>How to read this:</strong>
+        Stock &ne; flow &nbsp;&middot;&nbsp; Refugee count &ne; immigrant stock &nbsp;&middot;&nbsp; Bank transfers &ne; total remittances &nbsp;&middot;&nbsp; Shown countries &ne; national total
+      </div>
+
+      <!-- Mode-specific interpretation warning (e.g. remittances: the per-country
+           split is a historical 2020 breakdown, not the current geography). -->
+      <div class="mode-warning" id="modeWarning" hidden></div>
+
+      <!-- Map + table side by side -->
+      <div class="panel reveal">
+        <div class="card map-card">
+          <svg id="map" role="img" aria-label="Map of migration flows"></svg>
+          <div class="zoom-ctrls">
+            <button class="zoom-btn" id="zoomIn" aria-label="Zoom in" title="Zoom in">+</button>
+            <button class="zoom-btn" id="zoomOut" aria-label="Zoom out" title="Zoom out">&minus;</button>
+            <button class="zoom-btn" id="zoomReset" aria-label="Reset to world view" title="Reset view">&#8862;</button>
+          </div>
+          <div class="map-caption" id="mapCaption"></div>
+          <div class="src-caption" id="mapSource"></div>
+        </div>
+
+        <div class="card table-card">
+          <div class="total">
+            <span class="big" id="totalValue">—</span>
+            <span class="label" id="totalLabel"></span>
+          </div>
+          <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th class="c-bar-cell"></th>
+                <th class="num" id="valueHead">People</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline: a genuine scrubber — draggable handle, live year readout,
+           arrow-key support, and a speed control; any manual move pauses play. -->
+      <div class="card timeline-card">
+        <button class="play" id="playBtn" aria-label="Play through years" title="Play">
+          <svg width="14" height="14" viewBox="0 0 14 14" id="playIcon"><path d="M3 2 L12 7 L3 12 Z" fill="currentColor"/></svg>
+          <span class="play-label">Play timeline</span>
+        </button>
+        <div class="track" id="track" role="slider" tabindex="0"
+             aria-label="Year" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="">
+          <div class="track-line"></div>
+          <div class="track-fill" id="trackFill"></div>
+          <div class="stops" id="stops"></div>
+          <div class="track-handle" id="trackHandle" aria-hidden="true">
+            <span class="handle-readout" id="handleReadout"></span>
+          </div>
+        </div>
+        <div class="speed-ctrl" role="group" aria-label="Playback speed">
+          <button type="button" class="speed-btn" data-speed="0.5">0.5&times;</button>
+          <button type="button" class="speed-btn is-on" data-speed="1">1&times;</button>
+          <button type="button" class="speed-btn" data-speed="2">2&times;</button>
+        </div>
+      </div>
+      <p class="timeline-note" id="timelineNote" aria-live="polite" hidden></p>
+
+      <!-- Economics: mode-aware analysis with world benchmarks -->
+      <div class="card context-card reveal">
+        <p class="context-headline" id="contextHeadline"></p>
+        <p class="ctx-panel-note src-caption" id="ctxPanelNote" hidden></p>
+        <!-- Part-to-whole comparison strip: shows the proportion, not just the stat -->
+        <div id="partWholeViz" class="part-whole-strip" hidden></div>
+        <div class="context-body">
+          <div class="context-chart">
+            <div class="ctx-chart-title" id="ctxChartTitle"></div>
+            <svg id="ctxChart" role="img"></svg>
+            <div class="src-caption" id="ctxSource"></div>
+          </div>
+          <div class="context-stats" id="ctxStats"></div>
+        </div>
+        <!-- Plain-language glossary for the terms used on this view, surfaced on
+             the page (built from DATA.glossary by app.js) so readers don't have to
+             hover the cards or open the methodology modal. -->
+        <div class="ctx-defs" id="ctxDefs" hidden></div>
+      </div>
+    </section>
+
+    <!-- ===================== 04 · WHAT DROVE THE TRENDS ===================== -->
+    <section class="chapter" id="ch-drivers" data-nav="Timeline">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">What drove the trends, 1991&ndash;2026</h2>
+      </div>
+      <p class="chapter-intro reveal">Moldova's migration story tracks its history: independence opened the borders, crises pushed people out, EU ties pulled them west, and the war next door made the country a major refugee host almost overnight.</p>
+      <div class="milestone-strip reveal" id="milestoneStrip"><!-- built by app.js --></div>
+    </section>
+
+    <!-- ===================== 05 · LABOUR MIGRATION ===================== -->
+    <section class="chapter" id="ch-labour" data-nav="Labour">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Labour migration &amp; the diaspora</h2>
+      </div>
+      <p class="chapter-intro reveal">Most Moldovan emigration is, at root, <strong>labour migration</strong>: people leaving to work, often sending money home and frequently keeping one foot in both countries. The diaspora's centre of gravity has shifted from the post-Soviet east toward the European Union over the past two decades.</p>
+      <div class="labour-body reveal">
+        <div class="labour-grid">
+          <div class="labour-col">
+            <h3>Main destinations &middot; 2024</h3>
+            <div id="labourDest"><!-- bars built from UN DESA 2024 by app.js --></div>
+            <p class="labour-note">Moldova-born stock, UN DESA 2024. Germany, the US and the UK report by citizenship, not birthplace, so they carry no Moldova-born cell here and are omitted.</p>
+          </div>
+          <div class="labour-col">
+            <h3>Trends, return &amp; brain circulation</h3>
+            <div class="labour-cards">
+              <div class="labour-card">
+                <h4>East &rarr; West shift</h4>
+                <p>Russia was the top destination through the 2010s; by 2024 Italy leads and the EU as a whole holds the majority of the recorded diaspora.</p>
+              </div>
+              <div class="labour-card">
+                <h4>Return migration is small</h4>
+                <p>Official repatriation is a thin counter-flow: <strong>332</strong> returnees in 2024, down from 1,462 in 2015 (NBS). Circular and seasonal returns are common but largely unrecorded.</p>
+              </div>
+              <div class="labour-card">
+                <h4>Brain drain vs brain circulation</h4>
+                <p><strong>Brain drain</strong> is the permanent loss of skilled and young workers; <strong>brain circulation</strong> is the more hopeful idea that migrants return with skills, capital and networks. Moldova leans toward drain: about <strong>68%</strong> of registered emigrants are under 35.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="labour-limits">
+          <strong>Data limitations.</strong> There is no comprehensive, regularly published public breakdown of the diaspora by <em>occupation, skill level or sector</em>. Qualitatively, Moldovans abroad are concentrated in construction, domestic and care work, agriculture, hospitality and transport, but this dashboard does not chart it for lack of an authoritative, current source. Registered NBS flows also undercount real movement, so labour-migration totals here should be read as lower bounds.
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 06 · SOURCES & METHODOLOGY ===================== -->
+    <section class="chapter" id="ch-sources" data-nav="Sources">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Sources &amp; methodology</h2>
+      </div>
+      <footer class="reveal">
+        <p><strong>Sources &amp; caveats.</strong> <span class="src" id="sourceLine"></span></p>
+        <p>Drawn from official sources: the National Bank of Moldova, UN DESA's International Migrant
+          Stock, UNHCR, the World Bank and Eurostat, with mixed confidence labelled throughout.
+          <button type="button" class="link-btn" id="openMethod">Methodology &amp; sources</button></p>
+        <p class="data-stamp" id="dataStamp"></p>
+      </footer>
+    </section>
   </div>
+
+  <!-- Methodology & sources (native <dialog>: Esc + focus-trap built in) -->
+  <dialog id="methodDialog" class="method-dialog" aria-labelledby="methodTitle">
+    <div class="method-head">
+      <h2 id="methodTitle">Methodology &amp; sources</h2>
+      <button type="button" class="method-close" id="methodClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="method-body" id="methodBody"><!-- built from DATA by app.js --></div>
+  </dialog>
 
   <!-- Libraries & data (load order matters) -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>

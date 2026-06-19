@@ -29,12 +29,22 @@
   --ink-soft:      #6B7470;   /* secondary text */
   --ink-faint:     #9AA09C;   /* captions */
 
-  /* One accent per mode */
-  --c-out:   #C7402F;   /* leaving Moldova   (red)   */
-  --c-in:    #1E8C72;   /* coming to Moldova (teal-green; safer for red-green CVD) */
-  --c-money: #2B6F9E;   /* money sent home   (blue)  */
+  /* Phenomenon colour logic (consistent across the whole dashboard):
+       diaspora / emigration   = blue
+       refugees                = orange
+       population / foreign-born = green
+       remittances             = purple                                   */
+  --c-diaspora: #2B6CA8;   /* blue   — diaspora abroad / emigration       */
+  --c-refugee:  #E08A2E;   /* orange — refugees hosted                    */
+  --c-pop:      #2E8B6B;   /* green  — population / foreign-born residents */
+  --c-money:    #6E4FA3;   /* purple — remittances                        */
+  --c-flow:     #6B7682;   /* slate  — registered administrative flows    */
 
-  --accent:  var(--c-out);   /* set per mode at runtime */
+  /* Back-compat aliases (older rules referenced these) */
+  --c-out:   var(--c-diaspora);
+  --c-in:    var(--c-refugee);
+
+  --accent:  var(--c-diaspora);   /* set per mode at runtime */
 
   --radius: 10px;
   --shadow: 0 1px 2px rgba(31, 36, 33, 0.04), 0 6px 24px rgba(31, 36, 33, 0.04);
@@ -192,7 +202,7 @@ h1 {
   box-shadow: var(--shadow);
 }
 
-.map-card { position: relative; overflow: hidden; padding: 6px; }
+.map-card { position: relative; overflow: hidden; padding: 6px; align-self: start; }
 #map { width: 100%; display: block; cursor: grab; touch-action: none; }
 #map:active { cursor: grabbing; }
 
@@ -345,6 +355,9 @@ h1 {
   max-width: 18ch;
 }
 
+/* Long lists (e.g. the 37 refugee-hosting districts) scroll within the card
+   instead of stretching it; the header stays pinned. */
+.table-scroll { overflow-y: auto; max-height: 480px; }
 table { width: 100%; border-collapse: collapse; margin-top: 6px; }
 thead th {
   font-family: var(--font-mono);
@@ -355,6 +368,10 @@ thead th {
   text-align: left;
   font-weight: 500;
   padding: 8px 6px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
 }
 thead th.num { text-align: right; }
 
@@ -390,6 +407,7 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
   border-bottom: 1px solid var(--line);
   margin-bottom: 18px;
 }
+.pw-item { display: flex; flex-direction: column; }
 .pw-svg {
   width: 100%;
   max-width: 480px;
@@ -398,6 +416,14 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
   overflow: visible;
   font-family: var(--font-body);
 }
+/* The GDP waffle is 100 cells; cap it small so it reads as a tidy proportion
+   block rather than dominating the panel. The explanatory caption (.pw-cap)
+   keeps its full width below. */
+.pw-svg.pw-waffle { max-width: 208px; }
+/* Readout + denominator note live in HTML (not SVG) so long lines wrap. */
+.pw-cap { max-width: 520px; margin-top: 8px; }
+.pw-readout { font-size: 12px; font-weight: 500; color: var(--ink); line-height: 1.4; }
+.pw-denom { font-size: 10px; color: #9aa09c; margin-top: 3px; line-height: 1.4; }
 /* animate fill on mode change, but respect reduced-motion */
 @media (prefers-reduced-motion: no-preference) {
   .pw-svg rect[fill]:not([fill="none"]) {
@@ -419,6 +445,20 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 .ctx-yr { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-faint); }
 .ctx-ref { stroke: var(--ink-faint); stroke-width: 1px; stroke-dasharray: 4 4; }
 .ctx-ref-label { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-faint); }
+
+/* ---- Per-mode plain-language glossary (visible on the page) -------------- */
+.ctx-defs { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.ctx-defs-title {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 11px;
+}
+.ctx-defs-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 11px 26px;
+}
+.ctx-def { margin: 0; }
+.ctx-def dt { font-weight: 600; font-size: 12.5px; color: var(--ink); margin-bottom: 2px; }
+.ctx-def dd { margin: 0; font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
 
 .context-stats { display: flex; flex-direction: column; gap: 12px; }
 .stat {
@@ -705,124 +745,621 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 }
 .howto-strip strong { color: var(--ink); }
 
+/* ============================================================================
+   PUBLIC-PROFILE SECTIONS (glance / concepts / milestones / warning)
+   ========================================================================== */
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 17px; letter-spacing: -0.01em;
+  color: var(--ink); margin: 0 0 12px;
+}
+.summary-hint { font-family: var(--font-body); font-weight: 400; font-size: 12.5px; color: var(--ink-faint); }
+
+/* Phenomenon colour helpers (border + value tint) */
+.c-blue   { --tone: var(--c-diaspora); }
+.c-orange { --tone: var(--c-refugee); }
+.c-green  { --tone: var(--c-pop); }
+.c-purple { --tone: var(--c-money); }
+.c-grey   { --tone: var(--c-flow); }
+
+/* ---- Key numbers at a glance --------------------------------------------- */
+.glance { margin: 4px 0 22px; }
+.glance-grid {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+}
+.kpi {
+  display: block; text-align: left; width: 100%;
+  background: var(--surface); border: 1px solid var(--line);
+  border-top: 3px solid var(--tone, var(--line));
+  border-radius: var(--radius); padding: 13px 15px 14px;
+  cursor: default; font-family: inherit;
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+button.kpi { cursor: pointer; }
+button.kpi:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; }
+.kpi-label {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.kpi-value {
+  font-family: var(--font-display); font-weight: 600; font-size: 26px;
+  line-height: 1; letter-spacing: -.02em; color: var(--tone, var(--ink));
+}
+.kpi-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 5px; line-height: 1.4; }
+.glance-foot { font-size: 12.5px; color: var(--ink-soft); margin: 13px 0 0; max-width: 80ch; }
+
+/* ---- Concepts explained -------------------------------------------------- */
+.concepts, .milestones {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 16px 18px; margin: 0 0 18px;
+}
+.concepts > summary, .milestones > summary {
+  cursor: pointer; list-style: none; margin: 0;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.concepts > summary::-webkit-details-marker, .milestones > summary::-webkit-details-marker { display: none; }
+.concepts > summary::before, .milestones > summary::before {
+  content: "▸"; color: var(--ink-faint); font-size: 13px; transition: transform .15s ease;
+}
+.concepts[open] > summary::before, .milestones[open] > summary::before { transform: rotate(90deg); }
+.concepts > summary .section-title, .milestones > summary .section-title { margin: 0; display: inline; }
+.concepts-body { margin-top: 14px; }
+.concepts-lede { font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 0 0 16px; max-width: 90ch; }
+.concept-grid {
+  display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;
+}
+.concept-card {
+  background: var(--bg); border: 1px solid var(--line);
+  border-left: 3px solid var(--tone); border-radius: 8px; padding: 13px 14px;
+}
+.concept-card h3 { font-size: 13.5px; margin: 8px 0 5px; color: var(--ink); }
+.concept-card p { font-size: 12px; line-height: 1.5; color: var(--ink-soft); margin: 0; }
+.concept-card p strong { color: var(--tone); }
+.concept-ico { color: var(--tone); display: inline-flex; }
+.concept-egs { display: grid; gap: 8px; margin-bottom: 18px; }
+.concept-eg {
+  font-size: 12.5px; line-height: 1.5; color: var(--ink); margin: 0;
+  background: color-mix(in srgb, var(--c-refugee) 7%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--c-refugee) 25%, var(--line));
+  border-radius: 8px; padding: 9px 12px;
+}
+.eg-tag {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--c-refugee); font-weight: 600;
+  margin-right: 8px;
+}
+.concept-eg strong { color: var(--c-refugee); }
+
+/* ---- Relative-scale comparison ------------------------------------------- */
+.scale-compare { border-top: 1px solid var(--line); padding-top: 16px; }
+.scale-title { font-size: 13.5px; margin: 0 0 12px; color: var(--ink); }
+.scale-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.scale-lbl { flex: 0 0 150px; font-size: 12px; color: var(--ink-soft); text-align: right; }
+.scale-bar {
+  height: 26px; border-radius: 5px; background: var(--tone);
+  display: flex; align-items: center; min-width: 54px;
+  transition: width .5s ease;
+}
+.scale-bar span {
+  color: #fff; font-family: var(--font-mono); font-size: 11.5px; font-weight: 500;
+  padding-left: 9px; white-space: nowrap;
+}
+.scale-insight { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin: 12px 0 0; max-width: 85ch; }
+.scale-insight strong { color: var(--ink); }
+
+/* ---- Milestones strip ---------------------------------------------------- */
+.milestone-strip {
+  margin-top: 14px; display: flex; gap: 12px; overflow-x: auto;
+  padding-bottom: 8px; scroll-snap-type: x proximity;
+}
+.milestone {
+  flex: 0 0 200px; scroll-snap-align: start;
+  background: var(--bg); border: 1px solid var(--line);
+  border-top: 3px solid var(--tone, var(--c-flow)); border-radius: 8px; padding: 12px 13px;
+}
+.milestone-year {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+  color: var(--tone, var(--ink)); margin-bottom: 4px;
+}
+.milestone-event { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 4px; line-height: 1.3; }
+.milestone-note { font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; }
+
+/* ---- Mode interpretation warning ----------------------------------------- */
+.mode-warning {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: color-mix(in srgb, var(--c-money) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--c-money) 32%, var(--line));
+  border-left: 4px solid var(--c-money);
+  border-radius: 8px; padding: 10px 14px; margin: 0 0 14px;
+  font-size: 12.5px; line-height: 1.5; color: var(--ink);
+}
+.mode-warning::before { content: "⚠"; color: var(--c-money); font-size: 15px; line-height: 1.3; }
+.mode-warning strong { color: var(--c-money); }
+
+/* ---- Responsive ---------------------------------------------------------- */
+@media (max-width: 880px) {
+  .glance-grid { grid-template-columns: repeat(2, 1fr); }
+  .concept-grid { grid-template-columns: repeat(2, 1fr); }
+  .scale-lbl { flex-basis: 110px; }
+}
+@media (max-width: 520px) {
+  .glance-grid { grid-template-columns: 1fr 1fr; }
+  .concept-grid { grid-template-columns: 1fr; }
+  .kpi-value { font-size: 22px; }
+}
+
+/* ============================================================================
+   AUDIENCE PATHWAYS + SIMPLE/ADVANCED VIEW + LABOUR MIGRATION
+   ========================================================================== */
+
+/* ---- Labour migration ---------------------------------------------------- */
+.labour { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin: 0 0 18px; }
+.labour > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.labour > summary::-webkit-details-marker { display: none; }
+.labour > summary::before { content: "▸"; color: var(--ink-faint); font-size: 13px; transition: transform .15s ease; }
+.labour[open] > summary::before { transform: rotate(90deg); }
+.labour > summary .section-title { margin: 0; display: inline; }
+.labour-body { margin-top: 14px; }
+.labour-lede { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 0 0 16px; max-width: 90ch; }
+.labour-lede strong { color: var(--ink); }
+.labour-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 26px; }
+.labour-col h3 { font-size: 13.5px; margin: 0 0 12px; color: var(--ink); }
+.labour-note { font-size: 11px; color: var(--ink-faint); line-height: 1.45; margin: 10px 0 0; }
+.labour-cards { display: grid; gap: 10px; }
+.labour-card { background: var(--bg); border: 1px solid var(--line); border-left: 3px solid var(--c-diaspora); border-radius: 8px; padding: 11px 13px; }
+.labour-card h4 { font-size: 12.5px; margin: 0 0 5px; color: var(--ink); }
+.labour-card p { font-size: 12px; line-height: 1.5; color: var(--ink-soft); margin: 0; }
+.labour-card p strong { color: var(--c-diaspora); }
+.labour-limits {
+  margin-top: 18px; font-size: 12px; line-height: 1.55; color: var(--ink-soft);
+  background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 11px 14px;
+}
+.labour-limits strong { color: var(--ink); }
+.labour-limits em { font-style: normal; font-weight: 600; color: var(--ink); }
+
+/* labour destination mini-bars (built by app.js) */
+.ldest-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.ldest-name { flex: 0 0 78px; font-size: 12px; color: var(--ink-soft); text-align: right; }
+.ldest-track { flex: 1; background: color-mix(in srgb, var(--c-diaspora) 12%, var(--surface)); border: 1px solid var(--line); border-radius: 5px; height: 22px; overflow: hidden; }
+.ldest-fill { height: 100%; background: var(--c-diaspora); border-radius: 5px 0 0 5px; transition: width .5s ease; }
+.ldest-val { flex: 0 0 64px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); }
+
+@media (max-width: 720px) {
+  .labour-grid { grid-template-columns: 1fr; gap: 18px; }
+}
+
+/* ============================================================================
+   STORY MAP: chapters, nav rail, scroll progress, reveal-on-scroll
+   ========================================================================== */
+
+/* ---- Scroll progress bar (fixed, tinted by the active mode accent) ------- */
+.story-progress {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: transparent; z-index: 60; pointer-events: none;
+}
+#storyProgressBar { display: block; height: 100%; width: 0; background: var(--accent); transition: width .12s linear; }
+
+/* ---- Chapter navigation rail (fixed, right) ------------------------------ */
+.story-nav {
+  position: fixed; top: 50%; right: 18px; transform: translateY(-50%);
+  z-index: 55; display: flex; flex-direction: column; gap: 13px;
+}
+.story-dot {
+  display: flex; align-items: center; gap: 10px; flex-direction: row-reverse;
+  background: transparent; border: 0; cursor: pointer; padding: 2px;
+}
+.story-dot .dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid var(--ink-faint); background: transparent;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+.story-dot .dot-label {
+  font-size: 11px; color: var(--ink); white-space: nowrap; opacity: 0;
+  background: var(--surface); border: 1px solid var(--line);
+  padding: 2px 9px; border-radius: 6px; box-shadow: var(--shadow);
+  transition: opacity .2s ease;
+}
+.story-dot:hover .dot { border-color: var(--accent); }
+.story-dot:hover .dot-label { opacity: 1; }
+.story-dot:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+.story-dot.active .dot { border-color: var(--accent); background: var(--accent); transform: scale(1.3); }
+.story-dot.active .dot-label { opacity: 1; }
+@media (max-width: 1100px) { .story-nav { display: none; } }
+
+/* ---- Chapters ------------------------------------------------------------ */
+.chapter { padding: 48px 0; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+.chapter-intro-sec { border-top: 0; padding-top: 6px; }
+.chapter-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+.chapter-num {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+  letter-spacing: .1em; color: var(--accent);
+}
+.chapter-title {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(20px, 2.6vw, 28px); letter-spacing: -.02em;
+  margin: 0; color: var(--ink); line-height: 1.1;
+}
+.chapter-intro { font-size: 15px; line-height: 1.6; color: var(--ink-soft); max-width: 76ch; margin: 8px 0 24px; }
+.chapter-intro strong { color: var(--ink); }
+
+/* ---- Hero / intro -------------------------------------------------------- */
+.hero { margin-bottom: 22px; }
+.scroll-cue {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-faint); margin: 26px 0 0;
+}
+.scroll-cue-arrow { display: inline-block; margin-left: 6px; animation: cue-bob 1.8s ease-in-out infinite; }
+@keyframes cue-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+/* ---- Reveal-on-scroll (no-JS-safe: visible until JS opts in) ------------- */
+.reveal { opacity: 1; transform: none; }
+body.js-reveal .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+body.js-reveal .reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  body.js-reveal .reveal { opacity: 1 !important; transform: none !important; }
+  .scroll-cue-arrow { animation: none; }
+}
+
+/* ============================================================================
+   DESIGN-BRIEF REFINEMENTS
+   grouped control · money motif · ranked bars · scrubber · rail toggle
+   ========================================================================== */
+
+/* ---- #7 Grouped segmented control (taxonomy via layout, no badges) ------- */
+.modes {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 18px;
+  background: transparent; border: 0; border-radius: 0; padding: 0; margin-top: 10px;
+}
+.mode-group { display: flex; flex-direction: column; gap: 6px; }
+.mode-group-label {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--ink-faint); padding-left: 4px;
+}
+.mode-group-label .kind {
+  text-transform: none; letter-spacing: .02em; color: var(--ink-faint); opacity: .8;
+}
+.mode-pill {
+  display: inline-flex; gap: 4px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px;
+}
+/* Lower-confidence / administrative data: dashed pill signals "different kind". */
+.mode-pill-dashed { border-style: dashed; background: transparent; }
+.jit-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.jit-link:hover { opacity: .8; }
+
+/* ---- #5 Scrubbable timeline: handle, readout, speed ---------------------- */
+.track { touch-action: none; cursor: pointer; border-radius: 6px; }
+.track:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.track-handle {
+  position: absolute; top: 50%; left: 0; transform: translate(-50%, -50%);
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); border: 3px solid var(--surface);
+  box-shadow: 0 1px 4px rgba(31,36,33,.25); z-index: 3; pointer-events: none;
+  transition: left .25s ease;
+}
+.handle-readout {
+  position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: #fff;
+  background: var(--accent); padding: 2px 7px; border-radius: 5px; white-space: nowrap;
+}
+.handle-readout::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 4px solid transparent; border-top-color: var(--accent);
+}
+.speed-ctrl { display: inline-flex; gap: 2px; flex: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.speed-btn {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft);
+  padding: 4px 9px; border-radius: 999px; transition: background .15s, color .15s;
+}
+.speed-btn.is-on { background: var(--accent); color: #fff; }
+.speed-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ---- #9 Mobile: scroll-snapping control groups, larger hit targets ------- */
+@media (max-width: 880px) {
+  .modes { gap: 14px; }
+  .mode-group { width: 100%; }
+  .mode-pill {
+    overflow-x: auto; scroll-snap-type: x proximity;
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .mode-pill::-webkit-scrollbar { display: none; }
+  .mode-pill .mode-btn { scroll-snap-align: start; min-height: 44px; white-space: nowrap; }
+}
+
 </style>
 </head>
 <body>
+
+  <!-- Scroll progress + chapter navigation (built/driven by app.js) -->
+  <div class="story-progress" aria-hidden="true"><span id="storyProgressBar"></span></div>
+  <nav class="story-nav" id="storyNav" aria-label="Jump to a chapter"><!-- built by app.js --></nav>
+
   <div class="wrap">
-    <header>
-      <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
-      <h1>Moldova in Motion</h1>
-      <p class="story-subhead">About one in four Moldovan-born people live abroad &mdash; but their money, families and crises still connect back home.</p>
-      <p class="lede">Where Moldovans go, who comes to Moldova, and how much money flows home.
-        Bubble size is the number of people — or dollars — moving along each route.</p>
-      <p class="scope-note" id="scopeNote"></p>
 
-      <!-- Mode toggle: plain-language labels for a general audience -->
-      <div class="modes" role="group" aria-label="Choose what to show">
-        <button class="mode-btn" data-mode="emigration"  aria-pressed="true">
-          <span class="ico"></span>Leaving Moldova<span class="mode-badge">STOCK</span></button>
-        <button class="mode-btn" data-mode="immigration" aria-pressed="false">
-          <span class="ico"></span>Refugees from Ukraine<span class="mode-badge">REFUGEE-HOSTING</span></button>
-        <button class="mode-btn" data-mode="immigration_census" aria-pressed="false">
-          <span class="ico"></span>Foreign-born residents<span class="mode-badge">STOCK</span></button>
-        <button class="mode-btn" data-mode="remittances" aria-pressed="false">
-          <span class="ico"></span>Money sent home<span class="mode-badge">MONEY-PROXY</span></button>
-        <span class="mode-sep" aria-hidden="true"></span>
-        <button class="mode-btn mode-btn-nbs" data-mode="emigration_flow" aria-pressed="false">
-          <span class="ico"></span>Emigrants / year<span class="mode-badge">REGISTERED-FLOW</span></button>
-        <button class="mode-btn mode-btn-nbs" data-mode="immigration_flow" aria-pressed="false">
-          <span class="ico"></span>Immigrants / year<span class="mode-badge">REGISTERED-FLOW</span></button>
+    <!-- ===================== INTRO ===================== -->
+    <section class="chapter chapter-intro-sec" id="ch-intro" data-nav="Intro">
+      <header class="hero reveal">
+        <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
+        <h1>Moldova in Motion</h1>
+        <p class="story-subhead">Roughly one in four people born in Moldova now live somewhere else, yet their money, their families and the crises they pass through still tie them home.</p>
+        <p class="lede">Six short chapters on where Moldovans go, who comes to Moldova, and how much money makes its way back. Scroll to follow, or use the dots on the right.</p>
+        <p class="scope-note" id="scopeNote"></p>
+      </header>
+
+      <p class="scroll-cue reveal" aria-hidden="true">Scroll to begin <span class="scroll-cue-arrow">&darr;</span></p>
+    </section>
+
+    <!-- ===================== 01 · AT A GLANCE ===================== -->
+    <section class="chapter" id="ch-glance" data-nav="At a glance">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">01</span>
+        <h2 class="chapter-title">Key numbers at a glance</h2>
       </div>
-      <p class="modes-note">The last two are <strong>official NBS registered flows</strong> (a few thousand a year) — a different, much smaller measure than the diaspora &amp; refugee <em>stocks</em> on the left.</p>
-    </header>
+      <p class="chapter-intro reveal">Four interlinked but distinct realities define migration in Moldova: a large diaspora abroad, a shrinking resident population, refugee hosting since 2022, and an economy underpinned by remittances. Tap any card to explore it on the map.</p>
+      <div class="glance-grid reveal" id="glanceGrid"><!-- built by app.js --></div>
+    </section>
 
-    <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
-    <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
+    <!-- ===================== 02 · HOW TO READ THE NUMBERS ===================== -->
+    <section class="chapter" id="ch-concepts" data-nav="Concepts">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">02</span>
+        <h2 class="chapter-title">How to read the numbers</h2>
+      </div>
+      <p class="chapter-intro reveal">A <strong>stock</strong> is a count at one moment (how many people are abroad today). A <strong>flow</strong> is movement during a period (how many registered a move this year). Stocks are large and slow; flows are small and yearly. Mixing them is the most common mistake in reading migration data.</p>
 
-    <!-- Definitions strip: one-line orientation for all audiences -->
-    <div class="howto-strip" role="note" aria-label="How to read this dashboard">
-      <strong>How to read this:</strong>
-      Stock &ne; flow &nbsp;&middot;&nbsp; Refugee count &ne; immigrant stock &nbsp;&middot;&nbsp; Bank transfers &ne; total remittances &nbsp;&middot;&nbsp; Shown countries &ne; national total
-    </div>
-
-    <!-- Map + table side by side -->
-    <div class="panel">
-      <div class="card map-card">
-        <svg id="map" role="img" aria-label="Map of migration flows"></svg>
-        <div class="zoom-ctrls">
-          <button class="zoom-btn" id="zoomIn" aria-label="Zoom in" title="Zoom in">+</button>
-          <button class="zoom-btn" id="zoomOut" aria-label="Zoom out" title="Zoom out">&minus;</button>
-          <button class="zoom-btn" id="zoomReset" aria-label="Reset to world view" title="Reset view">&#8862;</button>
+      <div class="concept-grid reveal">
+        <div class="concept-card c-blue">
+          <span class="concept-ico" data-ico="users"></span>
+          <h3>Diaspora stock</h3>
+          <p>People <em>born in Moldova</em> now living abroad, counted at one moment. <strong>864,257</strong> (UN DESA 2024). Built up over decades — not a single year's departures.</p>
         </div>
-        <div class="map-caption" id="mapCaption"></div>
-        <div class="src-caption" id="mapSource"></div>
-      </div>
-
-      <div class="card table-card">
-        <div class="total">
-          <span class="big" id="totalValue">—</span>
-          <span class="label" id="totalLabel"></span>
+        <div class="concept-card c-green">
+          <span class="concept-ico" data-ico="globe"></span>
+          <h3>Foreign-born residents</h3>
+          <p>People <em>living in Moldova</em> who were born elsewhere. <strong>106,700</strong> at the 2024 census (4.4%). A residence stock — most hold Moldovan citizenship.</p>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Country</th>
-              <th class="c-bar-cell"></th>
-              <th class="num" id="valueHead">People</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Timeline -->
-    <div class="card timeline-card">
-      <button class="play" id="playBtn" aria-label="Play through years" title="Play">
-        <svg width="14" height="14" viewBox="0 0 14 14" id="playIcon"><path d="M3 2 L12 7 L3 12 Z" fill="currentColor"/></svg>
-        <span class="play-label">Play timeline</span>
-      </button>
-      <div class="track">
-        <div class="track-line"></div>
-        <div class="track-fill" id="trackFill"></div>
-        <div class="stops" id="stops"></div>
-      </div>
-    </div>
-    <p class="timeline-note" id="timelineNote" aria-live="polite" hidden></p>
-
-    <!-- Economics: mode-aware analysis with world benchmarks -->
-    <div class="card context-card">
-      <p class="context-headline" id="contextHeadline"></p>
-      <p class="ctx-panel-note src-caption" id="ctxPanelNote" hidden></p>
-      <!-- Part-to-whole comparison strip: shows the proportion, not just the stat -->
-      <div id="partWholeViz" class="part-whole-strip" hidden></div>
-      <div class="context-body">
-        <div class="context-chart">
-          <div class="ctx-chart-title" id="ctxChartTitle"></div>
-          <svg id="ctxChart" role="img"></svg>
-          <div class="src-caption" id="ctxSource"></div>
+        <div class="concept-card c-orange">
+          <span class="concept-ico" data-ico="tent"></span>
+          <h3>Refugees hosted</h3>
+          <p>People who <em>fled to Moldova</em> and are protected here. <strong>141,058</strong> Ukrainians (UNHCR, May 2026). A humanitarian count — not the same as foreign-born residents.</p>
         </div>
-        <div class="context-stats" id="ctxStats"></div>
+        <div class="concept-card c-grey">
+          <span class="concept-ico" data-ico="route"></span>
+          <h3>Registered flows</h3>
+          <p>People who <em>formally registered</em> a move in a single year — a few thousand (NBS). A flow; tiny next to the stocks, because most who leave never deregister.</p>
+        </div>
       </div>
-    </div>
 
-    <footer>
-      <p><strong>Sources &amp; caveats.</strong> <span class="src" id="sourceLine"></span></p>
-      <p>Drawn from official sources — National Bank of Moldova, UN DESA International Migrant
-        Stock, UNHCR, the World Bank and Eurostat — with mixed confidence labelled throughout.
-        <button type="button" class="link-btn" id="openMethod">Methodology &amp; sources</button></p>
-      <p class="data-stamp" id="dataStamp"></p>
-    </footer>
-
-    <!-- Methodology & sources (native <dialog>: Esc + focus-trap built in) -->
-    <dialog id="methodDialog" class="method-dialog" aria-labelledby="methodTitle">
-      <div class="method-head">
-        <h2 id="methodTitle">Methodology &amp; sources</h2>
-        <button type="button" class="method-close" id="methodClose" aria-label="Close">&times;</button>
+      <div class="concept-egs reveal">
+        <p class="concept-eg"><span class="eg-tag">Read it right</span> 864,000 Moldova-born people abroad does <strong>not</strong> mean 864,000 emigrated this year. It is a lifetime stock accumulated over decades.</p>
+        <p class="concept-eg"><span class="eg-tag">Read it right</span> 141,000 refugees in Moldova are <strong>not</strong> the same as the foreign-born residents in the census — different definitions, different sources, different people.</p>
       </div>
-      <div class="method-body" id="methodBody"><!-- built from DATA by app.js --></div>
-    </dialog>
+
+      <!-- Relative scale: emigration is Moldova's largest migration reality -->
+      <div class="scale-compare reveal">
+        <h3 class="scale-title">How the three stocks compare</h3>
+        <div class="scale-row"><span class="scale-lbl">Diaspora abroad</span><div class="scale-bar c-blue" style="width:100%"><span>864,257</span></div></div>
+        <div class="scale-row"><span class="scale-lbl">Refugees hosted</span><div class="scale-bar c-orange" style="width:16.3%"><span>141,058</span></div></div>
+        <div class="scale-row"><span class="scale-lbl">Foreign-born residents</span><div class="scale-bar c-green" style="width:12.3%"><span>106,700</span></div></div>
+        <p class="scale-insight">Emigration remains Moldova's largest migration reality: the diaspora abroad is roughly <strong>six times</strong> the refugee population it hosts and <strong>eight times</strong> its foreign-born residents.</p>
+      </div>
+    </section>
+
+    <!-- ===================== 03 · EXPLORE THE DATA ===================== -->
+    <section class="chapter" id="ch-explore" data-nav="Explore the map">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">03</span>
+        <h2 class="chapter-title">Explore the four realities</h2>
+      </div>
+      <p class="chapter-intro reveal">Switch between the views below to see who leaves, who arrives, who is hosted, and how the money flows. Press play on the timeline to watch each story change over the years.</p>
+
+      <!-- Grouped segmented control: taxonomy lives in the grouping + one quiet
+           label per group, not in per-button badges. The administrative NBS
+           register sits in its own dashed group to signal lower confidence. -->
+      <div class="modes reveal" role="group" aria-label="Choose what to show">
+        <div class="mode-group">
+          <span class="mode-group-label">Who's abroad <span class="kind">stock</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="emigration" aria-pressed="true"><span class="ico"></span>Leaving Moldova</button>
+          </div>
+        </div>
+        <div class="mode-group">
+          <span class="mode-group-label">Who's here <span class="kind">stock</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="immigration" aria-pressed="false"><span class="ico"></span>Refugees from Ukraine</button>
+            <button class="mode-btn" data-mode="immigration_census" aria-pressed="false"><span class="ico"></span>Foreign-born residents</button>
+          </div>
+        </div>
+        <div class="mode-group">
+          <span class="mode-group-label">Population <span class="kind">census</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="population" aria-pressed="false"><span class="ico"></span>By district</button>
+          </div>
+        </div>
+        <div class="mode-group">
+          <span class="mode-group-label">Money <span class="kind">bank-transfer proxy</span></span>
+          <div class="mode-pill">
+            <button class="mode-btn" data-mode="remittances" aria-pressed="false"><span class="ico"></span>Money sent home</button>
+          </div>
+        </div>
+        <div class="mode-group mode-group-admin">
+          <span class="mode-group-label">Registered flows <span class="kind">NBS, per year</span></span>
+          <div class="mode-pill mode-pill-dashed">
+            <button class="mode-btn mode-btn-nbs" data-mode="emigration_flow" aria-pressed="false"><span class="ico"></span>Emigrants / year</button>
+            <button class="mode-btn mode-btn-nbs" data-mode="immigration_flow" aria-pressed="false"><span class="ico"></span>Immigrants / year</button>
+          </div>
+        </div>
+      </div>
+      <p class="modes-note">The dashed group comes from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year, a far smaller thing than the diaspora and refugee stocks. <a href="#ch-concepts" class="jit-link">What's a stock vs a flow?</a></p>
+
+      <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
+      <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
+
+      <!-- Definitions strip: one-line orientation for all audiences -->
+      <div class="howto-strip" role="note" aria-label="How to read this dashboard">
+        <strong>How to read this:</strong>
+        Stock &ne; flow &nbsp;&middot;&nbsp; Refugee count &ne; immigrant stock &nbsp;&middot;&nbsp; Bank transfers &ne; total remittances &nbsp;&middot;&nbsp; Shown countries &ne; national total
+      </div>
+
+      <!-- Mode-specific interpretation warning (e.g. remittances: the per-country
+           split is a historical 2020 breakdown, not the current geography). -->
+      <div class="mode-warning" id="modeWarning" hidden></div>
+
+      <!-- Map + table side by side -->
+      <div class="panel reveal">
+        <div class="card map-card">
+          <svg id="map" role="img" aria-label="Map of migration flows"></svg>
+          <div class="zoom-ctrls">
+            <button class="zoom-btn" id="zoomIn" aria-label="Zoom in" title="Zoom in">+</button>
+            <button class="zoom-btn" id="zoomOut" aria-label="Zoom out" title="Zoom out">&minus;</button>
+            <button class="zoom-btn" id="zoomReset" aria-label="Reset to world view" title="Reset view">&#8862;</button>
+          </div>
+          <div class="map-caption" id="mapCaption"></div>
+          <div class="src-caption" id="mapSource"></div>
+        </div>
+
+        <div class="card table-card">
+          <div class="total">
+            <span class="big" id="totalValue">—</span>
+            <span class="label" id="totalLabel"></span>
+          </div>
+          <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th class="c-bar-cell"></th>
+                <th class="num" id="valueHead">People</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline: a genuine scrubber — draggable handle, live year readout,
+           arrow-key support, and a speed control; any manual move pauses play. -->
+      <div class="card timeline-card">
+        <button class="play" id="playBtn" aria-label="Play through years" title="Play">
+          <svg width="14" height="14" viewBox="0 0 14 14" id="playIcon"><path d="M3 2 L12 7 L3 12 Z" fill="currentColor"/></svg>
+          <span class="play-label">Play timeline</span>
+        </button>
+        <div class="track" id="track" role="slider" tabindex="0"
+             aria-label="Year" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="">
+          <div class="track-line"></div>
+          <div class="track-fill" id="trackFill"></div>
+          <div class="stops" id="stops"></div>
+          <div class="track-handle" id="trackHandle" aria-hidden="true">
+            <span class="handle-readout" id="handleReadout"></span>
+          </div>
+        </div>
+        <div class="speed-ctrl" role="group" aria-label="Playback speed">
+          <button type="button" class="speed-btn" data-speed="0.5">0.5&times;</button>
+          <button type="button" class="speed-btn is-on" data-speed="1">1&times;</button>
+          <button type="button" class="speed-btn" data-speed="2">2&times;</button>
+        </div>
+      </div>
+      <p class="timeline-note" id="timelineNote" aria-live="polite" hidden></p>
+
+      <!-- Economics: mode-aware analysis with world benchmarks -->
+      <div class="card context-card reveal">
+        <p class="context-headline" id="contextHeadline"></p>
+        <p class="ctx-panel-note src-caption" id="ctxPanelNote" hidden></p>
+        <!-- Part-to-whole comparison strip: shows the proportion, not just the stat -->
+        <div id="partWholeViz" class="part-whole-strip" hidden></div>
+        <div class="context-body">
+          <div class="context-chart">
+            <div class="ctx-chart-title" id="ctxChartTitle"></div>
+            <svg id="ctxChart" role="img"></svg>
+            <div class="src-caption" id="ctxSource"></div>
+          </div>
+          <div class="context-stats" id="ctxStats"></div>
+        </div>
+        <!-- Plain-language glossary for the terms used on this view, surfaced on
+             the page (built from DATA.glossary by app.js) so readers don't have to
+             hover the cards or open the methodology modal. -->
+        <div class="ctx-defs" id="ctxDefs" hidden></div>
+      </div>
+    </section>
+
+    <!-- ===================== 04 · WHAT DROVE THE TRENDS ===================== -->
+    <section class="chapter" id="ch-drivers" data-nav="Timeline">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">04</span>
+        <h2 class="chapter-title">What drove the trends, 1991&ndash;2026</h2>
+      </div>
+      <p class="chapter-intro reveal">Moldova's migration story tracks its history: independence opened the borders, crises pushed people out, EU ties pulled them west, and the war next door made the country a major refugee host almost overnight.</p>
+      <div class="milestone-strip reveal" id="milestoneStrip"><!-- built by app.js --></div>
+    </section>
+
+    <!-- ===================== 05 · LABOUR MIGRATION ===================== -->
+    <section class="chapter" id="ch-labour" data-nav="Labour">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">05</span>
+        <h2 class="chapter-title">Labour migration &amp; the diaspora</h2>
+      </div>
+      <p class="chapter-intro reveal">Most Moldovan emigration is, at root, <strong>labour migration</strong>: people leaving to work, often sending money home and frequently keeping one foot in both countries. The diaspora's centre of gravity has shifted from the post-Soviet east toward the European Union over the past two decades.</p>
+      <div class="labour-body reveal">
+        <div class="labour-grid">
+          <div class="labour-col">
+            <h3>Main destinations &middot; 2024</h3>
+            <div id="labourDest"><!-- bars built from UN DESA 2024 by app.js --></div>
+            <p class="labour-note">Moldova-born stock, UN DESA 2024. Germany, the US and the UK report by citizenship, not birthplace, so they carry no Moldova-born cell here and are omitted.</p>
+          </div>
+          <div class="labour-col">
+            <h3>Trends, return &amp; brain circulation</h3>
+            <div class="labour-cards">
+              <div class="labour-card">
+                <h4>East &rarr; West shift</h4>
+                <p>Russia was the top destination through the 2010s; by 2024 Italy leads and the EU as a whole holds the majority of the recorded diaspora.</p>
+              </div>
+              <div class="labour-card">
+                <h4>Return migration is small</h4>
+                <p>Official repatriation is a thin counter-flow: <strong>332</strong> returnees in 2024, down from 1,462 in 2015 (NBS). Circular and seasonal returns are common but largely unrecorded.</p>
+              </div>
+              <div class="labour-card">
+                <h4>Brain drain vs brain circulation</h4>
+                <p><strong>Brain drain</strong> is the permanent loss of skilled and young workers; <strong>brain circulation</strong> is the more hopeful idea that migrants return with skills, capital and networks. Moldova leans toward drain: about <strong>68%</strong> of registered emigrants are under 35.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="labour-limits">
+          <strong>Data limitations.</strong> There is no comprehensive, regularly published public breakdown of the diaspora by <em>occupation, skill level or sector</em>. Qualitatively, Moldovans abroad are concentrated in construction, domestic and care work, agriculture, hospitality and transport, but this dashboard does not chart it for lack of an authoritative, current source. Registered NBS flows also undercount real movement, so labour-migration totals here should be read as lower bounds.
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 06 · SOURCES & METHODOLOGY ===================== -->
+    <section class="chapter" id="ch-sources" data-nav="Sources">
+      <div class="chapter-head reveal">
+        <span class="chapter-num">06</span>
+        <h2 class="chapter-title">Sources &amp; methodology</h2>
+      </div>
+      <footer class="reveal">
+        <p><strong>Sources &amp; caveats.</strong> <span class="src" id="sourceLine"></span></p>
+        <p>Drawn from official sources: the National Bank of Moldova, UN DESA's International Migrant
+          Stock, UNHCR, the World Bank and Eurostat, with mixed confidence labelled throughout.
+          <button type="button" class="link-btn" id="openMethod">Methodology &amp; sources</button></p>
+        <p class="data-stamp" id="dataStamp"></p>
+      </footer>
+    </section>
   </div>
+
+  <!-- Methodology & sources (native <dialog>: Esc + focus-trap built in) -->
+  <dialog id="methodDialog" class="method-dialog" aria-labelledby="methodTitle">
+    <div class="method-head">
+      <h2 id="methodTitle">Methodology &amp; sources</h2>
+      <button type="button" class="method-close" id="methodClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="method-body" id="methodBody"><!-- built from DATA by app.js --></div>
+  </dialog>
 
   <!-- Libraries & data (load order matters) -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
@@ -882,7 +1419,7 @@ window.MIGRATION_DATA = {
     // "Data current as of" stamp. The pipeline overwrites `generated` on each run;
     // `updated` is a manual fallback for hand-edits. Per-series freshness lives in
     // each source's `accessed`.
-    updated: "2026-06-12",
+    updated: "2026-06-17",
     latest_year: { emigration: 2024, immigration: 2026, remittances: 2020 },
     note: "Remittances by-country is official/exact (NBM 2018 & 2020). " +
           "Immigration uses UNHCR refugee counts (to 2026). " +
@@ -892,9 +1429,10 @@ window.MIGRATION_DATA = {
 
   // One-line scope note shown near the title and wherever a population ratio
   // appears. Resident vs de-jure population are never combined in one ratio.
-  scope_note: "Scope: resident population excludes the Transnistria region " +
-              "(NBS 2024 Census); international sources may differ in scope. " +
-              "Population-based ratios use resident population.",
+  scope_note: "A note on scope: the resident population here leaves out the " +
+              "Transnistria region (NBS 2024 Census), and international sources may " +
+              "count things a little differently. Any ratio against population uses " +
+              "the resident figure.",
 
   // ---- Temporary Protection choropleth (Ukrainian refugees, by district) ----
   // Subject = TP HOLDERS only (92,405 enrolled, UNHCR 27 Apr 2026). This is a
@@ -916,7 +1454,7 @@ window.MIGRATION_DATA = {
       subject: "Temporary Protection holders (Ukrainian refugees)",
       nationalTotal: 92405,
       asOf: "2026-04-27",
-      source_ids: ["unhcr", "geoboundaries"],
+      source_ids: ["unhcr_tp", "geoboundaries"],
       geometry: "geoBoundaries MDA ADM1 (CC-BY 4.0)",
       dataStatus: "OFFICIAL — UNHCR Power BI, 27 Apr 2026"
     },
@@ -961,14 +1499,73 @@ window.MIGRATION_DATA = {
     ]
   },
 
+  // ---- Resident population choropleth (NBS 2024 Census, by district) ---------
+  // Subject = usually-resident population by ADM1 unit, from the 2024 Population
+  // and Housing Census (final data, Table 5; reference date 8 Apr 2024). Reuses
+  // the same `match` keys as tp_choropleth so every geoBoundaries feature joins.
+  // The Transnistria region + Bender are on the left bank of the Dniester and
+  // were NOT enumerated by the census → population: null (painted "no data").
+  // District values sum to the national resident total, 2,409,207.
+  // Source: https://statistica.gov.md/ (PHC 2024 final, Geographical characteristics).
+  population_choropleth: {
+    meta: {
+      subject: "Usually-resident population (2024 Census)",
+      nationalTotal: 2409207,
+      asOf: "2024-04-08",
+      source_ids: ["nbs_census_2024", "geoboundaries"],
+      geometry: "geoBoundaries MDA ADM1 (CC-BY 4.0)",
+      dataStatus: "OFFICIAL — NBS Census 2024 final data (Table 5)"
+    },
+    districts: [
+      { match: "chisinau",      name: "Chișinău",          type: "municipality",  population: 720128 },
+      { match: "balti",         name: "Bălți",             type: "municipality",  population: 94546 },
+      { match: "gagauzia",      name: "Găgăuzia",          type: "autonomous",    population: 103668 },
+      { match: "transnistria",  name: "Transnistria",      type: "transnistria",  population: null },
+      { match: "bender",        name: "Bender (Tighina)",  type: "transnistria",  population: null },
+      { match: "anenii noi",    name: "Anenii Noi",        type: "raion",         population: 57687 },
+      { match: "basarabeasca",  name: "Basarabeasca",      type: "raion",         population: 14914 },
+      { match: "briceni",       name: "Briceni",           type: "raion",         population: 46894 },
+      { match: "cahul",         name: "Cahul",             type: "raion",         population: 72775 },
+      { match: "cantemir",      name: "Cantemir",          type: "raion",         population: 33181 },
+      { match: "calarasi",      name: "Călărași",          type: "raion",         population: 43864 },
+      { match: "causeni",       name: "Căușeni",           type: "raion",         population: 57261 },
+      { match: "cimislia",      name: "Cimișlia",          type: "raion",         population: 30986 },
+      { match: "criuleni",      name: "Criuleni",          type: "raion",         population: 52926 },
+      { match: "donduseni",     name: "Dondușeni",         type: "raion",         population: 28108 },
+      { match: "drochia",       name: "Drochia",           type: "raion",         population: 53738 },
+      { match: "dubasari",      name: "Dubăsari",          type: "raion",         population: 21781 },
+      { match: "edinet",        name: "Edineț",            type: "raion",         population: 50429 },
+      { match: "falesti",       name: "Fălești",           type: "raion",         population: 56039 },
+      { match: "floresti",      name: "Florești",          type: "raion",         population: 53264 },
+      { match: "glodeni",       name: "Glodeni",           type: "raion",         population: 35829 },
+      { match: "hincesti",      name: "Hîncești",          type: "raion",         population: 69462 },
+      { match: "ialoveni",      name: "Ialoveni",          type: "raion",         population: 74458 },
+      { match: "leova",         name: "Leova",             type: "raion",         population: 28835 },
+      { match: "nisporeni",     name: "Nisporeni",         type: "raion",         population: 36413 },
+      { match: "ocnita",        name: "Ocnița",            type: "raion",         population: 31610 },
+      { match: "orhei",         name: "Orhei",             type: "raion",         population: 79242 },
+      { match: "rezina",        name: "Rezina",            type: "raion",         population: 30243 },
+      { match: "riscani",       name: "Rîșcani",           type: "raion",         population: 43652 },
+      { match: "singerei",      name: "Sîngerei",          type: "raion",         population: 55933 },
+      { match: "soroca",        name: "Soroca",            type: "raion",         population: 58609 },
+      { match: "straseni",      name: "Strășeni",          type: "raion",         population: 61362 },
+      { match: "soldanesti",    name: "Șoldănești",        type: "raion",         population: 25394 },
+      { match: "stefan voda",   name: "Ștefan Vodă",       type: "raion",         population: 42285 },
+      { match: "taraclia",      name: "Taraclia",          type: "raion",         population: 26435 },
+      { match: "telenesti",     name: "Telenești",         type: "raion",         population: 41452 },
+      { match: "ungheni",       name: "Ungheni",           type: "raion",         population: 75804 }
+    ]
+  },
+
   // Neutral, factual per-country footnotes surfaced in the hover tooltip. These
   // are mobility/scope facts, NOT identity or geopolitical framing. `modes`
   // limits a note to where it's relevant (omit = all modes).
   country_notes: {
-    Romania: { text: "Many Moldovans also hold Romanian citizenship and may move " +
-                     "onward through the EU — a passport and mobility fact." },
-    Ukraine: { text: "From 2022, arrivals from Ukraine are predominantly refugees / " +
-                     "people fleeing the war in Ukraine (UNHCR).", modes: ["immigration"] }
+    Romania: { text: "Many Moldovans also carry Romanian citizenship, which lets them " +
+                     "move on freely through the EU. It is a fact about passports and " +
+                     "mobility, nothing more." },
+    Ukraine: { text: "From 2022 onward, the people arriving from Ukraine are " +
+                     "overwhelmingly refugees fleeing the war (UNHCR).", modes: ["immigration"] }
   },
 
   // Timeline call-outs — factual, mode-scoped notes tied to a year. Rendered as
@@ -976,13 +1573,15 @@ window.MIGRATION_DATA = {
   // neutral (data, not framing); `modes` limits where each shows.
   annotations: [
     { year: 2022, modes: ["immigration"],
-      text: "War in Ukraine — arrivals of refugees / people fleeing the war surge (UNHCR)." },
+      text: "War breaks out in Ukraine, and the number of people fleeing across the border surges (UNHCR)." },
     { year: 2024, modes: ["immigration"],
-      text: "≈136,000 refugees from Ukraine residing in Moldova (UNHCR)." },
+      text: "Around 136,000 refugees from Ukraine are now living in Moldova (UNHCR)." },
     { year: 2020, modes: ["remittances"],
-      text: "Russia's share falls to third; Israel becomes the top source (NBM, 2020)." },
+      text: "Russia's share slips to third place as Israel takes the top spot; EU countries together already account for more than a third of flows (NBM, 2020)." },
+    { year: 2022, modes: ["remittances"],
+      text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. EU sources — led by Italy, Germany, the UK and France — now account for most formal flows." },
     { year: 2024, modes: ["emigration"],
-      text: "Recorded diaspora tilts toward the EU; Italy leads and recorded Russia-born stock falls (UN DESA)." }
+      text: "The recorded diaspora tilts toward the EU, with Italy now in the lead as the Russia-born count falls (UN DESA)." }
   ],
 
   // ==========================================================================
@@ -1015,11 +1614,23 @@ window.MIGRATION_DATA = {
       definition: "Refugees and asylum-seekers whose country of asylum is the Republic of " +
                   "Moldova, at year-end.",
       scope: "From 2022 this population is predominantly people fleeing the war in Ukraine.",
-      note: "Reported in UNHCR's terms — refugees / people fleeing the war in Ukraine — " +
-            "not merged into general 'immigrants'."
+      note: "Reported in UNHCR's terms, as refugees and people fleeing the war in Ukraine, " +
+            "and not merged into general 'immigrants'."
+    },
+    unhcr_tp: {
+      label: "Temporary Protection beneficiaries by district",
+      publisher: "UNHCR data portal · Government of the Republic of Moldova",
+      url: "https://data.unhcr.org/en/country/mda",
+      indicator_code: "TP holders by raion (as of 27 Apr 2026)",
+      accessed: "2026-06-16",
+      definition: "People enrolled for Temporary Protection in Moldova, broken down by district, " +
+                  "from UNHCR Moldova's operational data portal with figures sourced from the " +
+                  "Government of the Republic of Moldova.",
+      scope: "92,405 TP holders nationally (27 Apr 2026); the district figures reconcile to that total.",
+      note: ""
     },
     geoboundaries: {
-      label: "geoBoundaries — Moldova administrative boundaries (ADM1)",
+      label: "geoBoundaries: Moldova administrative boundaries (ADM1)",
       publisher: "geoBoundaries (Runfola et al., 2020)",
       url: "https://www.geoboundaries.org/",
       indicator_code: "gbOpen MDA ADM1 · simplified · commit 9469f09",
@@ -1027,7 +1638,7 @@ window.MIGRATION_DATA = {
       definition: "Open district (raion) boundary geometry for Moldova, used to draw the " +
                   "Temporary Protection choropleth.",
       scope: "37 ADM1 units (raions + municipalities + Găgăuzia + Transnistria/Bender). " +
-             "Geometry only — carries no population or refugee values.",
+             "Geometry only, carrying no population or refugee values.",
       note: "CC-BY 4.0. Mirrored on the Humanitarian Data Exchange (HDX)."
     },
     nbm_transfers: {
@@ -1039,25 +1650,29 @@ window.MIGRATION_DATA = {
       definition: "Cross-border money transfers to resident individuals settled via Moldovan " +
                   "banks, by source country, net basis. A proxy for remittances.",
       scope: "Excludes the Transnistria region (not under the authorities' control), so " +
-             "figures are not comparable with counterpart-country statistics. Not solely " +
-             "labour remittances — also includes some salaries, pensions and other transfers. " +
-             "A full by-country breakdown was published annually only through 2020.",
-      note: "Exact official figures for 2018 and 2020."
+             "figures are not comparable with counterpart-country statistics. They are not solely " +
+             "labour remittances, and also include some salaries, pensions and other transfers. " +
+             "A full by-country breakdown was published annually only through 2020; from 2021 the " +
+             "breakdown lives only in NBM's interactive DBP4 database. The aggregate (all countries) " +
+             "continues to be published: ≈$1.63bn in 2023 (NBM net settlements).",
+      note: "Exact official figures for 2018 and 2020. 2023 aggregate ≈$1.63bn (NBM DBP4)."
     },
     wb_remit_gdp: {
       label: "Personal remittances received (% of GDP)",
-      publisher: "World Bank — World Development Indicators",
+      publisher: "World Bank, World Development Indicators",
       url: "https://data.worldbank.org/indicator/BX.TRF.PWKR.DT.GD.ZS?locations=MD",
       indicator_code: "BX.TRF.PWKR.DT.GD.ZS",
       accessed: "2026-06-11",
-      definition: "Remittance dependency — personal remittances received as a share of GDP " +
-                  "(BPM6).",
+      definition: "Remittance dependency, measured as personal remittances received as a share of " +
+                  "GDP (BPM6).",
       scope: "National accounts basis; excludes Transnistria.",
-      note: "Earlier years approximate; refresh via fetch_data.py."
+      note: "Earlier years approximate; refresh via fetch_data.py. The ~5% benchmark is the " +
+            "unweighted average remittances-to-GDP across about 174 countries (WDI), not the " +
+            "GDP-weighted world aggregate (which is far lower)."
     },
     wb_remit_total: {
       label: "Personal remittances received (current US$)",
-      publisher: "World Bank — World Development Indicators",
+      publisher: "World Bank, World Development Indicators",
       url: "https://data.worldbank.org/indicator/BX.TRF.PWKR.CD.DT?locations=MD",
       indicator_code: "BX.TRF.PWKR.CD.DT",
       accessed: "2026-06-11",
@@ -1071,7 +1686,7 @@ window.MIGRATION_DATA = {
       url: "https://statistica.gov.md/",
       indicator_code: "Census 2024 · usually-resident",
       accessed: "2026-06-11",
-      definition: "Usually-resident population — people who actually live in the country.",
+      definition: "Usually-resident population: the people who actually live in the country.",
       scope: "Excludes the Transnistria region. Do not mix with de-jure population in a ratio.",
       note: ""
     },
@@ -1083,41 +1698,41 @@ window.MIGRATION_DATA = {
       accessed: "2026-06-11",
       definition: "EU resident population who are Moldovan citizens (migr_pop1ctz) or " +
                   "Moldova-born (migr_pop3ctb), 1 January.",
-      scope: "Cross-check only — a DIFFERENT measure from UN DESA's country-of-birth stock " +
-             "(citizenship counts drop naturalised Moldovans). Not mixed into the map.",
+      scope: "For cross-checking only. It is a different measure from UN DESA's country-of-birth " +
+             "stock (citizenship counts drop naturalised Moldovans), and is not mixed into the map.",
       note: "Used to corroborate EU destinations, not to replace UN DESA."
     },
     mof_budget: {
       label: "State budget revenue",
       publisher: "Ministry of Finance of the Republic of Moldova",
       url: "https://mf.gov.md/en",
-      indicator_code: "State budget — revenue",
+      indicator_code: "State budget revenue",
       accessed: "2026-06-11",
       definition: "Annual revenue of the state budget, used as a scale reference for remittances.",
       scope: "National scope; excludes Transnistria.",
       note: ""
     },
     nbs_census_migration: {
-      label: "2024 Census — population by country of birth (foreign-born residents)",
+      label: "2024 Census: population by country of birth (foreign-born residents)",
       publisher: "National Bureau of Statistics of the Republic of Moldova",
       url: "https://statistica.gov.md/en/final-results-of-the-2024-population-and-housing-census-migration-10121_61958.html",
       indicator_code: "Census 2024 · foreign-born usual residents",
       accessed: "2026-06-14",
       definition: "Usually-resident people born outside Moldova, counted at the 2024 census.",
       scope: "106,700 persons (4.4%); 77.4% hold Moldovan citizenship. Excludes Transnistria.",
-      note: "A residence/stock measure — distinct from UNHCR's refugee-hosting count."
+      note: "A residence and stock measure, distinct from UNHCR's refugee-hosting count."
     },
     nbs_migration: {
-      label: "International migration — emigrants by destination / immigrants by origin",
+      label: "International migration: emigrants by destination, immigrants by origin",
       publisher: "National Bureau of Statistics of the Republic of Moldova",
       url: "https://statbank.statistica.md/pxweb/en/20%20Populatia%20si%20procesele%20demografice/POP070/",
       indicator_code: "PxWeb POP07300 / POP07100",
       accessed: "2026-06-12",
-      definition: "Annual registered international migration FLOWS by country — people who " +
+      definition: "Annual registered international migration flows by country: people who " +
                   "formally emigrated (deregistered) or immigrated (registered) in the year.",
       scope: "Flows, not stocks, and only legally registered moves. 'Authorized emigrants' " +
-             "(who deregistered) are a small fraction of the real diaspora — counts are a few " +
-             "thousand a year, NOT comparable to UN DESA migrant stock or UNHCR refugee counts. " +
+             "(who deregistered) are a small fraction of the real diaspora, just a few " +
+             "thousand a year, and NOT comparable to UN DESA migrant stock or UNHCR refugee counts. " +
              "Excludes Transnistria.",
       note: "The authoritative Moldovan national source for registered migration."
     }
@@ -1127,8 +1742,8 @@ window.MIGRATION_DATA = {
   // Single source of truth for definitions (cards link here in item 8).
   glossary: [
     { id: "emigrant_stock", term: "Emigrant (diaspora) stock",
-      definition: "People born in Moldova who live in another country, counted at a point in " +
-                  "time — a stock, not the number who left in a given year." },
+      definition: "People born in Moldova who live in another country, counted at a single point in " +
+                  "time. It is a stock, not the number who left in any given year." },
     { id: "immigrant_stock", term: "Immigrant stock",
       definition: "People living in Moldova who were born in another country, counted at a " +
                   "point in time." },
@@ -1139,8 +1754,8 @@ window.MIGRATION_DATA = {
       definition: "Refugees and asylum-seekers residing in a country at a given time (UNHCR " +
                   "basis), here with the Republic of Moldova as country of asylum." },
     { id: "remittances_gdp", term: "Remittances-to-GDP",
-      definition: "Personal remittances received as a percentage of GDP — how large money " +
-                  "sent home is relative to the whole economy." },
+      definition: "Personal remittances received as a percentage of GDP, a way of seeing how large " +
+                  "the money sent home is next to the whole economy." },
     { id: "remittance_dependency", term: "Remittance dependency",
       definition: "How much an economy relies on money sent home from abroad; proxied here by " +
                   "remittances-to-GDP." },
@@ -1148,44 +1763,48 @@ window.MIGRATION_DATA = {
       definition: "Total personal remittances received from abroad in a year (World Bank BPM6 " +
                   "series); broader than the NBM net-settlement measure." },
     { id: "budget_ratio", term: "Remittances vs. state budget",
-      definition: "Remittance inflows expressed as a share of the state budget's revenue — a " +
-                  "sense of their scale in the economy." },
+      definition: "Remittance inflows set against the state budget's revenue, to give a sense of " +
+                  "their scale in the economy." },
     { id: "net_settlements", term: "Net settlements",
       definition: "The National Bank of Moldova's measure of cross-border transfers to " +
-                  "individuals via banks, netted — a proxy for remittances by source country." },
+                  "individuals via banks, netted out. It stands in as a proxy for remittances by " +
+                  "source country." },
     { id: "registered_emigrant", term: "Registered (authorized) emigrant",
       definition: "A person who formally deregistered their residence on emigrating, in a given " +
-                  "year (NBS). A FLOW, and only a small fraction of actual emigrants — most never " +
-                  "deregister — so it is far below the diaspora stock." },
+                  "year (NBS). It is a flow, and only a small fraction of those who actually leave, " +
+                  "since most never deregister, so it sits far below the diaspora stock." },
     { id: "registered_immigrant", term: "Registered immigrant",
       definition: "A person who officially registered as immigrating to Moldova in a given year " +
                   "(NBS), by country of origin. A FLOW; kept separate from UNHCR refugee figures." },
     { id: "population_gap", term: "Implied diaspora (de jure − usually-resident)",
       definition: "NBS publishes two population concepts: 'de jure resident' (registered residents, " +
                   "including many who live abroad) and 'usually resident' (people actually living in " +
-                  "Moldova). The difference — about 0.86M in 2019 — approximates the diaspora, and is " +
-                  "why NBS's tiny registered-emigration flows don't contradict the ~864k stock." },
+                  "Moldova). The difference between them, about 0.86 million in 2019, roughly matches " +
+                  "the diaspora, and it is why NBS's tiny registered-emigration flows don't contradict " +
+                  "the figure of around 864,000." },
     { id: "depopulation", term: "Depopulation",
-      definition: "Moldova's usually-resident population fell to 2.41M at the 2024 census — down " +
-                  "380,000 (−13.6%) from 2014 — driven by emigration plus more deaths than births (NBS)." },
+      definition: "Moldova's usually-resident population fell to 2.41M at the 2024 census, a drop of " +
+                  "380,000 (13.6%) from 2014, driven by emigration together with more deaths than births (NBS)." },
     { id: "diaspora_basis", term: "Why diaspora figures differ",
-      definition: "Country-of-birth counts (UN DESA 2024, ~864k) omit Moldovans who naturalised " +
-                  "abroad and destinations that report by citizenship; nationality-basis counts " +
-                  "(UN DESA 2020, 1.16M; IOM ~1.0–1.2M) include them. The NBS de-jure-minus-resident " +
-                  "gap (~0.86M) tracks the birth basis." },
+      definition: "Counts by country of birth (UN DESA 2024, about 864,000) leave out Moldovans who " +
+                  "naturalised abroad and the destinations that report by citizenship; counts on a " +
+                  "nationality basis (UN DESA 2020, 1.16M; IOM around 1.0 to 1.2M) include them. The " +
+                  "NBS gap between de jure and resident population, about 0.86 million, tracks the " +
+                  "birth basis." },
     { id: "youth_emigration", term: "Youth emigration",
-      definition: "Share of registered emigrants aged under 35 — 68% in 2024 (about 46% are 15–29), " +
-                  "concentrating the loss in working and child-bearing ages (NBS POP07300)." },
+      definition: "Share of registered emigrants aged under 35, which reached 68% in 2024 (about 46% " +
+                  "are 15 to 29), concentrating the loss in working and child-bearing ages (NBS POP07300)." },
     { id: "repatriate", term: "Repatriate (returnee)",
       definition: "A person of Moldovan origin who officially returns to settle in Moldova in a given " +
-                  "year (NBS) — a small, declining counter-flow (1,462 in 2015 → 332 in 2024)." }
+                  "year (NBS). It is a small and shrinking counter-flow, falling from 1,462 in 2015 to " +
+                  "332 in 2024." }
   ],
 
   // Caveats / scope notes — the political-safety + methodology landmines, in one
   // place. The modal lists these; the scope notes in the UI (item 4) read here too.
   caveats: [
     "Resident population excludes the Transnistria region (NBS 2024 Census). International " +
-      "figures may differ in scope — resident-only and de-jure population are never combined " +
+      "figures may differ in scope, and resident-only and de-jure population are never combined " +
       "in the same ratio.",
     "Emigration is UN DESA migrant stock by country of birth. Germany, the United States and " +
       "the United Kingdom report by citizenship rather than birthplace, so they carry no " +
@@ -1193,39 +1812,47 @@ window.MIGRATION_DATA = {
       "Moldovans who have naturalised abroad.",
     "Many Moldovans also hold Romanian citizenship and may move onward through the EU; flows " +
       "to Romania reflect this passport and mobility fact, not any identity claim.",
-    "Arrivals from Ukraine are reported in UNHCR's terms — refugees / people fleeing the war " +
-      "in Ukraine — and are kept separate from general 'immigrant' figures.",
+    "Arrivals from Ukraine are reported in UNHCR's terms, as refugees and people fleeing the war " +
+      "in Ukraine, and are kept separate from general 'immigrant' figures.",
     "Remittances are NBM money transfers via banks (net settlements): a proxy that also " +
       "includes some salaries and pensions, excludes Transnistria, and was published with a " +
       "full by-country breakdown only through 2020. The Russia-to-EU shift is shown as data only.",
     "Figures shown as estimates are estimates; official series are cited individually in Sources. " +
       "Terminology follows official usage (“irregular” not “illegal”; “Republic of Moldova”).",
     "Why NBS migration looks so small vs other sources: (1) it is an annual FLOW, not a cumulative " +
-      "stock; (2) emigration counts only people who formally DEREGISTERED — most of the diaspora never " +
+      "stock; (2) emigration counts only people who formally DEREGISTERED, and most of the diaspora never " +
       "did; (3) the diaspora instead appears in NBS's population accounts, where 'de jure resident' " +
       "exceeds 'usually resident' by ≈0.86M; (4) Ukrainian refugees are counted by UNHCR, not NBS; and " +
       "(5) each source defines a 'migrant' differently (UN DESA = country of birth, Eurostat = " +
       "citizenship, NBM = bank transfers, UNHCR = refugees, NBS = registered moves).",
-    "A consequence of (2): by NBS registered counts, recorded immigration (~6,600/yr) now exceeds " +
-      "recorded emigration (~4,000/yr) — not because more people arrive than leave, but because " +
-      "arrivals must register while departures rarely do. The real net flow is strongly outward, as " +
-      "the −13.6% fall in resident population shows (NBS 2024 Census)."
+    "A consequence of (2): by NBS registered counts, recorded immigration (about 6,600 a year) now " +
+      "exceeds recorded emigration (about 3,500–4,000 a year), not because more people arrive than leave, " +
+      "but because arrivals must register while departures rarely do. The real net flow is strongly " +
+      "outward, as the 13.6% fall in resident population shows (NBS 2024 Census). The NBS tables " +
+      "show only the top destination/origin countries; both totals are verified against NBS POP07300 " +
+      "(emigrants) and POP07100 (immigrants) for 2024, which include dozens of smaller-flow countries " +
+      "not listed here. Returnees (repatriates with Moldovan origin) numbered 332 in 2024, down from " +
+      "1,462 in 2015 (NBS POP07300)."
   ],
 
   // Economic context shown in the analysis panel below the map. Professional
   // migration-economics framing with world-average benchmarks.
   context: {
     world: {
-      migrant_share_pct: 3.7,          // UN DESA 2024: share of people who are intl migrants
-      refugees_total_m: 36.9,          // UNHCR end-2024 (million)
-      remittances_gdp_pct: 5.13        // World Bank: world avg remittances-to-GDP
+      migrant_share_pct: 3.7,          // UN DESA 2024: share of people who are intl migrants (304M of ~8.2bn)
+      refugees_total_m: 36.8,          // UNHCR Global Trends 2024 (refugees under UNHCR's mandate, end-2024)
+      remittances_gdp_pct: 5.13        // World Bank WDI: unweighted average remittances-to-GDP across ~174 countries
     },
     moldova: {
       population_resident: 2409207,    // NBS 2024 Census, FINAL usually-resident, 8 Apr 2024
       population_2014_census: 2789205, // NBS 2014 Census, usually-resident (NBS final; for depopulation visual)
+      population_urban: 1118967,       // NBS 2024 Census (Table 4), usually-resident urban
+      population_rural: 1290240,       // NBS 2024 Census (Table 4), usually-resident rural
+      urban_pct: 46.4,                 // 1,118,967 / 2,409,207
+      rural_pct: 53.6,                 // 1,290,240 / 2,409,207
       gdp_usd_bn: 18.2,               // World Bank 2024
       gdp_mdl_bn: 342.1,              // [VERIFY] forecast-style; needs primary MDL GDP source
-      nbm_avg_rate_2024: 18.0,        // NBM average USD/MDL exchange rate 2024 (approx.)
+      nbm_avg_rate_2024: 17.7,        // NBM average USD/MDL exchange rate 2024 (~17.72; last full USD-anchored year before NBM switched to EUR ref on 2 Jan 2025)
       state_budget_revenue_mdl_bn: 66.98,  // executed 2024, per MoF
       diaspora_estimate: 864257,  // UN DESA 2024, Moldovan-born abroad (all destinations)
       // NBS's own population concepts: "de jure resident" (registered, incl. those
@@ -1235,72 +1862,122 @@ window.MIGRATION_DATA = {
       implied_diaspora_nbs: 857936     // the gap — NBS's own measure of who's abroad
     },
     emigration: {
-      takeaway: "About 864,000 Moldovan-born people live abroad — about 1 in 4 of all Moldovan-born people (≈26%), or equivalently more than a third of everyone still living in Moldova.",
-      headline: "Few countries are as shaped by emigration. UN DESA's 2024 edition estimates " +
-                "864,257 Moldovan-born people abroad — a strict country-of-birth figure that " +
-                "omits destinations reporting by citizenship (Germany, US, UK) and misses " +
-                "naturalised Moldovans. Note: earlier 2020-edition releases cited ~1.16M; the " +
-                "2024 edition revised that to ~813k, so the difference is a data-series " +
-                "reassessment, not a real-world decline in the diaspora. NBS's own population " +
-                "gap (~0.86M) puts the true diaspora at roughly 1.0–1.2 million.",
+      takeaway: "About 864,000 people born in Moldova now live abroad. That is roughly one in four of everyone born here, and more than a third of all the people still living in the country today.",
+      headline: "Few countries have been shaped by emigration the way Moldova has. UN DESA's " +
+                "2024 edition counts 864,257 people born in Moldova who now live abroad. It is " +
+                "a strict count by country of birth, so it leaves out places that report by " +
+                "citizenship instead (Germany, the US and the UK) and quietly loses anyone who " +
+                "has since naturalised. On that birthplace basis the number has been climbing, " +
+                "from 812,653 in 2020 to 864,257 in 2024. Eurostat's independent country-of-birth " +
+                "statistics (migr_pop3ctb) for EU member states alone confirm over 400,000 " +
+                "Moldova-born residents across Italy, Romania, France, Spain and Portugal — " +
+                "consistent with the five EU rows in this dashboard — with Germany adding " +
+                "roughly 35,000 more that UN DESA's bilateral matrix omits because Germany " +
+                "reports by citizenship. Counted by nationality rather than birthplace the diaspora " +
+                "is larger still: the Prague Process puts Moldovan nationals abroad at about " +
+                "1.16 million in 2020, and Moldova's own population gap of about 0.86 million " +
+                "points to a real diaspora of roughly 1.0 to 1.2 million.",
       indicators: [
-        { term: "Diaspora (UN DESA 2024)", value: "864k", sub: "country-of-birth total · ~1.0–1.2M on a citizenship basis", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" },
+        { term: "Diaspora (UN DESA 2024)", value: "864k", sub: "country-of-birth total · about 1.0 to 1.2M on a citizenship basis", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" },
+        { term: "EU alone (Eurostat)", value: "400k+", sub: "Moldova-born in EU27 (Eurostat migr_pop3ctb 2022) · Germany adds ~35k not in UN DESA", world: null, icon: "globe", source_id: "eurostat_migr", def_id: "diaspora_basis" },
         { term: "Share abroad", value: "≈26–32%", sub: "of all Moldovan-born people (basis-dependent)", world: null, icon: "globe", source_id: "undesa_2024", def_id: "diaspora_basis" },
         { term: "Resident population", value: "2.41M", sub: "−13.6% since 2014 (NBS 2024 Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" }
       ]
     },
     immigration: {
-      takeaway: "Since early 2022 Moldova has hosted over 141,000 Ukrainians fleeing the war — one of Europe's highest per-capita refugee-hosting rates (about 1 in every 17 residents). The map shows where their Temporary Protection holders live.",
-      headline: "After Russia's full-scale invasion of Ukraine in February 2022, Moldova received " +
-                "one of the largest refugee inflows per capita in Europe. UNHCR records 141,058 " +
-                "Ukrainian refugees remaining in Moldova (31 May 2026) and 92,405 enrolled in " +
-                "Temporary Protection (27 Apr 2026; status valid to March 2027). These are UNHCR " +
-                "operational figures — a different count from the 52,400 Ukraine-born usual residents " +
-                "recorded in the 2024 census (see the Foreign-born residents tab for that measure).",
+      takeaway: "Since the early days of 2022, Moldova has taken in more than 141,000 Ukrainians fleeing the war, one of the highest shares anywhere in Europe at about one refugee for every 17 residents. Roughly two in five are children. The map shows where the people granted Temporary Protection have settled.",
+      headline: "When Russia launched its full-scale invasion of Ukraine in February 2022, Moldova " +
+                "found itself receiving one of the largest refugee inflows per person anywhere in " +
+                "Europe. As of 31 May 2026 UNHCR counts 141,058 Ukrainian refugees still in the " +
+                "country, with 92,405 of them enrolled in Temporary Protection (recorded 27 April " +
+                "2026 and valid through March 2027). The population skews young and female: about " +
+                "38% of those in Moldova are children under 18, roughly 39% are adult women, and " +
+                "about 23% are adult men — a demographic pattern typical of conflict displacement, " +
+                "where men of military age often remain in or return to Ukraine. These are UNHCR's " +
+                "operational figures, and they are a different thing from the 52,400 Ukraine-born " +
+                "usual residents the 2024 census recorded, which you can explore on the " +
+                "Foreign-born residents tab.",
       indicators: [
         { term: "Residing (May 2026)", value: "141,058", sub: "Ukrainian refugees remaining · UNHCR 31 May 2026", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
         { term: "Temporary Protection", value: "92,405", sub: "TP enrolled 27 Apr 2026 (UNHCR); valid to Mar 2027", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
-        { term: "Per capita", value: "1 in 17", sub: "residents per refugee · 2024 Census vs UNHCR May 2026", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" }
+        { term: "Per capita", value: "1 in 17", sub: "residents per refugee · 2024 Census vs UNHCR May 2026", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" },
+        { term: "Children (under 18)", value: "~38%", sub: "of Ukrainian refugees in Moldova · adult women ~39% · adult men ~23% (UNHCR 2024)", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" }
       ]
     },
     immigration_census: {
-      takeaway: "At the 2024 census, 106,700 usually-resident people in Moldova were born outside the country — 4.4% of the population. Ukraine-born (52.4k) and Russia-born (≈32.5k) account for nearly 80% of them. This is a census stock measure — distinct from UNHCR's refugee count.",
-      headline: "Moldova's 2024 census counted 106,700 usually-resident people born outside " +
-                "Moldova — 4.4% of residents, just above the world average of 3.7%. " +
-                "Ukraine-born residents (52,400) form the largest group; Russia-born (≈32,500; " +
-                "30.5% of foreign-born) the second. This census stock measure is distinct from " +
-                "UNHCR's Ukrainian refugee count: not everyone who is Ukraine-born is a refugee, " +
-                "and not every refugee registers as usually-resident.",
+      takeaway: "At the 2024 census, 106,700 of the people who actually live in Moldova had been born somewhere else, about 4.4% of the population. Those born in Ukraine (52,400) and Russia (around 32,500) make up nearly 80% of them. This is a census headcount, and it is not the same thing as UNHCR's refugee tally.",
+      headline: "Moldova's 2024 census counted 106,700 of its usual residents as having been born " +
+                "outside the country, about 4.4% of everyone living there and a little above the " +
+                "world average of 3.7%. People born in Ukraine are the largest group at 52,400, " +
+                "followed by those born in Russia at around 32,500 (30.5% of the foreign-born). " +
+                "This census headcount is its own measure, separate from UNHCR's Ukrainian refugee " +
+                "count: not everyone born in Ukraine is a refugee, and not every refugee shows up " +
+                "as a usual resident. UN DESA's internationally comparable migrant stock, which " +
+                "counts the Ukrainian refugees inside the total, puts the 2024 figure higher still, " +
+                "at 188,207.",
       indicators: [
         { term: "Foreign-born residents", value: "106.7k", sub: "4.4% of usually-resident population · NBS 2024 Census", world: "3.7% global", icon: "users", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
         { term: "Ukraine-born", value: "52,400", sub: "49.1% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
         { term: "Russia-born", value: "≈32,500", sub: "30.5% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" }
       ]
     },
+    population: {
+      takeaway: "The 2024 census counted 2,409,207 people usually living in Moldova, down 13.6% from 2014. Nearly one in three live in the capital, Chișinău, and just over half the country is still rural. The map shades every district by how many residents it has.",
+      headline: "Moldova's 2024 Population and Housing Census counted 2,409,207 usual residents on " +
+                "8 April 2024, 379,998 fewer than in 2014, a fall of 13.6% in a decade. The decline " +
+                "is uneven across the country: the capital, Chișinău, actually grew (to 720,128, " +
+                "nearly 30% of the whole population), while the northern and southern raions lost " +
+                "more than a fifth of their people. Just under half the population, 46.4%, lives in " +
+                "towns and cities; the remaining 53.6% is rural. These are usually-resident figures " +
+                "for the territory the census could enumerate, so they exclude the Transnistria " +
+                "region and the city of Bender on the left bank of the Dniester.",
+      // Census-year resident totals for the trend chart (NBS 2024, Table 5).
+      pop_series_source_id: "nbs_census_2024",
+      pop_series: [
+        { year: 2004, pop: 3383332 }, { year: 2014, pop: 2789205 }, { year: 2024, pop: 2409207 }
+      ],
+      indicators: [
+        { term: "Resident population", value: "2.41M", sub: "Usually-resident · 8 Apr 2024 (NBS Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Change since 2014", value: "−13.6%", sub: "−379,998 residents vs 2014 census", world: null, icon: "users", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Urban", value: "46.4%", sub: "1,118,967 residents · NBS 2024 Census", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Rural", value: "53.6%", sub: "1,290,240 residents · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_2024", def_id: "depopulation" }
+      ]
+    },
     remittances: {
-      takeaway: "Money sent home by Moldovans abroad equals ~10.5% of GDP — nearly double the global average and more than half the state budget. This map shows where it comes from.",
-      panel_note: "Country breakdown: NBM 2020; economic indicators: World Bank 2024.",
-      headline: "Money sent home is a pillar of the economy. Even after falling from a 2006 peak " +
-                "of 34.5%, remittances are ~10.5% of GDP — about double the world average.",
+      takeaway: "The money Moldovans abroad send home is worth about 10.5% of GDP, nearly double the global average and more than half the size of the state budget. The map shows where it came from in 2020; since 2022 Russia's share has effectively collapsed.",
+      panel_note: "Country breakdown: NBM 2020 (last year with a published by-country breakdown). NBM aggregate net settlements 2023: ≈$1.63bn. World Bank broader BPM6 measure: $1.92bn (2024). Economic indicators: World Bank 2024.",
+      headline: "Money sent home is one of the pillars of the economy. Even after sliding from its " +
+                "2006 peak of 34.5%, it still amounts to about 10.5% of GDP, roughly double the world " +
+                "average. The geography of those flows has also shifted dramatically. Russia was the " +
+                "single largest source from at least 2015 through 2019, contributing more than a " +
+                "quarter of all formal transfers. By 2020 Israel had overtaken it. Then, after " +
+                "Western financial sanctions on Russia in 2022, transfers from Russia through Moldovan " +
+                "banks essentially stopped — their share fell from around 14% in 2020 to near zero. " +
+                "EU member states, led by Italy, Germany, the United Kingdom and France, now account " +
+                "for the large majority of formal inflows. The NBM's total net settlements (a narrower " +
+                "bank-only measure) came to about $1.63bn in 2023; the World Bank's broader BPM6 " +
+                "series puts total remittances at $1.92bn in 2024.",
       // Remittances-to-GDP over time. Recent years exact; earlier approximate.
       gdp_series_source_id: "wb_remit_gdp",
       gdp_series: [
         { year: 2006, pct: 34.5 }, { year: 2010, pct: 22.0 }, { year: 2014, pct: 20.0 },
-        { year: 2018, pct: 16.0 }, { year: 2020, pct: 15.7 }, { year: 2022, pct: 14.0 },
+        { year: 2018, pct: 16.0 }, { year: 2020, pct: 15.8 }, { year: 2022, pct: 14.0 },
         { year: 2023, pct: 12.3 }, { year: 2024, pct: 10.5 }
       ],
       indicators: [
-        { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "≈5% LMIC avg", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
-        { term: "Remittance inflows", value: "$1.92bn", sub: "2024", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
-        { term: "vs. state budget", value: "≈54%", sub: "of 2024 executed state budget revenue (66.98bn MDL)", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
+        { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "≈5% country average", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
+        { term: "Remittance inflows", value: "$1.92bn", sub: "2024 (World Bank BPM6); NBM net settlements 2023: ≈$1.63bn", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
+        { term: "Russia's share", value: "14% → near zero", sub: "2020 to post-2022; EU + Israel now dominate formal flows (NBM)", world: null, icon: "route", source_id: "nbm_transfers", def_id: "net_settlements" },
+        { term: "vs. state budget", value: "≈51%", sub: "$1.92bn × ~17.7 = ~34.0bn MDL, against 66.98bn MDL state budget revenue (2024)", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
       ]
     },
     emigration_flow: {
-      takeaway: "Moldova's official emigration register captures only a few thousand formal departures a year — a narrow administrative slice of a diaspora ten times larger. These counts are not comparable to the stock figures on the other tabs.",
-      headline: "Moldova's own statistics office records only people who formally deregister on " +
-                "leaving — a few thousand a year. The real diaspora shows up elsewhere in NBS data: " +
-                "its 'de jure' population (registered residents) exceeds its 'usually-resident' count " +
-                "by ≈0.86M — essentially everyone living abroad.",
+      takeaway: "Moldova's official emigration register picks up only a few thousand formal departures each year, a narrow administrative sliver of a diaspora many times larger. These counts don't line up with the stock figures on the other tabs, so treat them separately.",
+      headline: "Moldova's own statistics office only records the people who formally deregister " +
+                "when they leave, which comes to a few thousand a year. The real diaspora hides " +
+                "elsewhere in the NBS numbers: the 'de jure' population of registered residents runs " +
+                "about 0.86 million ahead of the 'usually resident' count, and that gap is " +
+                "essentially everyone living abroad.",
       indicators: [
         { term: "Registered emigrants", value: "≈4,000/yr", sub: "2024, all destinations (NBS)", world: null, icon: "depart", source_id: "nbs_migration", def_id: "registered_emigrant" },
         { term: "Under 35", value: "68%", sub: "of 2024 registered emigrants (NBS)", world: null, icon: "users", source_id: "nbs_migration", def_id: "youth_emigration" },
@@ -1308,11 +1985,12 @@ window.MIGRATION_DATA = {
       ]
     },
     immigration_flow: {
-      takeaway: "Moldova officially records ~6,600 people settling in each year — mostly for work and family. This is a separate administrative count from the 136,000+ Ukrainian refugees tracked by UNHCR.",
-      headline: "Officially registered arrivals — people who formally settle in Moldova each year, " +
-                "by country of origin, mostly for work and family. By these registered counts more " +
-                "arrive than formally leave — only because most emigrants never deregister. Ukrainian " +
-                "displacement is NOT here; UNHCR records that separately.",
+      takeaway: "Moldova officially records about 6,600 people settling in each year, most of them coming for work or to join family. This is a separate administrative count from the 136,000-plus Ukrainian refugees that UNHCR tracks.",
+      headline: "These are the officially registered arrivals: people who formally settle in Moldova " +
+                "each year, sorted by where they came from, mostly for work or to join family. On " +
+                "paper more people arrive than leave, but only because most emigrants never bother to " +
+                "deregister. Ukrainian displacement is not counted here at all; UNHCR keeps that on " +
+                "its own books.",
       indicators: [
         { term: "Registered immigrants", value: "≈6,600/yr", sub: "2024, all origins (NBS)", world: null, icon: "arrive", source_id: "nbs_migration", def_id: "registered_immigrant" },
         { term: "Main reasons", value: "Work · Family", sub: "2024: 3,002 work · 2,211 family reunification", world: null, icon: "users", source_id: "nbs_migration", def_id: "registered_immigrant" },
@@ -1331,7 +2009,7 @@ window.MIGRATION_DATA = {
       direction: "out",
       source_id: "undesa_2024",
       vintage: "UN DESA 2024",
-      known_totals: { 2024: { value: 864257, label: "UN DESA 2024 total" } },
+      known_totals: { 2024: { value: 864257, label: "UN DESA 2024 emigrants, by origin" } },
       years: {
         // OFFICIAL — UN DESA 2024, Moldovan-born by country of destination.
         2010: [
@@ -1493,6 +2171,10 @@ window.MIGRATION_DATA = {
       direction: "out",
       vintage: "NBS registered flow",
       source_id: "nbs_migration",
+      // As with immigrants, the table shows only the main destinations; they
+      // sum to less than the cited all-destinations total, so reconcile with a
+      // "Shown X of Y" label. ≈ because NBS rounds.
+      known_totals: { 2024: { value: 4000, label: "registered emigrants, all destinations (NBS 2024)" } },
       years: {
         2015: [
           { country: "Russia", value: 961 }, { country: "Ukraine", value: 312 },
@@ -1545,6 +2227,12 @@ window.MIGRATION_DATA = {
       direction: "in",
       vintage: "NBS registered flow",
       source_id: "nbs_migration",
+      // The table lists only the main origin countries. They sum to far less
+      // than the national total (the by-reason split alone — work 3,002 +
+      // family 2,211 = 5,213 in 2024 — already exceeds the shown countries),
+      // so we reconcile to the cited all-origins total with a "Shown X of Y"
+      // label, the same way the diaspora tab does. ≈ because NBS rounds.
+      known_totals: { 2024: { value: 6600, label: "registered immigrants, all origins (NBS 2024)" } },
       years: {
         2015: [
           { country: "Ukraine", value: 754 }, { country: "Romania", value: 646 },
@@ -1587,6 +2275,23 @@ window.MIGRATION_DATA = {
           { country: "Spain", value: 9 }, { country: "Portugal", value: 5 }
         ]
       }
+    },
+
+    // ---- RESIDENT POPULATION BY DISTRICT (NBS 2024 Census choropleth) --------
+    // A district choropleth, not a country flow-map: the map + table read from
+    // population_choropleth. The single 2024 census year gives the timeline a
+    // stop; per-district rows let renderTable fall back gracefully if needed.
+    population: {
+      label: "Population by district",
+      sublabel: "Usually-resident population, 2024 Census",
+      unit: "people",
+      direction: "in",
+      vintage: "NBS 2024 Census",
+      source_id: "nbs_census_2024",
+      known_totals: { 2024: { value: 2409207, label: "NBS 2024 Census resident total" } },
+      years: {
+        2024: []   // choropleth-driven; rows live in population_choropleth.districts
+      }
     }
   }
 };
@@ -1603,10 +2308,15 @@ window.MIGRATION_DATA = {
 
   const DATA  = window.MIGRATION_DATA;
   const WORLD = window.WORLD_GEO;
-  const MOLDOVA = window.MOLDOVA_ADM1;   // geoBoundaries MDA ADM1 (districts)
+  const MOLDOVA = rewindForD3(window.MOLDOVA_ADM1);   // geoBoundaries MDA ADM1 (districts)
 
-  // Sequential blues for the TP choropleth (humanitarian-neutral; avoid alarm-red).
-  const TP_SCALE = ["#E6EEF5", "#B9D2E6", "#7FB0D4", "#3E86BC", "#1F5A8C"];
+  // Sequential oranges for the TP choropleth — refugees = orange in the
+  // dashboard-wide colour logic (diaspora=blue, refugees=orange, pop=green,
+  // remittances=purple).
+  const TP_SCALE = ["#FBE9D6", "#F6CFA1", "#EDA85F", "#DD8330", "#B05E12"];
+  // Sequential greens for the population choropleth — population/foreign-born =
+  // green in the same colour logic.
+  const POP_SCALE = ["#E1EFE8", "#B6DBC8", "#7FC0A1", "#46A079", "#1F7A55"];
   const NO_DATA_FILL = "#EFEDE7";
   // Normalize a district name for joining: strip diacritics + admin prefixes, lowercase.
   function normName(s) {
@@ -1614,6 +2324,24 @@ window.MIGRATION_DATA = {
       .normalize("NFD").replace(/[̀-ͯ]/g, "")
       .replace(/^(municipiul|raionul|uta|ato)\s+/i, "")
       .toLowerCase().trim();
+  }
+
+  // The vendored geoBoundaries ADM1 rings are wound clockwise — the opposite of
+  // what d3's spherical geometry expects. Left as-is, d3.geoPath fills the
+  // *complement* of each district, so the choropleth paints as one solid block
+  // instead of a map. Reverse the rings of any feature whose spherical area
+  // exceeds a hemisphere (the tell-tale of inverted winding) so each district
+  // renders as itself. Idempotent and a no-op on correctly-wound data.
+  function rewindForD3(geo) {
+    if (!geo || !geo.features || typeof d3 === "undefined" || !d3.geoArea) return geo;
+    geo.features.forEach(f => {
+      if (d3.geoArea(f) <= 2 * Math.PI) return;
+      const g = f.geometry || {};
+      const polys = g.type === "Polygon" ? [g.coordinates]
+                  : g.type === "MultiPolygon" ? g.coordinates : [];
+      polys.forEach(poly => poly.forEach(ring => ring.reverse()));
+    });
+    return geo;
   }
 
   let mode = "emigration";
@@ -1624,19 +2352,26 @@ window.MIGRATION_DATA = {
   let currentK = 1;             // current zoom scale
   let hoverCountry = null;      // for the tooltip
 
+  // Phenomenon colour logic: diaspora/emigration=blue, refugees=orange,
+  // population/foreign-born=green, remittances=purple. Flow modes inherit the
+  // related phenomenon's hue but desaturated, to read as secondary series.
   const ACCENTS = {
-    emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E",
-    immigration_census: "#2E7D62",  // darker teal — same family as immigration, different measure
-    // NBS official-flow modes: muted/earthy tones to read as secondary series.
-    emigration_flow: "#A8743A", immigration_flow: "#5E7488"
+    emigration: "#2B6CA8",          // diaspora abroad — blue
+    immigration: "#E08A2E",         // refugees hosted — orange
+    immigration_census: "#2E8B6B",  // foreign-born residents — green
+    remittances: "#6E4FA3",         // remittances — purple
+    emigration_flow: "#5C7FA8",     // registered emigration — muted blue
+    immigration_flow: "#5E8C76",    // registered immigration — muted green
+    population: "#2E8B6B"           // resident population — green (population family)
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
-    emigration: "Moldovans abroad — main destinations (stock)",
+    emigration: "Moldovans abroad, by main destination (stock)",
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     emigration_flow: "Registered emigrants per year (NBS)",
-    immigration_flow: "Registered immigrants per year (NBS)"
+    immigration_flow: "Registered immigrants per year (NBS)",
+    population: "Resident population, by census year (NBS)"
   };
 
   // Hand-built inline icons (24x24, stroke = currentColor). No dependency.
@@ -1660,7 +2395,29 @@ window.MIGRATION_DATA = {
   const MODE_ICON = {
     emigration: "depart", immigration: "tent", remittances: "banknote",
     immigration_census: "users",
-    emigration_flow: "depart", immigration_flow: "arrive"
+    emigration_flow: "depart", immigration_flow: "arrive",
+    population: "landmark"
+  };
+
+  // Per-mode choropleth configuration. Both district maps (refugees + resident
+  // population) share the same machinery (choroModel / renderChoropleth /
+  // renderDistrictTable / tip + legend); only the data key, value field, colour
+  // ramp and labels differ. Add a district map by adding an entry here.
+  const CHORO = {
+    immigration: {
+      dataKey: "tp_choropleth", valueKey: "tpHolders", scale: () => TP_SCALE,
+      legendTitle: "TP holders", valueWord: "TP holders",
+      mapCaptionLead: "TP holders by district · UNHCR data portal ",
+      totalSuffix: asOf => `TP holders · UNHCR ${asOf} (official)`,
+      pctDecimals: 0
+    },
+    population: {
+      dataKey: "population_choropleth", valueKey: "population", scale: () => POP_SCALE,
+      legendTitle: "Residents", valueWord: "residents",
+      mapCaptionLead: "Resident population by district · NBS Census ",
+      totalSuffix: asOf => `usually-resident · NBS Census ${asOf} (official)`,
+      pctDecimals: 1
+    }
   };
 
   const svg        = d3.select("#map");
@@ -1673,6 +2430,10 @@ window.MIGRATION_DATA = {
   const stopsEl    = document.getElementById("stops");
   const trackFill  = document.getElementById("trackFill");
   const playBtn    = document.getElementById("playBtn");
+  const trackEl    = document.getElementById("track");
+  const handleEl   = document.getElementById("trackHandle");
+  const readoutEl  = document.getElementById("handleReadout");
+  let speedFactor  = 1;   // 0.5× / 1× / 2× playback
 
   // ---- Projection (larger canvas) ------------------------------------------
   const W = 820, H = 540;
@@ -1684,7 +2445,7 @@ window.MIGRATION_DATA = {
   // Moldova districts choropleth uses its own projection, framed to the geometry
   // (no manual scale tuning). Leaves room on the left for the colour legend.
   const mdaProjection = MOLDOVA
-    ? d3.geoMercator().fitExtent([[150, 16], [W - 16, H - 16]], MOLDOVA) : null;
+    ? d3.geoMercator().fitExtent([[120, 28], [W - 120, H - 22]], MOLDOVA) : null;
   const mdaPath = mdaProjection ? d3.geoPath(mdaProjection) : null;
 
   // Single zoom layer holds everything that should pan/zoom together.
@@ -1737,7 +2498,7 @@ window.MIGRATION_DATA = {
   // Frame the map for the active mode: the world flow-modes open on Europe; the
   // districts choropleth (immigration) is framed to its own fitExtent (identity).
   function applyMapFraming() {
-    if (mode === "immigration" && MOLDOVA)
+    if (CHORO[mode] && MOLDOVA)
       svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
     else
       europeView();
@@ -1798,11 +2559,11 @@ window.MIGRATION_DATA = {
     if (s.accessed) bits.push("as of " + s.accessed);
     return bits.join(" · ");
   }
-  // Fuller one-line citation for the footer: "Publisher, label (code) — as of date".
+  // Fuller one-line citation for the footer: "Publisher, label (code), as of date".
   function citation(s) {
     if (!s) return "";
     const code = s.indicator_code ? ` (${s.indicator_code})` : "";
-    return `${s.publisher}, ${s.label}${code} — as of ${s.accessed}`;
+    return `${s.publisher}, ${s.label}${code}, as of ${s.accessed}`;
   }
   function captionsFor(obj) {
     return sourceIdsFor(obj).map(id => sourceCaption(sourceById(id))).filter(Boolean).join("  ·  ");
@@ -1884,9 +2645,9 @@ window.MIGRATION_DATA = {
 
   // ---- Renderers -----------------------------------------------------------
   function renderMap() {
-    // "Refugees from Ukraine" swaps the world flow-map for a Moldova districts
-    // choropleth of Temporary Protection holders (see renderChoropleth).
-    if (mode === "immigration" && MOLDOVA) { renderChoropleth(); return; }
+    // District-choropleth modes (refugees, resident population) swap the world
+    // flow-map for a Moldova districts choropleth (see renderChoropleth).
+    if (CHORO[mode] && MOLDOVA) { renderChoropleth(CHORO[mode]); return; }
     showWorldLayers();
 
     const m = DATA.modes[mode];
@@ -1989,26 +2750,28 @@ window.MIGRATION_DATA = {
     gDistricts.style("display", null); gChoroLegend.style("display", null);
   }
 
-  // Build the district lookup + colour scale once (data is static).
-  let _choro = null;
-  function choroModel() {
-    if (_choro) return _choro;
-    const tp = DATA.tp_choropleth;
+  // Build the district lookup + colour scale once per config (data is static).
+  const _choroCache = {};
+  function choroModel(cfg) {
+    if (_choroCache[cfg.dataKey]) return _choroCache[cfg.dataKey];
+    const src = DATA[cfg.dataKey];
+    const vk = cfg.valueKey;
     const byName = new Map();
-    tp.districts.forEach(d => byName.set(d.match, d));
-    const vals = tp.districts.map(d => d.tpHolders).filter(v => v != null);
+    src.districts.forEach(d => byName.set(d.match, d));
+    const vals = src.districts.map(d => d[vk]).filter(v => v != null);
     const maxV = d3.max(vals) || 1, minV = d3.min(vals) || 0;
-    // Quantile (even-count bins): the split is heavily skewed by Chișinău, so a
-    // linear scale would flatten every other district into one class (spec §7).
-    const color = d3.scaleQuantile().domain(vals).range(TP_SCALE);
-    const total = tp.meta.nationalTotal || d3.sum(vals);
-    _choro = { tp, byName, minV, maxV, color, total };
-    return _choro;
+    // Quantile (even-count bins): values are heavily skewed by Chișinău, so a
+    // linear scale would flatten every other district into one class.
+    const color = d3.scaleQuantile().domain(vals).range(cfg.scale());
+    const total = src.meta.nationalTotal || d3.sum(vals);
+    return (_choroCache[cfg.dataKey] = { src, cfg, byName, minV, maxV, color, total });
   }
 
-  function renderChoropleth() {
+  function renderChoropleth(cfg) {
     showChoroLayers();
-    const { byName, minV, maxV, color, total } = choroModel();
+    const model = choroModel(cfg);
+    const { byName, minV, maxV, color, total } = model;
+    const vk = cfg.valueKey;
     const feats = (MOLDOVA && MOLDOVA.features) || [];
 
     gDistricts.selectAll("path.district")
@@ -2022,25 +2785,25 @@ window.MIGRATION_DATA = {
       .attr("d", mdaPath)
       .attr("fill", f => {
         const rec = byName.get(normName(f.properties.shapeName));
-        return rec && rec.tpHolders != null ? color(rec.tpHolders) : NO_DATA_FILL;
+        return rec && rec[vk] != null ? color(rec[vk]) : NO_DATA_FILL;
       })
       .each(function (f) {
         const name = f.properties.shapeName;
         const key = normName(name);
         const rec = byName.get(key);
-        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, total); };
+        this.onmouseenter = () => { highlightDistrict(key); showDistrictTip(rec, name, model); };
         this.onmousemove = moveTip;
         this.onmouseleave = () => { clearDistrictHighlight(); hideTip(); };
       });
 
-    renderChoroLegend(color, minV, maxV);
+    renderChoroLegend(model);
 
-    const top = DATA.tp_choropleth.districts.slice()
-      .sort((a, b) => b.tpHolders - a.tpHolders).slice(0, 3)
-      .map(d => `${d.name}: ${fmt(d.tpHolders)}`).join(", ");
+    const top = model.src.districts.slice().filter(d => d[vk] != null)
+      .sort((a, b) => b[vk] - a[vk]).slice(0, 3)
+      .map(d => `${d.name}: ${fmt(d[vk])}`).join(", ");
     svg.attr("aria-label",
-      "Choropleth of Ukrainian Temporary Protection holders by Moldovan district " +
-      `(${fmt(total)} holders, UNHCR 27 Apr 2026). Highest: ${top}. ` +
+      `Choropleth of ${cfg.valueWord} by Moldovan district ` +
+      `(${fmt(total)} total). Highest: ${top}. ` +
       "Full figures are listed in the table beside the map.");
   }
 
@@ -2053,38 +2816,42 @@ window.MIGRATION_DATA = {
     gDistricts.selectAll("path.district").classed("dim", false);
     tableBody.selectAll("tr").classed("hot", false);
   }
-  function showDistrictTip(rec, name, total) {
+  function showDistrictTip(rec, name, model) {
+    const { cfg, total } = model;
+    const vk = cfg.valueKey;
     const disp = rec ? rec.name : name;
     let body;
     if (!rec) body = "no join match — check name";
-    else if (rec.tpHolders == null) body = "no data";
+    else if (rec[vk] == null) body = "not enumerated (left bank)";
     else {
-      const pct = total ? Math.round(rec.tpHolders / total * 100) : null;
-      body = `${fmt(rec.tpHolders)} TP holders` + (pct != null ? ` · ${pct}% of national` : "");
+      const pct = total ? (rec[vk] / total * 100).toFixed(cfg.pctDecimals) : null;
+      body = `${fmt(rec[vk])} ${cfg.valueWord}` + (pct != null ? ` · ${pct}% of national` : "");
     }
     tip.innerHTML = `<strong>${esc(disp)}</strong>${esc(body)}`;
     tip.hidden = false;
   }
 
   // Colour legend: 5 even-count (quantile) classes low→high + a grey "no data" swatch.
-  function renderChoroLegend(color, minV, maxV) {
+  function renderChoroLegend(model) {
+    const { cfg, color, minV, maxV } = model;
+    const scale = cfg.scale();
     const g = gChoroLegend;
     g.selectAll("*").remove();
     g.attr("transform", "translate(18, 30)");
     const sw = 17, gap = 4;
-    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text("TP holders");
+    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text(cfg.legendTitle);
     // scaleQuantile exposes quantiles(); scaleQuantize would expose thresholds().
     const brk = color.quantiles ? color.quantiles() : (color.thresholds ? color.thresholds() : []);
-    TP_SCALE.forEach((c, i) => {
+    scale.forEach((c, i) => {
       const lo = i === 0 ? minV : brk[i - 1];
-      const hi = i === TP_SCALE.length - 1 ? maxV : brk[i];
+      const hi = i === scale.length - 1 ? maxV : brk[i];
       const y = i * (sw + gap);
       g.append("rect").attr("x", 0).attr("y", y).attr("width", sw).attr("height", sw)
         .attr("rx", 3).attr("fill", c);
       g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", y + sw - 4)
         .text(`${fmtShort(Math.round(lo))}–${fmtShort(Math.round(hi))}`);
     });
-    const yNd = TP_SCALE.length * (sw + gap) + 6;
+    const yNd = scale.length * (sw + gap) + 6;
     g.append("rect").attr("x", 0).attr("y", yNd).attr("width", sw).attr("height", sw)
       .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#d8d8d2").attr("stroke-width", 1);
     g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", yNd + sw - 4).text("no data");
@@ -2134,23 +2901,26 @@ window.MIGRATION_DATA = {
     });
   }
 
-  // Fallback data table for the choropleth: districts ranked by TP holders.
+  // Fallback data table for the choropleth: districts ranked by value.
   // Doubles as the accessible alternative to the map (acceptance §8).
-  function renderDistrictTable() {
-    const { tp, total } = choroModel();
-    const asOf = fmtDate(tp.meta.asOf) || tp.meta.asOf || "";
-    valueHead.textContent = "TP holders";
-    mapCaption.textContent = "TP holders by district · UNHCR " + asOf + " · scroll to zoom, drag to pan";
-    const srcObj = { source_ids: ["unhcr", "geoboundaries"] };
+  function renderDistrictTable(cfg) {
+    const { src, total } = choroModel(cfg);
+    const vk = cfg.valueKey;
+    const meta = src.meta;
+    const asOf = fmtDate(meta.asOf) || meta.asOf || "";
+    const capWord = cfg.valueWord.charAt(0).toUpperCase() + cfg.valueWord.slice(1);
+    valueHead.textContent = capWord;
+    mapCaption.textContent = cfg.mapCaptionLead + asOf + " · scroll to zoom, drag to pan";
+    const srcObj = { source_ids: meta.source_ids };
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
     sourceLine.textContent = citationsFor(srcObj);
 
-    const rows = tp.districts.slice().filter(d => d.tpHolders != null)
-      .sort((a, b) => b.tpHolders - a.tpHolders);
-    const max = d3.max(rows, d => d.tpHolders) || 1;
+    const rows = src.districts.slice().filter(d => d[vk] != null)
+      .sort((a, b) => b[vk] - a[vk]);
+    const max = d3.max(rows, d => d[vk]) || 1;
     totalValue.textContent = fmt(total);
-    totalLabel.textContent = `${fmt(total)} TP holders · UNHCR ${asOf} (official)`;
+    totalLabel.textContent = `${fmt(total)} ${cfg.totalSuffix(asOf)}`;
 
     tableBody.selectAll("tr").data(rows, d => d.match).join(
       enter => {
@@ -2159,15 +2929,15 @@ window.MIGRATION_DATA = {
           .on("mouseleave", clearDistrictHighlight);
         tr.append("td").attr("class", "c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
         tr.append("td").attr("class", "c-bar-cell").append("div").attr("class", "c-bar-track")
-          .append("div").attr("class", "c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
-        tr.append("td").attr("class", "c-value").text(d => fmt(d.tpHolders));
+          .append("div").attr("class", "c-bar").style("width", d => (d[vk] / max * 100) + "%");
+        tr.append("td").attr("class", "c-value").text(d => fmt(d[vk]));
         return tr;
       },
       update => {
         update.attr("data-district", d => d.match);
         update.select(".c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
-        update.select(".c-bar").style("width", d => (d.tpHolders / max * 100) + "%");
-        update.select(".c-value").text(d => fmt(d.tpHolders));
+        update.select(".c-bar").style("width", d => (d[vk] / max * 100) + "%");
+        update.select(".c-value").text(d => fmt(d[vk]));
         return update;
       },
       exit => exit.remove()
@@ -2175,7 +2945,7 @@ window.MIGRATION_DATA = {
   }
 
   function renderTable() {
-    if (mode === "immigration" && MOLDOVA) { renderDistrictTable(); return; }
+    if (CHORO[mode] && MOLDOVA) { renderDistrictTable(CHORO[mode]); return; }
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
@@ -2304,7 +3074,7 @@ window.MIGRATION_DATA = {
       b.className = "stop" + (has ? "" : " empty") + (note ? " annotated" : "");
       b.disabled = !has;                       // can't select a year with no data
       b.setAttribute("aria-current", String(y === year));
-      if (note) b.title = `${y} — ${note.text}`;
+      if (note) b.title = `${y}: ${note.text}`;
       b.innerHTML = `<span class="pin"></span><span class="yr">${y}</span>`;
       if (has) b.addEventListener("click", () => { stopPlay(); setYear(y); });
       stopsEl.appendChild(b);
@@ -2317,12 +3087,26 @@ window.MIGRATION_DATA = {
     const el = document.getElementById("timelineNote");
     if (!el) return;
     const note = annotationFor(year);
-    if (note) { el.textContent = `${year} — ${note.text}`; el.hidden = false; }
+    if (note) { el.textContent = `${year}: ${note.text}`; el.hidden = false; }
     else { el.textContent = ""; el.hidden = true; }
   }
-  function updateTrackFill() {
+  function trackFraction() {
     const ys = years(), i = ys.indexOf(year);
-    trackFill.style.width = (ys.length > 1 ? (i / (ys.length - 1)) * 100 : 0) + "%";
+    return ys.length > 1 ? i / (ys.length - 1) : 0;
+  }
+  function updateTrackFill() {
+    const f = trackFraction();
+    trackFill.style.width = (f * 100) + "%";
+    if (handleEl) handleEl.style.left = (f * 100) + "%";
+    if (readoutEl) readoutEl.textContent = year;
+    if (trackEl) {
+      const ys = years();
+      trackEl.setAttribute("aria-valuemin", ys[0] || 0);
+      trackEl.setAttribute("aria-valuemax", ys[ys.length - 1] || 0);
+      trackEl.setAttribute("aria-valuenow", year || 0);
+      const has = !!DATA.modes[mode].years[year];
+      trackEl.setAttribute("aria-valuetext", year + (has ? "" : " (no data for this view)"));
+    }
   }
   function setYear(y) {
     year = y;
@@ -2334,6 +3118,23 @@ window.MIGRATION_DATA = {
     updateTrackFill(); renderMap(); renderTable(); updateContextHighlight();
     updateTimelineNote(); updateHash();
   }
+  // Step to the previous/next year that actually has data for this mode.
+  function stepYear(dir) {
+    const ys = modeYears(); if (!ys.length) return;
+    let i = ys.indexOf(nearestDataYear(year));
+    if (i < 0) i = 0;
+    i = Math.max(0, Math.min(ys.length - 1, i + dir));
+    setYear(ys[i]);
+  }
+  // Map a pointer x to the nearest data-bearing year and select it.
+  function scrubToClientX(clientX) {
+    if (!trackEl) return;
+    const r = trackEl.getBoundingClientRect();
+    const f = Math.max(0, Math.min(1, (clientX - r.left) / (r.width || 1)));
+    const ys = years();
+    const target = ys[Math.round(f * (ys.length - 1))];
+    setYear(nearestDataYear(target));   // snap to nearest year with data
+  }
 
   function togglePlay() { timer ? stopPlay() : startPlay(); }
   function startPlay() {
@@ -2341,11 +3142,12 @@ window.MIGRATION_DATA = {
       '<rect x="3" y="2.5" width="2.6" height="9" fill="currentColor"/><rect x="8.4" y="2.5" width="2.6" height="9" fill="currentColor"/>';
     const lbl = playBtn.querySelector(".play-label");
     if (lbl) lbl.textContent = "Pause";
+    if (timer) clearInterval(timer);
     timer = setInterval(() => {
       const ys = modeYears(); if (!ys.length) return;
       const i = ys.indexOf(year);
       setYear(ys[i < 0 ? 0 : (i + 1) % ys.length]);
-    }, 1600);
+    }, Math.round(1600 / speedFactor));
   }
   function stopPlay() {
     if (timer) { clearInterval(timer); timer = null; }
@@ -2354,6 +3156,35 @@ window.MIGRATION_DATA = {
     if (lbl) lbl.textContent = "Play timeline";
   }
   playBtn.addEventListener("click", togglePlay);
+
+  // Scrubber: drag the handle/track, arrow-key the year, and pick a speed.
+  // Any manual interaction pauses playback (it should feel hand-driven).
+  if (trackEl) {
+    let dragging = false;
+    const onMove = e => { if (dragging) scrubToClientX(e.clientX); };
+    trackEl.addEventListener("pointerdown", e => {
+      if (e.target.closest(".stop")) return;   // year-pin buttons handle themselves
+      dragging = true; stopPlay();
+      try { trackEl.setPointerCapture(e.pointerId); } catch (_) {}
+      scrubToClientX(e.clientX);
+    });
+    trackEl.addEventListener("pointermove", onMove);
+    trackEl.addEventListener("pointerup",   () => { dragging = false; });
+    trackEl.addEventListener("pointercancel", () => { dragging = false; });
+    trackEl.addEventListener("keydown", e => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown") { stopPlay(); stepYear(-1); e.preventDefault(); }
+      else if (e.key === "ArrowRight" || e.key === "ArrowUp") { stopPlay(); stepYear(1); e.preventDefault(); }
+      else if (e.key === "Home") { stopPlay(); const ys = modeYears(); if (ys.length) setYear(ys[0]); e.preventDefault(); }
+      else if (e.key === "End")  { stopPlay(); const ys = modeYears(); if (ys.length) setYear(ys[ys.length - 1]); e.preventDefault(); }
+    });
+  }
+  document.querySelectorAll(".speed-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      speedFactor = parseFloat(b.dataset.speed) || 1;
+      document.querySelectorAll(".speed-btn").forEach(o => o.classList.toggle("is-on", o === b));
+      if (timer) startPlay();   // re-arm at the new speed
+    });
+  });
 
   // ---- Mode switching ------------------------------------------------------
   function nearestDataYear(y) {
@@ -2398,7 +3229,9 @@ window.MIGRATION_DATA = {
     });
   });
 
-  // Jump straight to a (mode, year) — used by the trend charts.
+  // Jump straight to a (mode, year) — used by the trend charts and the
+  // "key numbers at a glance" cards. When the mode changes we refresh the
+  // whole analysis panel too (the trend-dot caller stays on the same mode).
   function gotoModeYear(name, y) {
     stopPlay();
     const changed = mode !== name;
@@ -2408,7 +3241,11 @@ window.MIGRATION_DATA = {
       setAccent(); buildTimeline();
     }
     setYear(y);
-    if (changed) applyMapFraming();
+    if (changed) { renderContext(); applyMapFraming(); }
+  }
+  function latestYearOf(name) {
+    const ys = Object.keys(DATA.modes[name].years).map(Number).sort((a, b) => a - b);
+    return ys[ys.length - 1];
   }
 
   // ---- Economics panel: one big mode-relevant chart + indicator cards ------
@@ -2442,8 +3279,14 @@ window.MIGRATION_DATA = {
     if (mode === "remittances") {
       data = ctx.gdp_series.map(d => ({ year: d.year, total: d.pct }));
       unit = "pct";
-      refLine = { value: DATA.context.world.remittances_gdp_pct, label: "LMIC average ≈5%" };
+      refLine = { value: DATA.context.world.remittances_gdp_pct, label: "Country average ≈5%" };
       title = "Remittances as % of GDP";
+    } else if (mode === "population") {
+      // Census-year resident totals (population mode has no per-year flow rows).
+      data = ctx.pop_series.map(d => ({ year: d.year, total: d.pop }));
+      unit = "people";
+      refLine = null;
+      title = CHART_TITLES.population;
     } else {
       data = modeTotals(mode);
       unit = "people";
@@ -2456,7 +3299,10 @@ window.MIGRATION_DATA = {
     // Caption under the economics chart: the source(s) behind THIS chart.
     // (remittances chart = the %GDP series source; stock charts = the mode source.)
     const chartSrcObj = mode === "remittances"
-      ? { source_id: ctx.gdp_series_source_id } : DATA.modes[mode];
+      ? { source_id: ctx.gdp_series_source_id }
+      : mode === "population"
+      ? { source_id: ctx.pop_series_source_id }
+      : DATA.modes[mode];
     const ctxSrc = document.getElementById("ctxSource");
     if (ctxSrc) { ctxSrc.textContent = captionsFor(chartSrcObj); ctxSrc.title = citationsFor(chartSrcObj); }
 
@@ -2488,6 +3334,8 @@ window.MIGRATION_DATA = {
     });
     updateContextHighlight();
     renderPartWhole();
+    renderCtxDefs(ctx);
+    updateModeWarning();
 
     // Panel-level source note (e.g. remittances: two different sources for map vs chart).
     const pnEl = document.getElementById("ctxPanelNote");
@@ -2495,6 +3343,31 @@ window.MIGRATION_DATA = {
       if (ctx.panel_note) { pnEl.textContent = ctx.panel_note; pnEl.hidden = false; }
       else { pnEl.hidden = true; }
     }
+  }
+
+  // ---- Per-mode plain-language glossary ------------------------------------
+  // Surfaces the definitions for the terms used on the current view's stat
+  // cards, on the page itself, so a general reader understands "stock", "net
+  // settlements", "registered emigrant" etc. without hovering or opening the
+  // modal. Reuses DATA.glossary (single source of truth), deduped by id.
+  function renderCtxDefs(ctx) {
+    const el = document.getElementById("ctxDefs");
+    if (!el) return;
+    const seen = new Set();
+    const defs = [];
+    (ctx.indicators || []).forEach(it => {
+      const d = defById(it.def_id);
+      if (d && !seen.has(d.id)) { seen.add(d.id); defs.push(d); }
+    });
+    if (!defs.length) { el.hidden = true; el.innerHTML = ""; return; }
+    el.innerHTML =
+      `<div class="ctx-defs-title">What these terms mean</div>`
+      + `<div class="ctx-defs-grid">`
+      + defs.map(d =>
+          `<dl class="ctx-def"><dt>${esc(d.term)}</dt><dd>${esc(d.definition)}</dd></dl>`
+        ).join("")
+      + `</div>`;
+    el.hidden = false;
   }
 
   // ---- Part-to-whole comparison visuals ------------------------------------
@@ -2523,7 +3396,7 @@ window.MIGRATION_DATA = {
       const pop14 = m.population_2014_census || (m.population_resident + 380000);
       pwDepopBars(el, {
         pop2014: pop14, pop2024: m.population_resident, accent,
-        readout: `Since 2014 Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents — about 1 in 7 people.`
+        readout: `Since 2014 Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents, about 1 in 7 people.`
       });
       el.hidden = false;
 
@@ -2533,7 +3406,7 @@ window.MIGRATION_DATA = {
       const ratio = Math.round(m.population_resident / refugees);  // ~17
       pwUnitCluster(el, {
         ratio, accent, reduceMotion: rm,
-        readout: `Moldova hosts about 1 Ukrainian refugee for every ${ratio} residents — among Europe's highest per-capita rates.`,
+        readout: `Moldova hosts about 1 Ukrainian refugee for every ${ratio} residents, among the highest rates per person anywhere in Europe.`,
         denomLabel: "● = 1 person · UNHCR May-2026 + NBS 2024 Census (usually-resident)"
       });
       el.hidden = false;
@@ -2552,6 +3425,23 @@ window.MIGRATION_DATA = {
       });
       el.hidden = false;
 
+    } else if (mode === "population") {
+      // P1. Urban vs rural split of the resident population.
+      pwSplitBar(el, {
+        part: m.population_urban, whole: m.population_resident,
+        partLabel: "Urban", wholeLabel: "Rural",
+        accent,
+        readout: `Just under half of residents (${m.urban_pct}%) live in towns and cities; the rest is rural.`,
+        denomLabel: "Whole = usually-resident population · NBS 2024 Census (Table 4)"
+      });
+      // P2. Depopulation since 2014.
+      const pop14 = m.population_2014_census || (m.population_resident + 380000);
+      pwDepopBars(el, {
+        pop2014: pop14, pop2024: m.population_resident, accent,
+        readout: `Moldova has roughly ${fmtShort(pop14 - m.population_resident)} fewer residents than in 2014, about 1 in 7 people.`
+      });
+      el.hidden = false;
+
     } else if (mode === "remittances") {
       // D1. GDP waffle: 10×10 = 100% of GDP
       const gdpSeries = DATA.context.remittances.gdp_series;
@@ -2559,7 +3449,7 @@ window.MIGRATION_DATA = {
       const worldPct = DATA.context.world.remittances_gdp_pct;
       pwWaffle(el, {
         pct: latestPct, refPct: worldPct, accent,
-        readout: `Roughly 1 in every 10 lei of GDP comes home as remittances — nearly double the world average.`,
+        readout: `Roughly 1 in every 10 lei of GDP comes home as remittances, nearly double the world average.`,
         denomLabel: `1 square = 1% of GDP · World Bank 2024 · World avg ≈${worldPct.toFixed(1)}% (dotted)`
       });
       // D2. Budget comparison bars (explicit NBM FX rate, both figures in MDL)
@@ -2578,13 +3468,26 @@ window.MIGRATION_DATA = {
     }
   }
 
+  // Shared HTML caption under each part-to-whole visual: the plain-language
+  // readout plus the denominator note. Kept in HTML rather than SVG text so a
+  // long line wraps instead of overflowing the viz's narrow viewBox (which used
+  // to clip on the choropleth mode and on narrow screens).
+  function pwCaption(box, readout, denom) {
+    let html = `<div class="pw-readout">${esc(readout)}</div>`;
+    if (denom) html += `<div class="pw-denom">${esc(denom)}</div>`;
+    const cap = document.createElement("div");
+    cap.className = "pw-cap";
+    cap.innerHTML = html;
+    box.appendChild(cap);
+  }
+
   // A. Horizontal proportional split bar.
   function pwSplitBar(el, o) {
     const W = 420, barH = 28;
     const pct = o.part / o.whole;
     const partPx = Math.max(4, Math.round(pct * W));
     const svg = d3.create("svg")
-      .attr("viewBox", `0 0 ${W} 64`).attr("class", "pw-svg")
+      .attr("viewBox", `0 0 ${W} 34`).attr("class", "pw-svg")
       .attr("role", "img").attr("aria-label", o.readout + " " + o.denomLabel);
     // grey whole
     svg.append("rect").attr("x", 0).attr("y", 0).attr("width", W).attr("height", barH).attr("rx", 5).attr("fill", "#d8d8d2");
@@ -2598,16 +3501,17 @@ window.MIGRATION_DATA = {
       svg.append("text").attr("x", partPx + (W - partPx) / 2).attr("y", barH / 2 + 4.5).attr("text-anchor", "middle")
         .attr("fill", "#555").attr("font-size", 11)
         .text(`${o.wholeLabel} · ${fmtShort(o.whole - o.part)}`);
-    svg.append("text").attr("x", 0).attr("y", barH + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", barH + 32).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // B. Two-row bar: 2014 pop vs 2024 pop, loss shown as hatched.
   function pwDepopBars(el, o) {
     const W = 420, barH = 22, gap = 6, labelH = 14;
     const row2Y = labelH + barH + gap + labelH;
-    const totalH = row2Y + barH + 42;
+    const totalH = row2Y + barH + 6;
     const max = o.pop2014;
     const w2024 = Math.round(o.pop2024 / max * W);
     const wLoss = W - w2024;
@@ -2630,10 +3534,10 @@ window.MIGRATION_DATA = {
         .attr("fill", o.accent).attr("font-size", 10)
         .text(`−${fmtShort(o.pop2014 - o.pop2024)} (−${Math.round((1 - o.pop2024 / o.pop2014) * 100)}%)`);
     svg.append("text").attr("x", w2024 - 4).attr("y", row2Y + barH / 2 + 4).attr("text-anchor", "end").attr("fill", "#fff").attr("font-size", 10).text(fmtShort(o.pop2024));
-    // readout
-    svg.append("text").attr("x", 0).attr("y", row2Y + barH + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", row2Y + barH + 32).attr("fill", "#9aa09c").attr("font-size", 10).text("vs 2014 census · NBS final results");
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, "vs 2014 census · NBS final results");
+    el.appendChild(box);
   }
 
   // C. Unit cluster: ratio grey icons + 1 accent icon ("1 in N").
@@ -2641,7 +3545,7 @@ window.MIGRATION_DATA = {
     const n = o.ratio + 1;   // 18 total icons
     const cols = Math.min(n, 9), rows = Math.ceil(n / cols);
     const cell = 30, icoW = 14, icoH = 20;
-    const W = cols * cell, totalH = rows * cell + 50;
+    const W = cols * cell, totalH = rows * cell + 8;
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-cluster")
       .attr("role", "img").attr("aria-label", o.readout);
@@ -2661,9 +3565,10 @@ window.MIGRATION_DATA = {
         .attr("width", icoW).attr("height", icoH)
         .attr("fill", isAccent ? o.accent : "#c8ccc6");
     }
-    svg.append("text").attr("x", 0).attr("y", rows * cell + 18).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", rows * cell + 32).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // D1. 10×10 waffle: each cell = 1% of GDP; reference dotted at world avg.
@@ -2672,7 +3577,7 @@ window.MIGRATION_DATA = {
     const filled = Math.round(o.pct);
     const refFilled = Math.round(o.refPct);
     const W = cols * (cell + pad) - pad;
-    const H = rows * (cell + pad) - pad + 52;
+    const H = rows * (cell + pad) - pad + 8;
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "pw-svg pw-waffle")
       .attr("role", "img").attr("aria-label", o.readout);
@@ -2684,8 +3589,10 @@ window.MIGRATION_DATA = {
         const isRefEdge = valueIdx === refFilled - 1;
         const x = col * (cell + pad), y = row * (cell + pad);
         svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
-          .attr("rx", 3)
-          .attr("fill", isFilled ? o.accent : "#e0e0d8").attr("opacity", isFilled ? 0.88 : 0.55);
+          .attr("rx", 2.5)
+          // Filled cells carry the story; empties recede to near-white so the
+          // ~10 accent squares read at a glance instead of a wall of 100 cubes.
+          .attr("fill", isFilled ? o.accent : "#ececE5").attr("opacity", isFilled ? 0.9 : 0.4);
         if (isRefEdge)
           svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
             .attr("rx", 3).attr("fill", "none")
@@ -2699,16 +3606,16 @@ window.MIGRATION_DATA = {
       .attr("x", refCol * (cell + pad) + cell / 2).attr("y", refRow * (cell + pad) - 4)
       .attr("text-anchor", "middle").attr("fill", o.accent).attr("font-size", 9).attr("opacity", 0.8)
       .text(`≈${o.refPct.toFixed(1)}% world avg`);
-    const textY = rows * (cell + pad) + 16;
-    svg.append("text").attr("x", 0).attr("y", textY).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    svg.append("text").attr("x", 0).attr("y", textY + 15).attr("fill", "#9aa09c").attr("font-size", 10).text(o.denomLabel);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout, o.denomLabel);
+    el.appendChild(box);
   }
 
   // D2. Two comparison bars: remittances vs state budget (same MDL scale).
   function pwBudgetBars(el, o) {
     const W = 420, barH = 24, gap = 10, labelH = 13;
-    const totalH = labelH * 2 + barH * 2 + gap + 52;
+    const totalH = labelH * 2 + barH * 2 + gap + 24;
     const remitPx = Math.round(Math.min(o.remitMdl / o.budgetMdl, 1) * W);
     const svg = d3.create("svg")
       .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-budget")
@@ -2729,8 +3636,10 @@ window.MIGRATION_DATA = {
     // FX note + readout
     const noteY = row2 + labelH + barH + 15;
     svg.append("text").attr("x", 0).attr("y", noteY).attr("fill", "#b0b4b0").attr("font-size", 9).text(`FX: ${o.fxLabel}`);
-    svg.append("text").attr("x", 0).attr("y", noteY + 16).attr("fill", "#1f2421").attr("font-size", 12).attr("font-weight", 500).text(o.readout);
-    el.appendChild(svg.node());
+    const box = document.createElement("div"); box.className = "pw-item";
+    box.appendChild(svg.node());
+    pwCaption(box, o.readout);
+    el.appendChild(box);
   }
 
   function drawLineChart(svg, data, opts) {
@@ -2783,6 +3692,22 @@ window.MIGRATION_DATA = {
     return String(s == null ? "" : s).replace(/[&<>"]/g, c =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
+  // How often each source is refreshed — surfaced in the methodology panel so
+  // users can judge currency. Keyed by source id; falls back to s.frequency.
+  const SOURCE_FREQUENCY = {
+    undesa_2024: "every ~5 years (with revisions)",
+    unhcr: "weekly / monthly (operational)",
+    unhcr_tp: "periodic operational snapshots",
+    geoboundaries: "static (boundary geometry)",
+    nbm_transfers: "annual (by-country to 2020; totals ongoing)",
+    wb_remit_gdp: "annual",
+    wb_remit_total: "annual",
+    nbs_census_2024: "decennial census",
+    nbs_census_migration: "decennial census",
+    nbs_migration: "annual",
+    eurostat_migr: "annual (1 January reference)",
+    mof_budget: "annual (budget execution)"
+  };
   function buildMethodology() {
     const body = document.getElementById("methodBody");
     if (!body) return;
@@ -2793,9 +3718,11 @@ window.MIGRATION_DATA = {
       const link = s.url
         ? `<a href="${encodeURI(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.label)}</a>`
         : esc(s.label);
-      const meta = [s.indicator_code, s.accessed ? "as of " + s.accessed : ""].filter(Boolean).map(esc).join(" · ");
+      const freq = SOURCE_FREQUENCY[id] || s.frequency || "";
+      const meta = [s.indicator_code, freq ? "updated " + freq : "", s.accessed ? "as of " + s.accessed : ""]
+        .filter(Boolean).map(esc).join(" · ");
       const desc = [s.definition, s.scope, s.note].filter(Boolean).map(esc).join(" ");
-      return `<div class="method-src"><div><span class="pub">${esc(s.publisher)}</span> — ${link}</div>`
+      return `<div class="method-src"><div><span class="pub">${esc(s.publisher)}</span> · ${link}</div>`
         + (meta ? `<div class="meta">${meta}</div>` : "")
         + (desc ? `<div class="desc">${desc}</div>` : "") + `</div>`;
     }).join("");
@@ -2820,11 +3747,188 @@ window.MIGRATION_DATA = {
     });
   }
 
+  // ---- Key numbers at a glance ---------------------------------------------
+  // Headline figures up front, colour-coded by phenomenon. Each card that maps
+  // to a view is a button that switches the dashboard to it (and scrolls to the
+  // map). Values mirror DATA so the strip can never drift from the panels.
+  function buildGlance() {
+    const grid = document.getElementById("glanceGrid");
+    if (!grid) return;
+    const m = DATA.context.moldova;
+    const tp = (DATA.tp_choropleth && DATA.tp_choropleth.meta) || {};
+    const KPIS = [
+      { label: "Moldova-born abroad", value: d3.format(",")(m.diaspora_estimate),
+        sub: "Diaspora stock · UN DESA 2024", tone: "c-blue", mode: "emigration" },
+      { label: "Resident population", value: "2.41M",
+        sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: "population" },
+      { label: "Foreign-born residents", value: "106,700",
+        sub: "4.4% of residents · NBS 2024 Census", tone: "c-green", mode: "immigration_census" },
+      { label: "Ukrainian refugees", value: "141,058",
+        sub: "Residing · UNHCR 31 May 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Temporary Protection", value: d3.format(",")(tp.nationalTotal || 92405),
+        sub: "Enrolled · UNHCR 27 Apr 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Annual remittances", value: "$1.92bn",
+        sub: "10.5% of GDP · World Bank 2024", tone: "c-purple", mode: "remittances" },
+      { label: "Emigrants / year", value: "≈4,000",
+        sub: "Registered flow · NBS 2024", tone: "c-blue", mode: "emigration_flow" },
+      { label: "Immigrants / year", value: "≈6,600",
+        sub: "Registered flow · NBS 2024", tone: "c-green", mode: "immigration_flow" }
+    ];
+    grid.innerHTML = KPIS.map(k => {
+      const tag = k.mode ? "button" : "div";
+      const attr = k.mode ? ` type="button" data-goto="${k.mode}"` : "";
+      return `<${tag} class="kpi ${k.tone}"${attr}>`
+        + `<div class="kpi-label">${esc(k.label)}</div>`
+        + `<div class="kpi-value">${esc(k.value)}</div>`
+        + `<div class="kpi-sub">${esc(k.sub)}</div>`
+        + `</${tag}>`;
+    }).join("");
+    grid.querySelectorAll("button.kpi[data-goto]").forEach(b => {
+      b.addEventListener("click", () => {
+        const target = b.dataset.goto;
+        gotoModeYear(target, latestYearOf(target));
+        updateHash();
+        const panel = document.querySelector(".panel");
+        if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+
+  // ---- Historical milestones (1991–2026) -----------------------------------
+  // The drivers behind the trends, as a compact scrollable strip.
+  function buildMilestones() {
+    const strip = document.getElementById("milestoneStrip");
+    if (!strip) return;
+    const MS = [
+      { year: "1991", tone: "c-blue", event: "Independence",
+        note: "Borders open; labour emigration begins, at first eastward to Russia and Ukraine." },
+      { year: "1998", tone: "c-blue", event: "Russian financial crisis",
+        note: "Recession at home pushes labour migration; remittances become a household lifeline." },
+      { year: "2007", tone: "c-blue", event: "Romania joins the EU",
+        note: "Many Moldovans take up Romanian citizenship, opening onward free movement in the EU." },
+      { year: "2014", tone: "c-blue", event: "EU visa-free travel",
+        note: "Visa liberalisation and the DCFTA reorient migration and trade toward the European Union." },
+      { year: "2020", tone: "c-grey", event: "COVID-19 pandemic",
+        note: "Temporary returns and disrupted flows; remittances prove surprisingly resilient." },
+      { year: "2022", tone: "c-orange", event: "Russia invades Ukraine",
+        note: "Moldova becomes one of Europe's largest refugee hosts per capita almost overnight." },
+      { year: "2024", tone: "c-green", event: "Census & EU accession path",
+        note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." }
+    ];
+    strip.innerHTML = MS.map(s =>
+      `<div class="milestone ${s.tone}">`
+      + `<div class="milestone-year">${esc(s.year)}</div>`
+      + `<div class="milestone-event">${esc(s.event)}</div>`
+      + `<div class="milestone-note">${esc(s.note)}</div>`
+      + `</div>`).join("");
+  }
+
+  // ---- Labour migration: data-driven destination bars ----------------------
+  // Reads the 2024 UN DESA diaspora breakdown (excluding the "Other" residual)
+  // so the destinations panel never drifts from the emigration map/table.
+  function renderLabourDest() {
+    const host = document.getElementById("labourDest");
+    if (!host) return;
+    const rows = (DATA.modes.emigration.years[2024] || [])
+      .filter(r => !r.residual)
+      .slice().sort((a, b) => b.value - a.value).slice(0, 8);
+    const max = d3.max(rows, r => r.value) || 1;
+    host.innerHTML = rows.map(r =>
+      `<div class="ldest-row">`
+      + `<span class="ldest-name">${esc(r.country)}</span>`
+      + `<span class="ldest-track"><span class="ldest-fill" style="width:${(r.value / max * 100).toFixed(1)}%"></span></span>`
+      + `<span class="ldest-val">${d3.format(",")(r.value)}</span>`
+      + `</div>`).join("");
+  }
+
+  // ---- Audience pathways + Simple/Advanced view ----------------------------
+  function scrollToSel(sel) {
+    const el = document.querySelector(sel);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  // ---- Story map: nav rail, scroll progress, reveal-on-scroll --------------
+  // The mode switcher is the single primary control surface; the nav rail just
+  // tracks chapters and offers quick jumps.
+  function initStory() {
+    const chapters = Array.from(document.querySelectorAll(".chapter[data-nav]"));
+    const nav = document.getElementById("storyNav");
+    if (nav && chapters.length) {
+      nav.innerHTML = chapters.map(c =>
+        `<button type="button" class="story-dot" data-target="#${c.id}" aria-label="${esc(c.dataset.nav)}">`
+        + `<span class="dot"></span><span class="dot-label">${esc(c.dataset.nav)}</span></button>`).join("");
+      nav.querySelectorAll(".story-dot").forEach(b =>
+        b.addEventListener("click", () => scrollToSel(b.dataset.target)));
+    }
+
+    const supportsIO = "IntersectionObserver" in window;
+
+    // Active-chapter highlight on the nav rail.
+    if (supportsIO && nav) {
+      const dots = Array.from(nav.querySelectorAll(".story-dot"));
+      const byId = {};
+      dots.forEach(d => { byId[d.dataset.target.slice(1)] = d; });
+      const navObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          dots.forEach(d => d.classList.remove("active"));
+          const d = byId[e.target.id]; if (d) d.classList.add("active");
+        });
+      }, { rootMargin: "-45% 0px -45% 0px", threshold: 0 });
+      chapters.forEach(c => navObs.observe(c));
+    }
+
+    // Reveal-on-scroll — only opt in when IO is available, so without JS/IO the
+    // content stays fully visible (the CSS default).
+    if (supportsIO) {
+      document.body.classList.add("js-reveal");
+      const revObs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) { e.target.classList.add("in"); revObs.unobserve(e.target); }
+        });
+      }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+      document.querySelectorAll(".reveal").forEach(el => revObs.observe(el));
+    }
+
+    // Scroll progress bar.
+    const bar = document.getElementById("storyProgressBar");
+    if (bar) {
+      const onScroll = () => {
+        const h = document.documentElement;
+        const max = h.scrollHeight - h.clientHeight;
+        bar.style.width = (max > 0 ? Math.min(100, (h.scrollTop / max) * 100) : 0) + "%";
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    }
+  }
+
+  // ---- Mode interpretation warning -----------------------------------------
+  // Only remittances carries one for now: the per-country split is a historical
+  // 2020 breakdown, distinct from the current (and accurate) headline totals.
+  function updateModeWarning() {
+    const el = document.getElementById("modeWarning");
+    if (!el) return;
+    if (mode === "remittances") {
+      el.innerHTML =
+        `<div><strong>Reading the remittance map.</strong> The per-country split is the latest `
+        + `<em>published</em> geographic breakdown (NBM 2020 net settlements) and is shown as history, `
+        + `not today's pattern: since the 2022 sanctions, transfers from Russia have collapsed and EU `
+        + `sources now dominate. The headline totals on this view (10.5% of GDP, $1.92bn in 2024) are `
+        + `current — only the country geography is historical.</div>`;
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
+  }
+
   // ---- Inject UI icons -----------------------------------------------------
   function injectIcons() {
     document.querySelectorAll(".mode-btn").forEach(b => {
       const slot = b.querySelector(".ico");
       if (slot) slot.innerHTML = icon(MODE_ICON[b.dataset.mode], 16);
+    });
+    document.querySelectorAll(".concept-ico[data-ico]").forEach(s => {
+      s.innerHTML = icon(s.dataset.ico, 22);
     });
     const reset = document.getElementById("zoomReset");
     if (reset) reset.innerHTML = icon("expand", 15);
@@ -2834,6 +3938,10 @@ window.MIGRATION_DATA = {
 
   // ---- Boot ----------------------------------------------------------------
   injectIcons();
+  buildGlance();
+  buildMilestones();
+  renderLabourDest();
+  initStory();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
   const stampEl = document.getElementById("dataStamp");
