@@ -38,8 +38,6 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true   # turn Pages on automatically (uses the pages:write token)
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
