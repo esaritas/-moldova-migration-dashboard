@@ -121,6 +121,59 @@ window.MIGRATION_DATA = {
     ]
   },
 
+  // NBS 2024 Census — usual resident population by district (raioane + municipalities + ATU).
+  // Figures from Table 5 of the final census data (NBS, released 15 Jul 2025).
+  // Bender and Transnistria are on the left bank of the Dniester and are NOT enumerated.
+  population_choropleth: {
+    meta: {
+      subject: "Usual resident population (NBS 2024 Census)",
+      nationalTotal: 2409207,
+      asOf: "2024-04-08",
+      source_ids: ["nbs_census_2024", "geoboundaries"],
+      geometry: "geoBoundaries MDA ADM1 (CC-BY 4.0)",
+      dataStatus: "OFFICIAL — NBS PHC 2024 final data, 15 Jul 2025"
+    },
+    districts: [
+      { match: "chisinau",     name: "Chișinău",       type: "municipality",  pop2024: 720128 },
+      { match: "balti",        name: "Bălți",          type: "municipality",  pop2024: 94546  },
+      { match: "gagauzia",     name: "Găgăuzia",       type: "autonomous",    pop2024: 103668 },
+      { match: "transnistria", name: "Transnistria",   type: "transnistria",  pop2024: null   },
+      { match: "bender",       name: "Bender (Tighina)",type:"transnistria",  pop2024: null   },
+      { match: "anenii noi",   name: "Anenii Noi",     type: "raion",         pop2024: 57687  },
+      { match: "basarabeasca", name: "Basarabeasca",   type: "raion",         pop2024: 14914  },
+      { match: "briceni",      name: "Briceni",        type: "raion",         pop2024: 46894  },
+      { match: "cahul",        name: "Cahul",          type: "raion",         pop2024: 72775  },
+      { match: "cantemir",     name: "Cantemir",       type: "raion",         pop2024: 33181  },
+      { match: "calarasi",     name: "Călărași",       type: "raion",         pop2024: 43864  },
+      { match: "causeni",      name: "Căușeni",        type: "raion",         pop2024: 57261  },
+      { match: "cimislia",     name: "Cimișlia",       type: "raion",         pop2024: 30986  },
+      { match: "criuleni",     name: "Criuleni",       type: "raion",         pop2024: 52926  },
+      { match: "donduseni",    name: "Dondușeni",      type: "raion",         pop2024: 28108  },
+      { match: "drochia",      name: "Drochia",        type: "raion",         pop2024: 53738  },
+      { match: "dubasari",     name: "Dubăsari",       type: "raion",         pop2024: 21781  },
+      { match: "edinet",       name: "Edineț",         type: "raion",         pop2024: 50429  },
+      { match: "falesti",      name: "Fălești",        type: "raion",         pop2024: 56039  },
+      { match: "floresti",     name: "Florești",       type: "raion",         pop2024: 53264  },
+      { match: "glodeni",      name: "Glodeni",        type: "raion",         pop2024: 35829  },
+      { match: "hincesti",     name: "Hîncești",       type: "raion",         pop2024: 69462  },
+      { match: "ialoveni",     name: "Ialoveni",       type: "raion",         pop2024: 74458  },
+      { match: "leova",        name: "Leova",          type: "raion",         pop2024: 28835  },
+      { match: "nisporeni",    name: "Nisporeni",      type: "raion",         pop2024: 36413  },
+      { match: "ocnita",       name: "Ocnița",         type: "raion",         pop2024: 31610  },
+      { match: "orhei",        name: "Orhei",          type: "raion",         pop2024: 79242  },
+      { match: "rezina",       name: "Rezina",         type: "raion",         pop2024: 30243  },
+      { match: "riscani",      name: "Rîșcani",        type: "raion",         pop2024: 43652  },
+      { match: "singerei",     name: "Sîngerei",       type: "raion",         pop2024: 55933  },
+      { match: "soldanesti",   name: "Șoldănești",     type: "raion",         pop2024: 25394  },
+      { match: "soroca",       name: "Soroca",         type: "raion",         pop2024: 58609  },
+      { match: "straseni",     name: "Strășeni",       type: "raion",         pop2024: 61362  },
+      { match: "stefan voda",  name: "Ștefan Vodă",    type: "raion",         pop2024: 42285  },
+      { match: "taraclia",     name: "Taraclia",       type: "raion",         pop2024: 26435  },
+      { match: "telenesti",    name: "Telenești",      type: "raion",         pop2024: 41452  },
+      { match: "ungheni",      name: "Ungheni",        type: "raion",         pop2024: 75804  }
+    ]
+  },
+
   // Neutral, factual per-country footnotes surfaced in the hover tooltip. These
   // are mobility/scope facts, NOT identity or geopolitical framing. `modes`
   // limits a note to where it's relevant (omit = all modes).
@@ -478,6 +531,28 @@ window.MIGRATION_DATA = {
         { term: "Main reasons", value: "Work · Family", sub: "2024: 3,002 work · 2,211 family reunification", world: null, icon: "users", source_id: "nbs_migration", def_id: "registered_immigrant" },
         { term: "Returnees", value: "332", sub: "repatriates in 2024 (1,462 in 2015), NBS", world: null, icon: "route", source_id: "nbs_migration", def_id: "repatriate" }
       ]
+    },
+    population_district: {
+      takeaway: "The 2024 census counted 2,409,207 usual residents — a 13.6% fall since 2014. Chișinău holds 30% of the national population. The map shows every raion shaded by resident count.",
+      // Historical census totals for the trend line in the context panel.
+      // Source: NBS PHC 2024 final data, Table 5 (usually-resident, enumerated territory).
+      pop_series_source_id: "nbs_census_2024",
+      pop_series: [
+        { year: 1959, pop: 2513483 }, { year: 1970, pop: 3085080 },
+        { year: 1979, pop: 3372051 }, { year: 1989, pop: 3657665 },
+        { year: 2004, pop: 3383332 }, { year: 2014, pop: 2789205 },
+        { year: 2024, pop: 2409207 }
+      ],
+      headline: "Moldova's 2024 census recorded 2,409,207 usually-resident people on 8 April 2024 — " +
+                "a 13.6% fall from the 2,789,205 counted in 2014. Chișinău municipality alone holds " +
+                "720,128 residents (30%); the three smallest raions (Basarabeasca, Dubăsari, " +
+                "Șoldănești) have fewer than 30,000 each. Bender and Transnistria were not " +
+                "enumerated (left bank of the Dniester).",
+      indicators: [
+        { term: "Resident population", value: "2.41M", sub: "−13.6% since 2014 (NBS 2024 Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Chișinău share", value: "29.9%", sub: "720,128 residents · largest district", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" },
+        { term: "Population decline", value: "−380k", sub: "vs. 2014 census (−13.6%)", world: null, icon: "users", source_id: "nbs_census_2024", def_id: "depopulation" }
+      ]
     }
   },
 
@@ -746,6 +821,20 @@ window.MIGRATION_DATA = {
           { country: "France", value: 44 }, { country: "United Kingdom", value: 40 },
           { country: "Spain", value: 9 }, { country: "Portugal", value: 5 }
         ]
+      }
+    },
+
+    // ---- POPULATION BY DISTRICT (NBS 2024 Census choropleth, no flow arcs) --
+    population_district: {
+      label: "Population by district",
+      sublabel: "Usual resident population by raion",
+      unit: "people",
+      direction: null,
+      vintage: "NBS 2024 Census",
+      source_id: "nbs_census_2024",
+      years: {
+        // Single census year; the choropleth renderer uses population_choropleth data.
+        2024: []
       }
     }
   }

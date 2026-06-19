@@ -31,9 +31,11 @@
 
   const ACCENTS = {
     emigration: "#C7402F", immigration: "#1E8C72", remittances: "#2B6F9E",
-    immigration_census: "#2E7D62",  // darker teal — same family as immigration, different measure
+    immigration_census: "#2E7D62",
     // NBS official-flow modes: muted/earthy tones to read as secondary series.
-    emigration_flow: "#A8743A", immigration_flow: "#5E7488"
+    emigration_flow: "#A8743A", immigration_flow: "#5E7488",
+    // Population-by-district choropleth (NBS 2024 Census).
+    population_district: "#5A6E8C"
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
@@ -41,7 +43,8 @@
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     emigration_flow: "Registered emigrants per year (NBS)",
-    immigration_flow: "Registered immigrants per year (NBS)"
+    immigration_flow: "Registered immigrants per year (NBS)",
+    population_district: "Resident population by district (NBS 2024 Census)"
   };
 
   // Hand-built inline icons (24x24, stroke = currentColor). No dependency.
@@ -65,7 +68,8 @@
   const MODE_ICON = {
     emigration: "depart", immigration: "tent", remittances: "banknote",
     immigration_census: "users",
-    emigration_flow: "depart", immigration_flow: "arrive"
+    emigration_flow: "depart", immigration_flow: "arrive",
+    population_district: "landmark"
   };
 
   const svg        = d3.select("#map");
@@ -142,7 +146,7 @@
   // Frame the map for the active mode: the world flow-modes open on Europe; the
   // districts choropleth (immigration) is framed to its own fitExtent (identity).
   function applyMapFraming() {
-    if (mode === "immigration" && MOLDOVA)
+    if ((mode === "immigration" || mode === "population_district") && MOLDOVA)
       svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
     else
       europeView();
@@ -292,6 +296,7 @@
     // "Refugees from Ukraine" swaps the world flow-map for a Moldova districts
     // choropleth of Temporary Protection holders (see renderChoropleth).
     if (mode === "immigration" && MOLDOVA) { renderChoropleth(); return; }
+    if (mode === "population_district" && MOLDOVA) { renderPopChoropleth(); return; }
     showWorldLayers();
 
     const m = DATA.modes[mode];
@@ -541,6 +546,139 @@
 
   // Fallback data table for the choropleth: districts ranked by TP holders.
   // Doubles as the accessible alternative to the map (acceptance §8).
+  // ---- Population-by-district choropleth (NBS 2024 Census) -----------------
+  // Shown for the "population_district" mode in place of the world flow-map.
+  // Subject is usual resident population by raion/municipality (census April 2024).
+  const POP_SCALE = ["#E8EFF5", "#B8CFE8", "#7FAED4", "#3D82BB", "#1A5589"];
+
+  let _popChoro = null;
+  function popChoroModel() {
+    if (_popChoro) return _popChoro;
+    const pc = DATA.population_choropleth;
+    const byName = new Map();
+    pc.districts.forEach(d => byName.set(d.match, d));
+    const vals = pc.districts.map(d => d.pop2024).filter(v => v != null);
+    const maxV = d3.max(vals) || 1, minV = d3.min(vals) || 0;
+    // Quantile bins: Chișinău dominates at 720k so linear would collapse all others.
+    const color = d3.scaleQuantile().domain(vals).range(POP_SCALE);
+    const total = pc.meta.nationalTotal || d3.sum(vals);
+    _popChoro = { pc, byName, minV, maxV, color, total };
+    return _popChoro;
+  }
+
+  function renderPopChoropleth() {
+    showChoroLayers();
+    const { byName, minV, maxV, color, total } = popChoroModel();
+    const feats = (MOLDOVA && MOLDOVA.features) || [];
+
+    gDistricts.selectAll("path.district")
+      .data(feats, f => f.properties.shapeName)
+      .join(
+        enter => enter.append("path").attr("class", "district")
+          .attr("vector-effect", "non-scaling-stroke"),
+        update => update,
+        exit  => exit.remove()
+      )
+      .attr("d", mdaPath)
+      .attr("fill", f => {
+        const rec = byName.get(normName(f.properties.shapeName));
+        return rec && rec.pop2024 != null ? color(rec.pop2024) : NO_DATA_FILL;
+      })
+      .each(function (f) {
+        const name = f.properties.shapeName;
+        const key  = normName(name);
+        const rec  = byName.get(key);
+        this.onmouseenter = () => { highlightDistrict(key); showPopDistrictTip(rec, name, total); };
+        this.onmousemove  = moveTip;
+        this.onmouseleave = () => { clearDistrictHighlight(); hideTip(); };
+      });
+
+    renderChoroLegendPop(color, minV, maxV, "Population");
+
+    const top = DATA.population_choropleth.districts.slice()
+      .filter(d => d.pop2024 != null)
+      .sort((a, b) => b.pop2024 - a.pop2024).slice(0, 3)
+      .map(d => `${d.name}: ${fmt(d.pop2024)}`).join(", ");
+    svg.attr("aria-label",
+      "Choropleth of usual resident population by Moldovan district (NBS 2024 Census, " +
+      `${fmt(total)} total). Highest: ${top}. ` +
+      "Full figures are listed in the table beside the map.");
+  }
+
+  function showPopDistrictTip(rec, name, total) {
+    const disp = rec ? rec.name : name;
+    let body;
+    if (!rec) body = "no join match — check name";
+    else if (rec.pop2024 == null) body = "not enumerated (left bank)";
+    else {
+      const pct = total ? (rec.pop2024 / total * 100).toFixed(1) : null;
+      body = `${fmt(rec.pop2024)} residents` + (pct != null ? ` · ${pct}% of national` : "");
+    }
+    tip.innerHTML = `<strong>${esc(disp)}</strong>${esc(body)}`;
+    tip.hidden = false;
+  }
+
+  function renderChoroLegendPop(color, minV, maxV, title) {
+    const g = gChoroLegend;
+    g.selectAll("*").remove();
+    g.attr("transform", "translate(18, 30)");
+    const sw = 17, gap = 4;
+    g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text(title);
+    const brk = color.quantiles ? color.quantiles() : (color.thresholds ? color.thresholds() : []);
+    POP_SCALE.forEach((c, i) => {
+      const lo = i === 0 ? minV : brk[i - 1];
+      const hi = i === POP_SCALE.length - 1 ? maxV : brk[i];
+      const y  = i * (sw + gap);
+      g.append("rect").attr("x", 0).attr("y", y).attr("width", sw).attr("height", sw)
+        .attr("rx", 3).attr("fill", c);
+      g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", y + sw - 4)
+        .text(`${fmtShort(Math.round(lo))}–${fmtShort(Math.round(hi))}`);
+    });
+    const yNd = POP_SCALE.length * (sw + gap) + 6;
+    g.append("rect").attr("x", 0).attr("y", yNd).attr("width", sw).attr("height", sw)
+      .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#d8d8d2").attr("stroke-width", 1);
+    g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", yNd + sw - 4)
+      .text("not enumerated");
+  }
+
+  function renderPopDistrictTable() {
+    const { pc, total } = popChoroModel();
+    const asOf = fmtDate(pc.meta.asOf) || pc.meta.asOf || "";
+    valueHead.textContent = "Residents";
+    mapCaption.textContent = "Usual resident population · NBS 2024 Census · scroll to zoom, drag to pan";
+    const srcObj = { source_ids: ["nbs_census_2024", "geoboundaries"] };
+    const mapSrc = document.getElementById("mapSource");
+    if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
+    sourceLine.textContent = citationsFor(srcObj);
+
+    const rows = pc.districts.slice().filter(d => d.pop2024 != null)
+      .sort((a, b) => b.pop2024 - a.pop2024);
+    const max = d3.max(rows, d => d.pop2024) || 1;
+    totalValue.textContent = fmt(total);
+    totalLabel.textContent = `${fmt(total)} usual residents · NBS Census ${asOf.slice(0, 4)} (official)`;
+
+    tableBody.selectAll("tr").data(rows, d => d.match).join(
+      enter => {
+        const tr = enter.append("tr").attr("data-district", d => d.match)
+          .on("mouseenter", (e, d) => highlightDistrict(d.match))
+          .on("mouseleave", clearDistrictHighlight);
+        tr.append("td").attr("class", "c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
+        tr.append("td").attr("class", "c-bar-cell").append("div").attr("class", "c-bar-track")
+          .append("div").attr("class", "c-bar").style("width", d => (d.pop2024 / max * 100) + "%");
+        tr.append("td").attr("class", "c-value").text(d => fmt(d.pop2024));
+        return tr;
+      },
+      update => {
+        update.attr("data-district", d => d.match);
+        update.select(".c-name").html(d => `<span class="c-swatch"></span>${esc(d.name)}`);
+        update.select(".c-bar").style("width", d => (d.pop2024 / max * 100) + "%");
+        update.select(".c-value").text(d => fmt(d.pop2024));
+        return update;
+      },
+      exit => exit.remove()
+    );
+  }
+
   function renderDistrictTable() {
     const { tp, total } = choroModel();
     const asOf = fmtDate(tp.meta.asOf) || tp.meta.asOf || "";
@@ -581,6 +719,7 @@
 
   function renderTable() {
     if (mode === "immigration" && MOLDOVA) { renderDistrictTable(); return; }
+    if (mode === "population_district" && MOLDOVA) { renderPopDistrictTable(); return; }
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
@@ -849,6 +988,11 @@
       unit = "pct";
       refLine = { value: DATA.context.world.remittances_gdp_pct, label: "LMIC average ≈5%" };
       title = "Remittances as % of GDP";
+    } else if (mode === "population_district") {
+      data = ctx.pop_series.map(d => ({ year: d.year, total: d.pop }));
+      unit = "people";
+      refLine = null;
+      title = "Resident population — census totals (NBS)";
     } else {
       data = modeTotals(mode);
       unit = "people";
@@ -861,7 +1005,10 @@
     // Caption under the economics chart: the source(s) behind THIS chart.
     // (remittances chart = the %GDP series source; stock charts = the mode source.)
     const chartSrcObj = mode === "remittances"
-      ? { source_id: ctx.gdp_series_source_id } : DATA.modes[mode];
+      ? { source_id: ctx.gdp_series_source_id }
+      : mode === "population_district"
+      ? { source_id: ctx.pop_series_source_id }
+      : DATA.modes[mode];
     const ctxSrc = document.getElementById("ctxSource");
     if (ctxSrc) { ctxSrc.textContent = captionsFor(chartSrcObj); ctxSrc.title = citationsFor(chartSrcObj); }
 

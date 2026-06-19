@@ -161,6 +161,9 @@ h1 {
 /* NBS flow buttons — visually muted to signal "different magnitude category" */
 .mode-btn-nbs { opacity: 0.82; }
 .mode-btn-nbs[aria-pressed="true"] { opacity: 1; }
+/* Population-by-district census button */
+.mode-btn-pop { opacity: 0.88; }
+.mode-btn-pop[aria-pressed="true"] { opacity: 1; }
 
 /* ---- Main layout: map + table -------------------------------------------- */
 .panel {
