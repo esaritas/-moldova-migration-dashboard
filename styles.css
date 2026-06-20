@@ -144,6 +144,11 @@ h1 {
 .mode-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 /* divider before the NBS official-flow modes */
 .mode-sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line); }
+.modes-intro {
+  margin: 0 0 12px; max-width: 70ch;
+  font-size: 14px; line-height: 1.6; color: var(--ink-soft);
+}
+.modes-intro strong { color: var(--ink); font-weight: 600; }
 .modes-note {
   margin: 8px 2px 0; max-width: 70ch;
   font-size: 12px; line-height: 1.5; color: var(--ink-soft);
@@ -794,6 +799,20 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .concepts > summary .section-title, .milestones > summary .section-title { margin: 0; display: inline; }
 .concepts-body { margin-top: 14px; }
 .concepts-lede { font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 0 0 16px; max-width: 90ch; }
+.concepts-detail { margin: 16px 0 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.concepts-detail summary {
+  padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--ink-soft); list-style: none; user-select: none;
+  display: flex; align-items: center; gap: 8px;
+}
+.concepts-detail summary::-webkit-details-marker { display: none; }
+.concepts-detail summary:hover { color: var(--ink); background: var(--surface); }
+.concepts-detail .detail-caret { font-size: 10px; transition: transform .2s; }
+.concepts-detail[open] .detail-caret { transform: rotate(90deg); }
+.concepts-detail > .concept-grid,
+.concepts-detail > .concept-egs { padding: 0 16px; }
+.concepts-detail > .concept-grid { margin-top: 14px; }
+.concepts-detail > .concept-egs { padding-bottom: 14px; }
 .concept-grid {
   display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;
 }
@@ -1054,4 +1073,13 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
   }
   .mode-pill::-webkit-scrollbar { display: none; }
   .mode-pill .mode-btn { scroll-snap-align: start; min-height: 44px; white-space: nowrap; }
+  /* concept grid: 2 cols on tablet */
+  .concept-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  /* concept grid: 1 col on phone */
+  .concept-grid { grid-template-columns: 1fr; }
+  .modes-intro { font-size: 13px; }
+  /* play button: make disabled state clearly visible */
+  .play:disabled { opacity: 0.4; cursor: not-allowed; }
 }

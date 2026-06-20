@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f1623"/>
+      <stop offset="100%" stop-color="#1a2535"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Accent bar top -->
+  <rect x="0" y="0" width="1200" height="6" fill="#2B6CA8"/>
+
+  <!-- Flag colours strip bottom-right decoration -->
+  <rect x="900" y="540" width="300" height="4" fill="#003DA5" opacity="0.6"/>
+  <rect x="900" y="548" width="300" height="4" fill="#FFD700" opacity="0.6"/>
+  <rect x="900" y="556" width="300" height="4" fill="#CC0001" opacity="0.6"/>
+
+  <!-- Eyebrow -->
+  <text x="80" y="110" font-family="'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="500" fill="#7EA8D4" letter-spacing="2">REPUBLIC OF MOLDOVA · DATA DASHBOARD</text>
+
+  <!-- Main title -->
+  <text x="80" y="210" font-family="'Helvetica Neue', Arial, sans-serif" font-size="88" font-weight="700" fill="#FFFFFF">Moldova</text>
+  <text x="80" y="305" font-family="'Helvetica Neue', Arial, sans-serif" font-size="88" font-weight="700" fill="#FFFFFF">in Motion</text>
+
+  <!-- Subtitle -->
+  <text x="80" y="375" font-family="'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="400" fill="#A8BDD4">Migration · Population · Remittances</text>
+
+  <!-- Divider -->
+  <line x1="80" y1="415" x2="560" y2="415" stroke="#2B6CA8" stroke-width="2"/>
+
+  <!-- Key stat callouts -->
+  <text x="80"  y="470" font-family="'Helvetica Neue', Arial, sans-serif" font-size="42" font-weight="700" fill="#5A9FD4">864K</text>
+  <text x="80"  y="500" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" fill="#7EA8D4">diaspora abroad</text>
+
+  <text x="280" y="470" font-family="'Helvetica Neue', Arial, sans-serif" font-size="42" font-weight="700" fill="#D4844A">141K</text>
+  <text x="280" y="500" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" fill="#7EA8D4">refugees hosted</text>
+
+  <text x="480" y="470" font-family="'Helvetica Neue', Arial, sans-serif" font-size="42" font-weight="700" fill="#8C6FBD">$2.8B</text>
+  <text x="480" y="500" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" fill="#7EA8D4">remittances / yr</text>
+
+  <!-- Right side decorative bars (mini bar chart feel) -->
+  <rect x="840" y="150" width="18" height="320" rx="4" fill="#2B6CA8" opacity="0.9"/>
+  <rect x="876" y="220" width="18" height="250" rx="4" fill="#2B6CA8" opacity="0.6"/>
+  <rect x="912" y="190" width="18" height="280" rx="4" fill="#E08A2E" opacity="0.7"/>
+  <rect x="948" y="280" width="18" height="190" rx="4" fill="#2E8B6B" opacity="0.7"/>
+  <rect x="984" y="240" width="18" height="230" rx="4" fill="#6E4FA3" opacity="0.7"/>
+  <rect x="1020" y="300" width="18" height="170" rx="4" fill="#2B6CA8" opacity="0.5"/>
+  <rect x="1056" y="200" width="18" height="270" rx="4" fill="#E08A2E" opacity="0.5"/>
+  <rect x="1092" y="260" width="18" height="210" rx="4" fill="#2E8B6B" opacity="0.5"/>
+  <line x1="820" y1="470" x2="1130" y2="470" stroke="#2B6CA8" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- URL -->
+  <text x="80" y="590" font-family="'Helvetica Neue', Arial, sans-serif" font-size="20" fill="#4A6A8A">esaritas.github.io/-moldova-migration-dashboard</text>
+</svg>

@@ -781,6 +781,10 @@
     });
     updateTrackFill();
     updateTimelineNote();
+    const hasMultipleYears = ys.filter(y => !!DATA.modes[mode].years[y]).length > 1;
+    playBtn.disabled = !hasMultipleYears;
+    playBtn.title = hasMultipleYears ? "Play through years" : "Timeline not available — only one data point";
+    if (!hasMultipleYears && timer) stopPlay();
   }
   // Narration line: shows the current year's annotation (mode-aware) during play.
   function updateTimelineNote() {
