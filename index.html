@@ -106,9 +106,9 @@
     <section class="chapter" id="ch-explore" data-nav="Explore the map">
       <div class="chapter-head reveal">
         <span class="chapter-num">03</span>
-        <h2 class="chapter-title">Explore the four realities</h2>
+        <h2 class="chapter-title">Explore Moldova's migration systems</h2>
       </div>
-      <p class="chapter-intro reveal">Switch between the views below to see who leaves, who arrives, who is hosted, and how the money flows. Press play on the timeline to watch each story change over the years.</p>
+      <p class="chapter-intro reveal">Switch between the views below to see who leaves, who arrives, who is hosted, and how the money flows. Each lens uses a different source and definition — watch the badges to see whether you're looking at a stock, a flow, a census count, a humanitarian count, or a money-transfer proxy. Press play on the timeline to watch each story change over the years.</p>
 
       <!-- Grouped segmented control: taxonomy lives in the grouping + one quiet
            label per group, not in per-button badges. The administrative NBS
@@ -149,6 +149,10 @@
         </div>
       </div>
       <p class="modes-note">The dashed group comes from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year, a far smaller thing than the diaspora and refugee stocks. <a href="#ch-concepts" class="jit-link">What's a stock vs a flow?</a></p>
+
+      <!-- Source/date + confidence badges for the active mode (built by app.js).
+           Makes the vintage and reliability of each lens visible at point of use. -->
+      <div class="mode-badges" id="modeBadges" aria-live="polite"></div>
 
       <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
       <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>

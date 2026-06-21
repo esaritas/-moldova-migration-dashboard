@@ -689,6 +689,25 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 .method-caveats { margin: 0; padding-left: 18px; }
 .method-caveats li { font-size: 13px; line-height: 1.55; color: var(--ink-soft); margin-bottom: 8px; }
 
+/* ---- Methodology summary matrix ---------------------------------------- */
+.method-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.method-table {
+  width: 100%; border-collapse: collapse; font-size: 12.5px; line-height: 1.45;
+}
+.method-table th, .method-table td {
+  text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.method-table thead th {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--ink-faint); font-weight: 500;
+  border-bottom: 1px solid var(--ink-faint);
+}
+.method-table tbody th { font-weight: 600; color: var(--ink); white-space: nowrap; }
+.method-table td { color: var(--ink-soft); }
+.method-table .num { font-family: var(--font-mono); white-space: nowrap; }
+.method-table tbody tr:last-child th, .method-table tbody tr:last-child td { border-bottom: 0; }
+
 /* ---- Responsive ----------------------------------------------------------- */
 @media (max-width: 880px) {
   .panel { grid-template-columns: 1fr; }
@@ -746,6 +765,39 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
   line-height: 1.5;
   transition: border-left-color 0.25s ease;
 }
+
+/* ---- Per-mode source/date + confidence badges -------------------------- */
+.mode-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0.55rem;
+}
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.mode-badge svg { opacity: 0.7; }
+.badge-source { color: var(--ink-soft); background: var(--surface); }
+/* Confidence tones: tinted from the phenomenon palette + status hues. */
+.badge-conf { font-weight: 500; border-color: transparent; }
+.tone-official  { color: #1f5e8c; background: color-mix(in srgb, var(--c-diaspora) 13%, transparent); }
+.tone-census    { color: #1f6e54; background: color-mix(in srgb, var(--c-pop) 14%, transparent); }
+.tone-operational { color: #9a5a12; background: color-mix(in srgb, var(--c-refugee) 16%, transparent); }
+.tone-estimated { color: #8a5a00; background: color-mix(in srgb, #C99A2E 22%, transparent); }
+.tone-proxy     { color: #533a82; background: color-mix(in srgb, var(--c-money) 15%, transparent); }
+.tone-partial   { color: #4c545c; background: color-mix(in srgb, var(--c-flow) 18%, transparent); }
+.tone-historical { color: #5a5f5b; background: color-mix(in srgb, var(--ink-faint) 18%, transparent); }
 
 /* ---- How to read this strip -------------------------------------------- */
 .howto-strip {
@@ -1195,9 +1247,9 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
     <section class="chapter" id="ch-explore" data-nav="Explore the map">
       <div class="chapter-head reveal">
         <span class="chapter-num">03</span>
-        <h2 class="chapter-title">Explore the four realities</h2>
+        <h2 class="chapter-title">Explore Moldova's migration systems</h2>
       </div>
-      <p class="chapter-intro reveal">Switch between the views below to see who leaves, who arrives, who is hosted, and how the money flows. Press play on the timeline to watch each story change over the years.</p>
+      <p class="chapter-intro reveal">Switch between the views below to see who leaves, who arrives, who is hosted, and how the money flows. Each lens uses a different source and definition — watch the badges to see whether you're looking at a stock, a flow, a census count, a humanitarian count, or a money-transfer proxy. Press play on the timeline to watch each story change over the years.</p>
 
       <!-- Grouped segmented control: taxonomy lives in the grouping + one quiet
            label per group, not in per-button badges. The administrative NBS
@@ -1238,6 +1290,10 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
         </div>
       </div>
       <p class="modes-note">The dashed group comes from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year, a far smaller thing than the diaspora and refugee stocks. <a href="#ch-concepts" class="jit-link">What's a stock vs a flow?</a></p>
+
+      <!-- Source/date + confidence badges for the active mode (built by app.js).
+           Makes the vintage and reliability of each lens visible at point of use. -->
+      <div class="mode-badges" id="modeBadges" aria-live="polite"></div>
 
       <!-- Key-takeaway card: one sentence per mode, rendered by app.js -->
       <div class="takeaway-card" id="takeawayCard" aria-live="polite"></div>
@@ -1879,6 +1935,30 @@ window.MIGRATION_DATA = {
       "1,462 in 2015 (NBS POP07300)."
   ],
 
+  // Scannable methodology matrix — one row per phenomenon, rendered as a table at
+  // the top of the methodology dialog so readers can compare what each number
+  // measures, when, and where it falls short, without reading the full prose.
+  method_summary: [
+    { topic: "Diaspora abroad", source: "UN DESA", year: "2024",
+      measure: "Country-of-birth migrant stock",
+      limit: "Omits citizenship-reporting countries (DE/US/UK); misses naturalised Moldovans." },
+    { topic: "Refugees hosted", source: "UNHCR", year: "2026",
+      measure: "Operational refugee count (residing + TP)",
+      limit: "Humanitarian count; district map is TP holders only, not all refugees." },
+    { topic: "Foreign-born residents", source: "NBS Census", year: "2024",
+      measure: "Usual-resident count by country of birth",
+      limit: "Different concept from the UNHCR refugee count; smaller origins estimated." },
+    { topic: "Remittances", source: "NBM / World Bank", year: "2020 / 2024",
+      measure: "Bank transfers (by country) / BPM6 total & %GDP",
+      limit: "Different definitions and years; by-country geography is historical (2020)." },
+    { topic: "Registered flows", source: "NBS", year: "2024",
+      measure: "Formal annual emigrant/immigrant registrations",
+      limit: "Undercounts real movement; most emigrants never formally deregister." },
+    { topic: "Resident population", source: "NBS Census", year: "2024",
+      measure: "Usually-resident population by district",
+      limit: "Excludes Transnistria & Bender; not comparable to de-jure register." }
+  ],
+
   // Economic context shown in the analysis panel below the map. Professional
   // migration-economics framing with world-average benchmarks.
   context: {
@@ -2053,6 +2133,10 @@ window.MIGRATION_DATA = {
       direction: "out",
       source_id: "undesa_2024",
       vintage: "UN DESA 2024",
+      // Visible confidence badge (see updateModeBadges in app.js). Tone keys map
+      // to colours in styles.css: official | operational | census | estimated |
+      // proxy | partial | historical.
+      confidence: { label: "Official stock", tone: "official" },
       known_totals: { 2024: { value: 864257, label: "UN DESA 2024 emigrants, by origin" } },
       years: {
         // OFFICIAL — UN DESA 2024, Moldovan-born by country of destination.
@@ -2099,6 +2183,7 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "in",
       vintage: "UNHCR May-2026",
+      confidence: { label: "Operational count", tone: "operational" },
       source_ids: ["unhcr"],
       years: {
         // Ukrainian refugees only — UNHCR Moldova situation reports.
@@ -2117,6 +2202,9 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "in",
       vintage: "NBS Census 2024",
+      // Ukraine & Russia are confirmed census values; smaller origins are
+      // proportional estimates — flagged as "partly estimated".
+      confidence: { label: "Census · partly estimated", tone: "estimated" },
       source_ids: ["nbs_census_migration", "undesa_2024"],
       known_totals: { 2024: { value: 106700, label: "NBS 2024 Census total foreign-born" } },
       years: {
@@ -2152,6 +2240,9 @@ window.MIGRATION_DATA = {
       direction: "in",
       source_id: "nbm_transfers",
       vintage: "NBM 2020 by-country",
+      // Per-country split is a bank-transfer proxy and the geography is historical
+      // (2020); the headline %GDP / total figures are current (World Bank 2024).
+      confidence: { label: "Bank-transfer proxy · 2020 geography", tone: "proxy" },
       known_totals: { 2020: { value: 1486.74, label: "NBM 2020 total" } },
       years: {
         // OFFICIAL — NBM 2017 annual release (net settlements, USD m, rounded)
@@ -2214,6 +2305,7 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "out",
       vintage: "NBS registered flow",
+      confidence: { label: "Formal registrations · undercount", tone: "partial" },
       source_id: "nbs_migration",
       // As with immigrants, the table shows only the main destinations; they
       // sum to less than the cited all-destinations total, so reconcile with a
@@ -2270,6 +2362,7 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "in",
       vintage: "NBS registered flow",
+      confidence: { label: "Formal registrations · undercount", tone: "partial" },
       source_id: "nbs_migration",
       // The table lists only the main origin countries. They sum to far less
       // than the national total (the by-reason split alone — work 3,002 +
@@ -2331,6 +2424,7 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "in",
       vintage: "NBS 2024 Census",
+      confidence: { label: "Census", tone: "census" },
       source_id: "nbs_census_2024",
       known_totals: { 2024: { value: 2409207, label: "NBS 2024 Census resident total" } },
       years: {
@@ -3383,6 +3477,7 @@ window.MIGRATION_DATA = {
     updateContextHighlight();
     renderPartWhole();
     renderCtxDefs(ctx);
+    updateModeBadges();
     updateModeWarning();
 
     // Panel-level source note (e.g. remittances: two different sources for map vs chart).
@@ -3775,8 +3870,22 @@ window.MIGRATION_DATA = {
         + (desc ? `<div class="desc">${desc}</div>` : "") + `</div>`;
     }).join("");
     const cav = (DATA.caveats || []).map(c => `<li>${esc(c)}</li>`).join("");
+    // Scannable summary matrix: what each number measures, when, and its limit.
+    const summaryRows = (DATA.method_summary || []).map(r =>
+      `<tr><th scope="row">${esc(r.topic)}</th><td>${esc(r.source)}</td>`
+      + `<td class="num">${esc(r.year)}</td><td>${esc(r.measure)}</td>`
+      + `<td>${esc(r.limit)}</td></tr>`).join("");
+    const summary = summaryRows
+      ? `<section class="method-section"><h3>At a glance</h3>`
+        + `<div class="method-table-scroll"><table class="method-table">`
+        + `<thead><tr><th scope="col">Topic</th><th scope="col">Source</th>`
+        + `<th scope="col" class="num">Year</th><th scope="col">Measure</th>`
+        + `<th scope="col">Main limitation</th></tr></thead>`
+        + `<tbody>${summaryRows}</tbody></table></div></section>`
+      : "";
     body.innerHTML =
-      `<section class="method-section"><h3>Definitions</h3>${defs}</section>`
+      summary
+      + `<section class="method-section"><h3>Definitions</h3>${defs}</section>`
       + `<section class="method-section"><h3>Sources</h3>${srcs}</section>`
       + `<section class="method-section"><h3>Scope &amp; caveats</h3><ul class="method-caveats">${cav}</ul></section>`;
   }
@@ -3950,9 +4059,31 @@ window.MIGRATION_DATA = {
     }
   }
 
+  // ---- Per-mode source/date + confidence badges ----------------------------
+  // Surfaces the vintage and reliability of the active lens at point of use, so
+  // a reader can see at a glance whether a figure is an official stock, an
+  // operational humanitarian count, a census count, a bank-transfer proxy, or a
+  // formal-registration flow that undercounts. Values come straight from DATA.
+  function updateModeBadges() {
+    const el = document.getElementById("modeBadges");
+    if (!el) return;
+    const m = DATA.modes[mode];
+    if (!m) { el.hidden = true; el.innerHTML = ""; return; }
+    const parts = [];
+    if (m.vintage)
+      parts.push(`<span class="mode-badge badge-source">`
+        + `${icon("route", 12)}<span>${esc(m.vintage)}</span></span>`);
+    if (m.confidence)
+      parts.push(`<span class="mode-badge badge-conf tone-${esc(m.confidence.tone || "official")}">`
+        + `${esc(m.confidence.label)}</span>`);
+    el.innerHTML = parts.join("");
+    el.hidden = parts.length === 0;
+  }
+
   // ---- Mode interpretation warning -----------------------------------------
-  // Only remittances carries one for now: the per-country split is a historical
-  // 2020 breakdown, distinct from the current (and accurate) headline totals.
+  // Remittances: the per-country split is a historical 2020 breakdown, distinct
+  // from the current headline totals. Refugees: the district map shows Temporary
+  // Protection holders, which is a narrower group than the national refugee count.
   function updateModeWarning() {
     const el = document.getElementById("modeWarning");
     if (!el) return;
@@ -3963,6 +4094,14 @@ window.MIGRATION_DATA = {
         + `not today's pattern: since the 2022 sanctions, transfers from Russia have collapsed and EU `
         + `sources now dominate. The headline totals on this view (10.5% of GDP, $1.92bn in 2024) are `
         + `current — only the country geography is historical.</div>`;
+      el.hidden = false;
+    } else if (mode === "immigration") {
+      el.innerHTML =
+        `<div><strong>Reading the refugee map.</strong> The district map shows <em>Temporary `
+        + `Protection holders</em> (≈92,405, UNHCR Apr 2026), not all Ukrainian refugees in the `
+        + `country. The headline count of 141,058 is the broader UNHCR <em>residing-refugee</em> `
+        + `figure — related to, but larger than, the TP total mapped by district. Both are separate `
+        + `again from the census foreign-born residents on the next tab.</div>`;
       el.hidden = false;
     } else {
       el.hidden = true;

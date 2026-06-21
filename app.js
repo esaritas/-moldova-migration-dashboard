@@ -1039,6 +1039,7 @@
     updateContextHighlight();
     renderPartWhole();
     renderCtxDefs(ctx);
+    updateModeBadges();
     updateModeWarning();
 
     // Panel-level source note (e.g. remittances: two different sources for map vs chart).
@@ -1431,8 +1432,22 @@
         + (desc ? `<div class="desc">${desc}</div>` : "") + `</div>`;
     }).join("");
     const cav = (DATA.caveats || []).map(c => `<li>${esc(c)}</li>`).join("");
+    // Scannable summary matrix: what each number measures, when, and its limit.
+    const summaryRows = (DATA.method_summary || []).map(r =>
+      `<tr><th scope="row">${esc(r.topic)}</th><td>${esc(r.source)}</td>`
+      + `<td class="num">${esc(r.year)}</td><td>${esc(r.measure)}</td>`
+      + `<td>${esc(r.limit)}</td></tr>`).join("");
+    const summary = summaryRows
+      ? `<section class="method-section"><h3>At a glance</h3>`
+        + `<div class="method-table-scroll"><table class="method-table">`
+        + `<thead><tr><th scope="col">Topic</th><th scope="col">Source</th>`
+        + `<th scope="col" class="num">Year</th><th scope="col">Measure</th>`
+        + `<th scope="col">Main limitation</th></tr></thead>`
+        + `<tbody>${summaryRows}</tbody></table></div></section>`
+      : "";
     body.innerHTML =
-      `<section class="method-section"><h3>Definitions</h3>${defs}</section>`
+      summary
+      + `<section class="method-section"><h3>Definitions</h3>${defs}</section>`
       + `<section class="method-section"><h3>Sources</h3>${srcs}</section>`
       + `<section class="method-section"><h3>Scope &amp; caveats</h3><ul class="method-caveats">${cav}</ul></section>`;
   }
@@ -1606,9 +1621,31 @@
     }
   }
 
+  // ---- Per-mode source/date + confidence badges ----------------------------
+  // Surfaces the vintage and reliability of the active lens at point of use, so
+  // a reader can see at a glance whether a figure is an official stock, an
+  // operational humanitarian count, a census count, a bank-transfer proxy, or a
+  // formal-registration flow that undercounts. Values come straight from DATA.
+  function updateModeBadges() {
+    const el = document.getElementById("modeBadges");
+    if (!el) return;
+    const m = DATA.modes[mode];
+    if (!m) { el.hidden = true; el.innerHTML = ""; return; }
+    const parts = [];
+    if (m.vintage)
+      parts.push(`<span class="mode-badge badge-source">`
+        + `${icon("route", 12)}<span>${esc(m.vintage)}</span></span>`);
+    if (m.confidence)
+      parts.push(`<span class="mode-badge badge-conf tone-${esc(m.confidence.tone || "official")}">`
+        + `${esc(m.confidence.label)}</span>`);
+    el.innerHTML = parts.join("");
+    el.hidden = parts.length === 0;
+  }
+
   // ---- Mode interpretation warning -----------------------------------------
-  // Only remittances carries one for now: the per-country split is a historical
-  // 2020 breakdown, distinct from the current (and accurate) headline totals.
+  // Remittances: the per-country split is a historical 2020 breakdown, distinct
+  // from the current headline totals. Refugees: the district map shows Temporary
+  // Protection holders, which is a narrower group than the national refugee count.
   function updateModeWarning() {
     const el = document.getElementById("modeWarning");
     if (!el) return;
@@ -1619,6 +1656,14 @@
         + `not today's pattern: since the 2022 sanctions, transfers from Russia have collapsed and EU `
         + `sources now dominate. The headline totals on this view (10.5% of GDP, $1.92bn in 2024) are `
         + `current — only the country geography is historical.</div>`;
+      el.hidden = false;
+    } else if (mode === "immigration") {
+      el.innerHTML =
+        `<div><strong>Reading the refugee map.</strong> The district map shows <em>Temporary `
+        + `Protection holders</em> (≈92,405, UNHCR Apr 2026), not all Ukrainian refugees in the `
+        + `country. The headline count of 141,058 is the broader UNHCR <em>residing-refugee</em> `
+        + `figure — related to, but larger than, the TP total mapped by district. Both are separate `
+        + `again from the census foreign-born residents on the next tab.</div>`;
       el.hidden = false;
     } else {
       el.hidden = true;
