@@ -719,6 +719,22 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
   .src-caption, .stat-src { font-size: 9.5px; }
   .method-body { padding: 16px 16px 20px; }
   .method-head { padding: 14px 16px; }
+
+  /* Chapter 3 interpretation aids: keep readable without crowding the map */
+  .takeaway-card { font-size: 14px; padding: 0.6rem 0.85rem; }
+  .mode-warning { font-size: 12px; padding: 10px 12px; }
+  .mode-badges { gap: 5px; }
+  .mode-badge { font-size: 10px; padding: 4px 8px; }
+  .howto-strip { font-size: 0.72rem; }
+  .proxy-card { padding: 13px 13px 14px; }
+  .proxy-head h4 { font-size: 12.5px; }
+  /* total + its "Shown X of Y" label crowd on one row — stack them on phones */
+  .total { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .total .big { font-size: 28px; }
+  .total .label { text-align: left; }
+  /* method summary table: let it scroll rather than squeeze */
+  .method-table { font-size: 11.5px; }
+  .method-table th, .method-table td { padding: 7px 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -773,6 +789,47 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 .tone-proxy     { color: #533a82; background: color-mix(in srgb, var(--c-money) 15%, transparent); }
 .tone-partial   { color: #4c545c; background: color-mix(in srgb, var(--c-flow) 18%, transparent); }
 .tone-historical { color: #5a5f5b; background: color-mix(in srgb, var(--ink-faint) 18%, transparent); }
+
+/* ---- Diaspora "zero-data" proxy card ----------------------------------- */
+/* Diagonal hatch background signals "estimated, not counted". */
+.proxy-card {
+  margin-top: 20px;
+  padding: 15px 16px 16px;
+  border: 1px dashed var(--c-diaspora);
+  border-radius: var(--radius);
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in srgb, var(--c-diaspora) 6%, transparent) 0 7px,
+      transparent 7px 14px);
+}
+.proxy-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.proxy-flag {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .06em;
+  text-transform: uppercase; color: #533a82;
+  background: color-mix(in srgb, var(--c-money) 15%, transparent);
+  padding: 4px 8px; border-radius: 999px; white-space: nowrap;
+}
+.proxy-head h4 { margin: 0; font-size: 13.5px; color: var(--ink); font-weight: 600; line-height: 1.35; }
+.proxy-note { margin: 0 0 12px; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+.proxy-rows { display: flex; flex-direction: column; gap: 8px; }
+.proxy-row {
+  display: grid; grid-template-columns: 1.1fr 1.7fr 1.5fr; gap: 12px; align-items: center;
+  padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+.proxy-co { font-weight: 600; font-size: 13.5px; color: var(--ink); }
+.proxy-est { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.proxy-num { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--c-diaspora); }
+.proxy-basis { font-size: 11px; color: var(--ink-faint); line-height: 1.35; }
+.proxy-conf { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; min-width: 0; }
+.proxy-conf-tag { font-family: var(--font-mono); font-size: 9.5px; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+.conf-medium { color: #8a5a00; background: color-mix(in srgb, #C99A2E 20%, transparent); }
+.conf-low, .conf-very-low { color: #4c545c; background: color-mix(in srgb, var(--c-flow) 16%, transparent); }
+.proxy-src { font-size: 9.5px; color: var(--ink-faint); font-family: var(--font-mono); line-height: 1.3; }
+@media (max-width: 560px) {
+  .proxy-row { grid-template-columns: 1fr; gap: 5px; }
+  .proxy-conf { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; }
+}
 
 /* ---- How to read this strip -------------------------------------------- */
 .howto-strip {
@@ -927,14 +984,14 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 /* ---- Mode interpretation warning ----------------------------------------- */
 .mode-warning {
   display: flex; gap: 10px; align-items: flex-start;
-  background: color-mix(in srgb, var(--c-money) 8%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--c-money) 32%, var(--line));
-  border-left: 4px solid var(--c-money);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  border-left: 4px solid var(--accent);
   border-radius: 8px; padding: 10px 14px; margin: 0 0 14px;
   font-size: 12.5px; line-height: 1.5; color: var(--ink);
 }
-.mode-warning::before { content: "⚠"; color: var(--c-money); font-size: 15px; line-height: 1.3; }
-.mode-warning strong { color: var(--c-money); }
+.mode-warning::before { content: "⚠"; color: var(--accent); font-size: 15px; line-height: 1.3; }
+.mode-warning strong { color: var(--accent); }
 
 /* ---- Responsive ---------------------------------------------------------- */
 @media (max-width: 880px) {

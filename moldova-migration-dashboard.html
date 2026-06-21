@@ -744,6 +744,22 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
   .src-caption, .stat-src { font-size: 9.5px; }
   .method-body { padding: 16px 16px 20px; }
   .method-head { padding: 14px 16px; }
+
+  /* Chapter 3 interpretation aids: keep readable without crowding the map */
+  .takeaway-card { font-size: 14px; padding: 0.6rem 0.85rem; }
+  .mode-warning { font-size: 12px; padding: 10px 12px; }
+  .mode-badges { gap: 5px; }
+  .mode-badge { font-size: 10px; padding: 4px 8px; }
+  .howto-strip { font-size: 0.72rem; }
+  .proxy-card { padding: 13px 13px 14px; }
+  .proxy-head h4 { font-size: 12.5px; }
+  /* total + its "Shown X of Y" label crowd on one row — stack them on phones */
+  .total { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .total .big { font-size: 28px; }
+  .total .label { text-align: left; }
+  /* method summary table: let it scroll rather than squeeze */
+  .method-table { font-size: 11.5px; }
+  .method-table th, .method-table td { padding: 7px 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -798,6 +814,47 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 .tone-proxy     { color: #533a82; background: color-mix(in srgb, var(--c-money) 15%, transparent); }
 .tone-partial   { color: #4c545c; background: color-mix(in srgb, var(--c-flow) 18%, transparent); }
 .tone-historical { color: #5a5f5b; background: color-mix(in srgb, var(--ink-faint) 18%, transparent); }
+
+/* ---- Diaspora "zero-data" proxy card ----------------------------------- */
+/* Diagonal hatch background signals "estimated, not counted". */
+.proxy-card {
+  margin-top: 20px;
+  padding: 15px 16px 16px;
+  border: 1px dashed var(--c-diaspora);
+  border-radius: var(--radius);
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in srgb, var(--c-diaspora) 6%, transparent) 0 7px,
+      transparent 7px 14px);
+}
+.proxy-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.proxy-flag {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .06em;
+  text-transform: uppercase; color: #533a82;
+  background: color-mix(in srgb, var(--c-money) 15%, transparent);
+  padding: 4px 8px; border-radius: 999px; white-space: nowrap;
+}
+.proxy-head h4 { margin: 0; font-size: 13.5px; color: var(--ink); font-weight: 600; line-height: 1.35; }
+.proxy-note { margin: 0 0 12px; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+.proxy-rows { display: flex; flex-direction: column; gap: 8px; }
+.proxy-row {
+  display: grid; grid-template-columns: 1.1fr 1.7fr 1.5fr; gap: 12px; align-items: center;
+  padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+.proxy-co { font-weight: 600; font-size: 13.5px; color: var(--ink); }
+.proxy-est { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.proxy-num { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--c-diaspora); }
+.proxy-basis { font-size: 11px; color: var(--ink-faint); line-height: 1.35; }
+.proxy-conf { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; min-width: 0; }
+.proxy-conf-tag { font-family: var(--font-mono); font-size: 9.5px; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+.conf-medium { color: #8a5a00; background: color-mix(in srgb, #C99A2E 20%, transparent); }
+.conf-low, .conf-very-low { color: #4c545c; background: color-mix(in srgb, var(--c-flow) 16%, transparent); }
+.proxy-src { font-size: 9.5px; color: var(--ink-faint); font-family: var(--font-mono); line-height: 1.3; }
+@media (max-width: 560px) {
+  .proxy-row { grid-template-columns: 1fr; gap: 5px; }
+  .proxy-conf { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; }
+}
 
 /* ---- How to read this strip -------------------------------------------- */
 .howto-strip {
@@ -952,14 +1009,14 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 /* ---- Mode interpretation warning ----------------------------------------- */
 .mode-warning {
   display: flex; gap: 10px; align-items: flex-start;
-  background: color-mix(in srgb, var(--c-money) 8%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--c-money) 32%, var(--line));
-  border-left: 4px solid var(--c-money);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  border-left: 4px solid var(--accent);
   border-radius: 8px; padding: 10px 14px; margin: 0 0 14px;
   font-size: 12.5px; line-height: 1.5; color: var(--ink);
 }
-.mode-warning::before { content: "⚠"; color: var(--c-money); font-size: 15px; line-height: 1.3; }
-.mode-warning strong { color: var(--c-money); }
+.mode-warning::before { content: "⚠"; color: var(--accent); font-size: 15px; line-height: 1.3; }
+.mode-warning strong { color: var(--accent); }
 
 /* ---- Responsive ---------------------------------------------------------- */
 @media (max-width: 880px) {
@@ -1383,6 +1440,10 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
              the page (built from DATA.glossary by app.js) so readers don't have to
              hover the cards or open the methodology modal. -->
         <div class="ctx-defs" id="ctxDefs" hidden></div>
+        <!-- Diaspora "zero-data" proxy: estimated Moldova-born in citizenship-
+             reporting countries (DE/UK/US), additional to UN DESA's total.
+             Built by app.js for the emigration view only. -->
+        <div class="proxy-card" id="diasporaProxy" hidden></div>
       </div>
     </section>
 
@@ -1835,10 +1896,50 @@ window.MIGRATION_DATA = {
              "thousand a year, and NOT comparable to UN DESA migrant stock or UNHCR refugee counts. " +
              "Excludes Transnistria.",
       note: "The authoritative Moldovan national source for registered migration."
+    },
+    // ---- Host-country proxy sources for citizenship-reporting destinations ----
+    // Germany, the US and the UK report residents by citizenship, so UN DESA's
+    // birthplace matrix omits Moldova-born there. These sources estimate that
+    // omitted population on a place-of-birth (or migration-background) basis.
+    us_acs: {
+      label: "American Community Survey — population by place of birth (Moldova)",
+      publisher: "U.S. Census Bureau",
+      url: "https://www.census.gov/programs-surveys/acs/",
+      indicator_code: "ACS · place of birth = Moldova",
+      accessed: "2026-06-21",
+      definition: "People living in the United States who were born in Moldova — a " +
+                  "place-of-birth basis, the same concept UN DESA uses elsewhere.",
+      scope: "ACS estimate ≈52,000 (2021), up from ≈43,600 (2015). Captures naturalised " +
+             "US citizens born in Moldova, whom UN DESA's bilateral matrix omits because " +
+             "the US reports by citizenship.",
+      note: "A survey estimate with a margin of error; treated here as a proxy, not an exact count."
+    },
+    destatis_micro: {
+      label: "Moldovan-origin population in Germany (country of birth / migration background)",
+      publisher: "Eurostat · German Federal Statistical Office (Destatis)",
+      url: "https://www.destatis.de/EN/Themes/Society-Environment/Population/Migration-Integration/_node.html",
+      indicator_code: "Eurostat migr_pop3ctb · Destatis Mikrozensus (Migrationshintergrund)",
+      accessed: "2026-06-21",
+      definition: "Moldova-born residents of Germany (Eurostat, country of birth) and the " +
+                  "broader Moldovan migration-background population (Destatis Mikrozensus).",
+      scope: "≈35,000 on a country-of-birth basis (Eurostat); the wider migration-background " +
+             "concept — which adds dual-nationals and descendants — runs far higher (≈120,000, " +
+             "2022). Germany reports to UN DESA by citizenship, so none of this is in the 864,257.",
+      note: "Two different concepts; shown as a range rather than a single value."
+    },
+    ons_cob: {
+      label: "Census 2021 — usual residents by country of birth (Moldova)",
+      publisher: "Office for National Statistics (UK)",
+      url: "https://www.ons.gov.uk/datasets/TS012/editions/2021",
+      indicator_code: "Census 2021 · TS012 country of birth",
+      accessed: "2026-06-21",
+      definition: "Usual residents of England & Wales born in Moldova.",
+      scope: "Badly undercounts the community: most Moldovans in the UK entered and are " +
+             "recorded as Romanian (EU) passport holders, so birthplace tables capture only a " +
+             "fraction. Earlier ONS country-of-birth estimates put Moldova-born near 3,400 (2015).",
+      note: "Listed to flag the gap; no reliable birthplace headcount exists, so only a floor is shown."
     }
   },
-
-  // Plain-language definitions for the terms used on cards and in the modal.
   // Single source of truth for definitions (cards link here in item 8).
   glossary: [
     { id: "emigrant_stock", term: "Emigrant (diaspora) stock",
@@ -2006,7 +2107,23 @@ window.MIGRATION_DATA = {
         { term: "EU alone (Eurostat)", value: "400k+", sub: "Moldova-born in EU27 (Eurostat migr_pop3ctb 2022) · Germany adds ~35k not in UN DESA", world: null, icon: "globe", source_id: "eurostat_migr", def_id: "diaspora_basis" },
         { term: "Share abroad", value: "≈26–32%", sub: "of all Moldovan-born people (basis-dependent)", world: null, icon: "globe", source_id: "undesa_2024", def_id: "diaspora_basis" },
         { term: "Resident population", value: "2.41M", sub: "−13.6% since 2014 (NBS 2024 Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" }
-      ]
+      ],
+      // Host-country proxy estimates for destinations UN DESA can't count by
+      // birthplace (they report by citizenship). These are ADDITIONAL to the
+      // 864,257 total, not part of it — rendered as a clearly-flagged estimate
+      // card so the "zero-data" gap is filled without corrupting the reconciliation.
+      diaspora_proxy: {
+        title: "Where UN DESA can't count: estimated Moldova-born in citizenship-reporting countries",
+        note: "Germany, the United States and the United Kingdom record residents by citizenship, " +
+              "not by place of birth, so UN DESA carries no Moldova-born figure for them and they " +
+              "are absent from the 864,257 total above. The host-country estimates below are " +
+              "additional to that total. Read them as confidence ranges, not exact counts.",
+        countries: [
+          { country: "United States", value: "≈ 52,000", basis: "Born in Moldova · US Census ACS 2021", confidence: "Medium", source_id: "us_acs" },
+          { country: "Germany", value: "≈ 35,000 – 122,000", basis: "Country of birth → migration background · 2022", confidence: "Low", source_id: "destatis_micro" },
+          { country: "United Kingdom", value: "≥ 3,400", basis: "Country of birth · ONS 2021 (severe undercount)", confidence: "Very low", source_id: "ons_cob" }
+        ]
+      }
     },
     immigration: {
       takeaway: "Since the early days of 2022, Moldova has taken in more than 141,000 Ukrainians fleeing the war, one of the highest shares anywhere in Europe at about one refugee for every 17 residents. Roughly two in five are children. The map shows where the people granted Temporary Protection have settled.",
@@ -3203,7 +3320,7 @@ window.MIGRATION_DATA = {
 
   function buildTimeline() {
     const ys = years();
-    if (year == null) year = 2024;          // default landing year
+    if (year == null) year = latestYearOf(mode);   // default to the mode's latest year
     stopsEl.innerHTML = "";
     ys.forEach(y => {
       const has = !!DATA.modes[mode].years[y];
@@ -3347,8 +3464,9 @@ window.MIGRATION_DATA = {
   function applyHashToState() {
     const h = parseHash();
     if (h.mode && DATA.modes[h.mode]) mode = h.mode;
-    const y = (h.year && /^\d+$/.test(h.year)) ? +h.year : 2024;
-    year = nearestDataYear(y);                 // guarantees a year with data
+    // An explicit year in the hash wins (snapped to a real data year); otherwise
+    // default to the mode's latest year, not a hardcoded one.
+    year = (h.year && /^\d+$/.test(h.year)) ? nearestDataYear(+h.year) : latestYearOf(mode);
     document.querySelectorAll(".mode-btn").forEach(b =>
       b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
   }
@@ -3363,9 +3481,9 @@ window.MIGRATION_DATA = {
       stopPlay();
       mode = btn.dataset.mode;
       document.querySelectorAll(".mode-btn").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
-      // If the current year is a gap for this mode, jump to its nearest real year
-      // so switching a filter never blanks the table.
-      year = nearestDataYear(year);
+      // Always land on the mode's most recent data year: when a newer figure
+      // exists (e.g. refugees in 2026), it makes no sense to show a stale one.
+      year = latestYearOf(mode);
       setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
       applyMapFraming(); updateHash();
     });
@@ -3477,6 +3595,7 @@ window.MIGRATION_DATA = {
     updateContextHighlight();
     renderPartWhole();
     renderCtxDefs(ctx);
+    renderDiasporaProxy(ctx);
     updateModeBadges();
     updateModeWarning();
 
@@ -3510,6 +3629,36 @@ window.MIGRATION_DATA = {
           `<dl class="ctx-def"><dt>${esc(d.term)}</dt><dd>${esc(d.definition)}</dd></dl>`
         ).join("")
       + `</div>`;
+    el.hidden = false;
+  }
+
+  // ---- Diaspora "zero-data" proxy card -------------------------------------
+  // Fills the gap left by UN DESA's birthplace matrix for countries that report
+  // by citizenship (Germany, US, UK), using host-country estimates. Clearly
+  // flagged as estimates ADDITIONAL to the counted total, so the table's
+  // reconciliation to 864,257 is never disturbed.
+  function renderDiasporaProxy(ctx) {
+    const el = document.getElementById("diasporaProxy");
+    if (!el) return;
+    const px = ctx && ctx.diaspora_proxy;
+    if (!px) { el.hidden = true; el.innerHTML = ""; return; }
+    const rows = (px.countries || []).map(c => {
+      const src = sourceById(c.source_id);
+      const cap = src ? sourceCaption(src) : "";
+      const confClass = "conf-" + String(c.confidence).toLowerCase().replace(/\s+/g, "-");
+      return `<div class="proxy-row">`
+        + `<div class="proxy-co">${esc(c.country)}</div>`
+        + `<div class="proxy-est"><span class="proxy-num">${esc(c.value)}</span>`
+        + `<span class="proxy-basis">${esc(c.basis)}</span></div>`
+        + `<div class="proxy-conf"><span class="proxy-conf-tag ${confClass}">${esc(c.confidence)} confidence</span>`
+        + (cap ? `<span class="proxy-src">${esc(cap)}</span>` : "")
+        + `</div></div>`;
+    }).join("");
+    el.innerHTML =
+      `<div class="proxy-head"><span class="proxy-flag">Estimated · not in the total above</span>`
+      + `<h4>${esc(px.title)}</h4></div>`
+      + `<p class="proxy-note">${esc(px.note)}</p>`
+      + `<div class="proxy-rows">${rows}</div>`;
     el.hidden = false;
   }
 

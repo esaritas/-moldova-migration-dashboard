@@ -765,7 +765,7 @@
 
   function buildTimeline() {
     const ys = years();
-    if (year == null) year = 2024;          // default landing year
+    if (year == null) year = latestYearOf(mode);   // default to the mode's latest year
     stopsEl.innerHTML = "";
     ys.forEach(y => {
       const has = !!DATA.modes[mode].years[y];
@@ -909,8 +909,9 @@
   function applyHashToState() {
     const h = parseHash();
     if (h.mode && DATA.modes[h.mode]) mode = h.mode;
-    const y = (h.year && /^\d+$/.test(h.year)) ? +h.year : 2024;
-    year = nearestDataYear(y);                 // guarantees a year with data
+    // An explicit year in the hash wins (snapped to a real data year); otherwise
+    // default to the mode's latest year, not a hardcoded one.
+    year = (h.year && /^\d+$/.test(h.year)) ? nearestDataYear(+h.year) : latestYearOf(mode);
     document.querySelectorAll(".mode-btn").forEach(b =>
       b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
   }
@@ -925,9 +926,9 @@
       stopPlay();
       mode = btn.dataset.mode;
       document.querySelectorAll(".mode-btn").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
-      // If the current year is a gap for this mode, jump to its nearest real year
-      // so switching a filter never blanks the table.
-      year = nearestDataYear(year);
+      // Always land on the mode's most recent data year: when a newer figure
+      // exists (e.g. refugees in 2026), it makes no sense to show a stale one.
+      year = latestYearOf(mode);
       setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
       applyMapFraming(); updateHash();
     });
@@ -1039,6 +1040,7 @@
     updateContextHighlight();
     renderPartWhole();
     renderCtxDefs(ctx);
+    renderDiasporaProxy(ctx);
     updateModeBadges();
     updateModeWarning();
 
@@ -1072,6 +1074,36 @@
           `<dl class="ctx-def"><dt>${esc(d.term)}</dt><dd>${esc(d.definition)}</dd></dl>`
         ).join("")
       + `</div>`;
+    el.hidden = false;
+  }
+
+  // ---- Diaspora "zero-data" proxy card -------------------------------------
+  // Fills the gap left by UN DESA's birthplace matrix for countries that report
+  // by citizenship (Germany, US, UK), using host-country estimates. Clearly
+  // flagged as estimates ADDITIONAL to the counted total, so the table's
+  // reconciliation to 864,257 is never disturbed.
+  function renderDiasporaProxy(ctx) {
+    const el = document.getElementById("diasporaProxy");
+    if (!el) return;
+    const px = ctx && ctx.diaspora_proxy;
+    if (!px) { el.hidden = true; el.innerHTML = ""; return; }
+    const rows = (px.countries || []).map(c => {
+      const src = sourceById(c.source_id);
+      const cap = src ? sourceCaption(src) : "";
+      const confClass = "conf-" + String(c.confidence).toLowerCase().replace(/\s+/g, "-");
+      return `<div class="proxy-row">`
+        + `<div class="proxy-co">${esc(c.country)}</div>`
+        + `<div class="proxy-est"><span class="proxy-num">${esc(c.value)}</span>`
+        + `<span class="proxy-basis">${esc(c.basis)}</span></div>`
+        + `<div class="proxy-conf"><span class="proxy-conf-tag ${confClass}">${esc(c.confidence)} confidence</span>`
+        + (cap ? `<span class="proxy-src">${esc(cap)}</span>` : "")
+        + `</div></div>`;
+    }).join("");
+    el.innerHTML =
+      `<div class="proxy-head"><span class="proxy-flag">Estimated · not in the total above</span>`
+      + `<h4>${esc(px.title)}</h4></div>`
+      + `<p class="proxy-note">${esc(px.note)}</p>`
+      + `<div class="proxy-rows">${rows}</div>`;
     el.hidden = false;
   }
 
