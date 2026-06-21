@@ -358,10 +358,50 @@ window.MIGRATION_DATA = {
              "thousand a year, and NOT comparable to UN DESA migrant stock or UNHCR refugee counts. " +
              "Excludes Transnistria.",
       note: "The authoritative Moldovan national source for registered migration."
+    },
+    // ---- Host-country proxy sources for citizenship-reporting destinations ----
+    // Germany, the US and the UK report residents by citizenship, so UN DESA's
+    // birthplace matrix omits Moldova-born there. These sources estimate that
+    // omitted population on a place-of-birth (or migration-background) basis.
+    us_acs: {
+      label: "American Community Survey — population by place of birth (Moldova)",
+      publisher: "U.S. Census Bureau",
+      url: "https://www.census.gov/programs-surveys/acs/",
+      indicator_code: "ACS · place of birth = Moldova",
+      accessed: "2026-06-21",
+      definition: "People living in the United States who were born in Moldova — a " +
+                  "place-of-birth basis, the same concept UN DESA uses elsewhere.",
+      scope: "ACS estimate ≈52,000 (2021), up from ≈43,600 (2015). Captures naturalised " +
+             "US citizens born in Moldova, whom UN DESA's bilateral matrix omits because " +
+             "the US reports by citizenship.",
+      note: "A survey estimate with a margin of error; treated here as a proxy, not an exact count."
+    },
+    destatis_micro: {
+      label: "Moldovan-origin population in Germany (country of birth / migration background)",
+      publisher: "Eurostat · German Federal Statistical Office (Destatis)",
+      url: "https://www.destatis.de/EN/Themes/Society-Environment/Population/Migration-Integration/_node.html",
+      indicator_code: "Eurostat migr_pop3ctb · Destatis Mikrozensus (Migrationshintergrund)",
+      accessed: "2026-06-21",
+      definition: "Moldova-born residents of Germany (Eurostat, country of birth) and the " +
+                  "broader Moldovan migration-background population (Destatis Mikrozensus).",
+      scope: "≈35,000 on a country-of-birth basis (Eurostat); the wider migration-background " +
+             "concept — which adds dual-nationals and descendants — runs far higher (≈120,000, " +
+             "2022). Germany reports to UN DESA by citizenship, so none of this is in the 864,257.",
+      note: "Two different concepts; shown as a range rather than a single value."
+    },
+    ons_cob: {
+      label: "Census 2021 — usual residents by country of birth (Moldova)",
+      publisher: "Office for National Statistics (UK)",
+      url: "https://www.ons.gov.uk/datasets/TS012/editions/2021",
+      indicator_code: "Census 2021 · TS012 country of birth",
+      accessed: "2026-06-21",
+      definition: "Usual residents of England & Wales born in Moldova.",
+      scope: "Badly undercounts the community: most Moldovans in the UK entered and are " +
+             "recorded as Romanian (EU) passport holders, so birthplace tables capture only a " +
+             "fraction. Earlier ONS country-of-birth estimates put Moldova-born near 3,400 (2015).",
+      note: "Listed to flag the gap; no reliable birthplace headcount exists, so only a floor is shown."
     }
   },
-
-  // Plain-language definitions for the terms used on cards and in the modal.
   // Single source of truth for definitions (cards link here in item 8).
   glossary: [
     { id: "emigrant_stock", term: "Emigrant (diaspora) stock",
@@ -529,7 +569,23 @@ window.MIGRATION_DATA = {
         { term: "EU alone (Eurostat)", value: "400k+", sub: "Moldova-born in EU27 (Eurostat migr_pop3ctb 2022) · Germany adds ~35k not in UN DESA", world: null, icon: "globe", source_id: "eurostat_migr", def_id: "diaspora_basis" },
         { term: "Share abroad", value: "≈26–32%", sub: "of all Moldovan-born people (basis-dependent)", world: null, icon: "globe", source_id: "undesa_2024", def_id: "diaspora_basis" },
         { term: "Resident population", value: "2.41M", sub: "−13.6% since 2014 (NBS 2024 Census)", world: null, icon: "landmark", source_id: "nbs_census_2024", def_id: "depopulation" }
-      ]
+      ],
+      // Host-country proxy estimates for destinations UN DESA can't count by
+      // birthplace (they report by citizenship). These are ADDITIONAL to the
+      // 864,257 total, not part of it — rendered as a clearly-flagged estimate
+      // card so the "zero-data" gap is filled without corrupting the reconciliation.
+      diaspora_proxy: {
+        title: "Where UN DESA can't count: estimated Moldova-born in citizenship-reporting countries",
+        note: "Germany, the United States and the United Kingdom record residents by citizenship, " +
+              "not by place of birth, so UN DESA carries no Moldova-born figure for them and they " +
+              "are absent from the 864,257 total above. The host-country estimates below are " +
+              "additional to that total. Read them as confidence ranges, not exact counts.",
+        countries: [
+          { country: "United States", value: "≈ 52,000", basis: "Born in Moldova · US Census ACS 2021", confidence: "Medium", source_id: "us_acs" },
+          { country: "Germany", value: "≈ 35,000 – 122,000", basis: "Country of birth → migration background · 2022", confidence: "Low", source_id: "destatis_micro" },
+          { country: "United Kingdom", value: "≥ 3,400", basis: "Country of birth · ONS 2021 (severe undercount)", confidence: "Very low", source_id: "ons_cob" }
+        ]
+      }
     },
     immigration: {
       takeaway: "Since the early days of 2022, Moldova has taken in more than 141,000 Ukrainians fleeing the war, one of the highest shares anywhere in Europe at about one refugee for every 17 residents. Roughly two in five are children. The map shows where the people granted Temporary Protection have settled.",
