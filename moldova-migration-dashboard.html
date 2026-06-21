@@ -1064,12 +1064,17 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .labour-limits strong { color: var(--ink); }
 .labour-limits em { font-style: normal; font-weight: 600; color: var(--ink); }
 
-/* labour destination mini-bars (built by app.js) */
-.ldest-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
-.ldest-name { flex: 0 0 78px; font-size: 12px; color: var(--ink-soft); text-align: right; }
-.ldest-track { flex: 1; background: color-mix(in srgb, var(--c-diaspora) 12%, var(--surface)); border: 1px solid var(--line); border-radius: 5px; height: 22px; overflow: hidden; }
-.ldest-fill { height: 100%; background: var(--c-diaspora); border-radius: 5px 0 0 5px; transition: width .5s ease; }
-.ldest-val { flex: 0 0 64px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); }
+/* labour destination bar chart (SVG, built by app.js) */
+.lbar-svg { width: 100%; height: auto; display: block; }
+.lbar-grid { stroke: var(--line); stroke-width: 1; }
+.lbar-tick { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-faint); }
+.lbar-axislabel { font-family: var(--font-mono); font-size: 8px; letter-spacing: .08em; text-transform: uppercase; fill: var(--ink-faint); }
+.lbar-name { font-family: var(--font-body); font-size: 11px; fill: var(--ink-soft); }
+.lbar-track { fill: color-mix(in srgb, var(--c-diaspora) 8%, var(--surface)); }
+.lbar-bar { fill: var(--c-diaspora); }
+.lbar-val { font-family: var(--font-mono); font-size: 10px; fill: var(--ink); }
+.lbar-pct { fill: var(--ink-faint); }
+#labourSrc { margin-top: 8px; }
 
 @media (max-width: 720px) {
   .labour-grid { grid-template-columns: 1fr; gap: 18px; }
@@ -1473,8 +1478,9 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
         <div class="labour-grid">
           <div class="labour-col">
             <h3>Main destinations &middot; 2024</h3>
-            <div id="labourDest"><!-- bars built from UN DESA 2024 by app.js --></div>
-            <p class="labour-note">Moldova-born stock, UN DESA 2024. Germany, the US and the UK report by citizenship, not birthplace, so they carry no Moldova-born cell here and are omitted.</p>
+            <div id="labourDest"><!-- bar chart built from UN DESA 2024 by app.js --></div>
+            <p class="labour-note">Bars show Moldova-born residents by destination; the percentage is each country's share of the 864,257 diaspora total. Germany, the US and the UK report residents by citizenship rather than birthplace, so they carry no Moldova-born cell here &mdash; their estimated numbers appear in the proxy panel on the <a href="#mode=emigration&amp;year=2024" class="jit-link">Leaving Moldova</a> view.</p>
+            <div class="src-caption" id="labourSrc"></div>
           </div>
           <div class="labour-col">
             <h3>Trends, return &amp; brain circulation</h3>
@@ -4158,22 +4164,62 @@ window.MIGRATION_DATA = {
       + `</div>`).join("");
   }
 
-  // ---- Labour migration: data-driven destination bars ----------------------
-  // Reads the 2024 UN DESA diaspora breakdown (excluding the "Other" residual)
-  // so the destinations panel never drifts from the emigration map/table.
+  // ---- Labour migration: data-driven destination bar chart -----------------
+  // An SVG horizontal bar chart with a real value axis + gridlines, so the bars
+  // convey scale (not just numbers). Reads the 2024 UN DESA diaspora breakdown
+  // (excluding the "Other" residual) so it never drifts from the emigration map.
   function renderLabourDest() {
     const host = document.getElementById("labourDest");
     if (!host) return;
-    const rows = (DATA.modes.emigration.years[2024] || [])
-      .filter(r => !r.residual)
-      .slice().sort((a, b) => b.value - a.value).slice(0, 8);
+    const all = (DATA.modes.emigration.years[2024] || []).filter(r => !r.residual);
+    const rows = all.slice().sort((a, b) => b.value - a.value).slice(0, 8);
+    if (!rows.length) return;
     const max = d3.max(rows, r => r.value) || 1;
-    host.innerHTML = rows.map(r =>
-      `<div class="ldest-row">`
-      + `<span class="ldest-name">${esc(r.country)}</span>`
-      + `<span class="ldest-track"><span class="ldest-fill" style="width:${(r.value / max * 100).toFixed(1)}%"></span></span>`
-      + `<span class="ldest-val">${d3.format(",")(r.value)}</span>`
-      + `</div>`).join("");
+    const kt = DATA.modes.emigration.known_totals && DATA.modes.emigration.known_totals[2024];
+    const total = (kt && kt.value) || d3.sum(all, r => r.value);
+
+    const W = 400, mL = 66, mR = 80, mT = 24, rowH = 30, barH = 15;
+    const H = mT + rows.length * rowH + 6;
+    const x = d3.scaleLinear().domain([0, max]).nice().range([mL, W - mR]);
+
+    const svg = d3.select(host).html("").append("svg")
+      .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "lbar-svg")
+      .attr("role", "img")
+      .attr("aria-label", "Main Moldova-born diaspora destinations in 2024 (UN DESA), people");
+
+    // Axis caption + gridlines with value ticks → this is the "scale".
+    svg.append("text").attr("x", mL).attr("y", 9).attr("class", "lbar-axislabel")
+      .text("Moldova-born residents");
+    x.ticks(4).forEach(t => {
+      svg.append("line").attr("class", "lbar-grid")
+        .attr("x1", x(t)).attr("x2", x(t)).attr("y1", mT - 4).attr("y2", H - 6);
+      svg.append("text").attr("class", "lbar-tick").attr("text-anchor", "middle")
+        .attr("x", x(t)).attr("y", mT - 9).text(fmtShort(t));
+    });
+
+    rows.forEach((r, i) => {
+      const cy = mT + i * rowH + rowH / 2;
+      svg.append("text").attr("class", "lbar-name").attr("text-anchor", "end")
+        .attr("x", mL - 8).attr("y", cy + 3.5).text(r.country);
+      // faint full-extent track shows how each bar sits against the max
+      svg.append("rect").attr("class", "lbar-track")
+        .attr("x", mL).attr("y", cy - barH / 2).attr("width", x.range()[1] - mL).attr("height", barH).attr("rx", 3);
+      svg.append("rect").attr("class", "lbar-bar")
+        .attr("x", mL).attr("y", cy - barH / 2).attr("width", Math.max(1, x(r.value) - mL)).attr("height", barH).attr("rx", 3);
+      const pct = total ? Math.round(r.value / total * 100) : null;
+      const val = svg.append("text").attr("class", "lbar-val")
+        .attr("x", x(r.value) + 5).attr("y", cy + 3.5);
+      val.append("tspan").text(d3.format(",")(r.value));
+      if (pct != null) val.append("tspan").attr("class", "lbar-pct").attr("dx", 4).text(pct + "%");
+    });
+
+    // Source caption, consistent with the rest of the dashboard's charts.
+    const srcEl = document.getElementById("labourSrc");
+    if (srcEl) {
+      const o = { source_id: "undesa_2024" };
+      srcEl.textContent = "Source: " + captionsFor(o);
+      srcEl.title = citationsFor(o);
+    }
   }
 
   // ---- Audience pathways + Simple/Advanced view ----------------------------

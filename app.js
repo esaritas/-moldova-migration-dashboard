@@ -1597,22 +1597,62 @@
       + `</div>`).join("");
   }
 
-  // ---- Labour migration: data-driven destination bars ----------------------
-  // Reads the 2024 UN DESA diaspora breakdown (excluding the "Other" residual)
-  // so the destinations panel never drifts from the emigration map/table.
+  // ---- Labour migration: data-driven destination bar chart -----------------
+  // An SVG horizontal bar chart with a real value axis + gridlines, so the bars
+  // convey scale (not just numbers). Reads the 2024 UN DESA diaspora breakdown
+  // (excluding the "Other" residual) so it never drifts from the emigration map.
   function renderLabourDest() {
     const host = document.getElementById("labourDest");
     if (!host) return;
-    const rows = (DATA.modes.emigration.years[2024] || [])
-      .filter(r => !r.residual)
-      .slice().sort((a, b) => b.value - a.value).slice(0, 8);
+    const all = (DATA.modes.emigration.years[2024] || []).filter(r => !r.residual);
+    const rows = all.slice().sort((a, b) => b.value - a.value).slice(0, 8);
+    if (!rows.length) return;
     const max = d3.max(rows, r => r.value) || 1;
-    host.innerHTML = rows.map(r =>
-      `<div class="ldest-row">`
-      + `<span class="ldest-name">${esc(r.country)}</span>`
-      + `<span class="ldest-track"><span class="ldest-fill" style="width:${(r.value / max * 100).toFixed(1)}%"></span></span>`
-      + `<span class="ldest-val">${d3.format(",")(r.value)}</span>`
-      + `</div>`).join("");
+    const kt = DATA.modes.emigration.known_totals && DATA.modes.emigration.known_totals[2024];
+    const total = (kt && kt.value) || d3.sum(all, r => r.value);
+
+    const W = 400, mL = 66, mR = 80, mT = 24, rowH = 30, barH = 15;
+    const H = mT + rows.length * rowH + 6;
+    const x = d3.scaleLinear().domain([0, max]).nice().range([mL, W - mR]);
+
+    const svg = d3.select(host).html("").append("svg")
+      .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "lbar-svg")
+      .attr("role", "img")
+      .attr("aria-label", "Main Moldova-born diaspora destinations in 2024 (UN DESA), people");
+
+    // Axis caption + gridlines with value ticks → this is the "scale".
+    svg.append("text").attr("x", mL).attr("y", 9).attr("class", "lbar-axislabel")
+      .text("Moldova-born residents");
+    x.ticks(4).forEach(t => {
+      svg.append("line").attr("class", "lbar-grid")
+        .attr("x1", x(t)).attr("x2", x(t)).attr("y1", mT - 4).attr("y2", H - 6);
+      svg.append("text").attr("class", "lbar-tick").attr("text-anchor", "middle")
+        .attr("x", x(t)).attr("y", mT - 9).text(fmtShort(t));
+    });
+
+    rows.forEach((r, i) => {
+      const cy = mT + i * rowH + rowH / 2;
+      svg.append("text").attr("class", "lbar-name").attr("text-anchor", "end")
+        .attr("x", mL - 8).attr("y", cy + 3.5).text(r.country);
+      // faint full-extent track shows how each bar sits against the max
+      svg.append("rect").attr("class", "lbar-track")
+        .attr("x", mL).attr("y", cy - barH / 2).attr("width", x.range()[1] - mL).attr("height", barH).attr("rx", 3);
+      svg.append("rect").attr("class", "lbar-bar")
+        .attr("x", mL).attr("y", cy - barH / 2).attr("width", Math.max(1, x(r.value) - mL)).attr("height", barH).attr("rx", 3);
+      const pct = total ? Math.round(r.value / total * 100) : null;
+      const val = svg.append("text").attr("class", "lbar-val")
+        .attr("x", x(r.value) + 5).attr("y", cy + 3.5);
+      val.append("tspan").text(d3.format(",")(r.value));
+      if (pct != null) val.append("tspan").attr("class", "lbar-pct").attr("dx", 4).text(pct + "%");
+    });
+
+    // Source caption, consistent with the rest of the dashboard's charts.
+    const srcEl = document.getElementById("labourSrc");
+    if (srcEl) {
+      const o = { source_id: "undesa_2024" };
+      srcEl.textContent = "Source: " + captionsFor(o);
+      srcEl.title = citationsFor(o);
+    }
   }
 
   // ---- Audience pathways + Simple/Advanced view ----------------------------
