@@ -460,9 +460,16 @@
     src.districts.forEach(d => byName.set(d.match, d));
     const vals = src.districts.map(d => d[vk]).filter(v => v != null);
     const maxV = d3.max(vals) || 1, minV = d3.min(vals) || 0;
-    // Quantile (even-count bins): values are heavily skewed by Chișinău, so a
-    // linear scale would flatten every other district into one class.
-    const color = d3.scaleQuantile().domain(vals).range(cfg.scale());
+    // Magnitude-based continuous scale (NOT quantile): the old even-count bins
+    // lumped Chișinău in with much smaller districts, so the largest value never
+    // looked distinct. Here colour tracks the actual value, sqrt-spaced so the
+    // long tail of small raions still spreads out while the maximum (Chișinău)
+    // is uniquely the darkest. domain_i = (i/n)² · max inverts the sqrt so each
+    // ramp stop sits at the right value.
+    const ramp = cfg.scale();
+    const dom = ramp.map((_, i) => Math.pow(i / (ramp.length - 1), 2) * maxV);
+    const color = d3.scaleLinear().domain(dom).range(ramp)
+      .interpolate(d3.interpolateRgb).clamp(true);
     const total = src.meta.nationalTotal || d3.sum(vals);
     return (_choroCache[cfg.dataKey] = { src, cfg, byName, minV, maxV, color, total });
   }
@@ -531,30 +538,44 @@
     tip.hidden = false;
   }
 
-  // Colour legend: 5 even-count (quantile) classes low→high + a grey "no data" swatch.
+  // Colour legend: a continuous gradient bar (dark/high → light/low) with value
+  // ticks, plus a grey "no data" swatch. Matches the magnitude scale above, so
+  // the darkest shade clearly belongs to the single highest district.
   function renderChoroLegend(model) {
-    const { cfg, color, minV, maxV } = model;
-    const scale = cfg.scale();
+    const { cfg, minV, maxV } = model;
+    const ramp = cfg.scale();
     const g = gChoroLegend;
     g.selectAll("*").remove();
     g.attr("transform", "translate(18, 30)");
-    const sw = 17, gap = 4;
+    const barW = 14, barH = 92;
+
+    // Vertical gradient: darkest (high) at top, lightest (low) at the bottom.
+    const gradId = "choroGrad-" + cfg.valueKey;
+    let defs = svg.select("defs");
+    if (defs.empty()) defs = svg.append("defs");
+    defs.select("#" + gradId).remove();
+    const lg = defs.append("linearGradient").attr("id", gradId)
+      .attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 1);
+    const rev = ramp.slice().reverse();
+    rev.forEach((c, i) => lg.append("stop")
+      .attr("offset", (i / (rev.length - 1)) * 100 + "%").attr("stop-color", c));
+
     g.append("text").attr("class", "legend-title").attr("x", 0).attr("y", -8).text(cfg.legendTitle);
-    // scaleQuantile exposes quantiles(); scaleQuantize would expose thresholds().
-    const brk = color.quantiles ? color.quantiles() : (color.thresholds ? color.thresholds() : []);
-    scale.forEach((c, i) => {
-      const lo = i === 0 ? minV : brk[i - 1];
-      const hi = i === scale.length - 1 ? maxV : brk[i];
-      const y = i * (sw + gap);
-      g.append("rect").attr("x", 0).attr("y", y).attr("width", sw).attr("height", sw)
-        .attr("rx", 3).attr("fill", c);
-      g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", y + sw - 4)
-        .text(`${fmtShort(Math.round(lo))}–${fmtShort(Math.round(hi))}`);
-    });
-    const yNd = scale.length * (sw + gap) + 6;
-    g.append("rect").attr("x", 0).attr("y", yNd).attr("width", sw).attr("height", sw)
+    g.append("rect").attr("x", 0).attr("y", 0).attr("width", barW).attr("height", barH)
+      .attr("rx", 3).attr("fill", `url(#${gradId})`).attr("stroke", "#fff").attr("stroke-width", 0.5);
+
+    // Ticks. The bar is linear in position but the scale is sqrt, so the bar's
+    // midpoint corresponds to ¼·max — labelled so the compression is legible.
+    const tick = (yFrac, val) => g.append("text").attr("class", "legend-label")
+      .attr("x", barW + 8).attr("y", yFrac * barH + 3.5).text(fmtShort(Math.round(val)));
+    tick(0.06, maxV);
+    tick(0.5, maxV * 0.25);
+    tick(0.97, minV);
+
+    const yNd = barH + 12;
+    g.append("rect").attr("x", 0).attr("y", yNd).attr("width", 14).attr("height", 14)
       .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#d8d8d2").attr("stroke-width", 1);
-    g.append("text").attr("class", "legend-label").attr("x", sw + 8).attr("y", yNd + sw - 4).text("no data");
+    g.append("text").attr("class", "legend-label").attr("x", 14 + 8).attr("y", yNd + 11).text("no data");
   }
 
   // Graduated-circle size legend (fixed corner, like the Migration Data Portal).
