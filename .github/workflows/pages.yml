@@ -12,8 +12,7 @@ name: Deploy dashboard to GitHub Pages
 on:
   push:
     branches:
-      - claude/eager-feynman-92z2ef   # current working branch (the live dashboard)
-      - main                          # keeps publishing after a future merge
+      - main   # the github-pages environment only deploys from the default branch
   workflow_dispatch:                  # lets you re-run it by hand from the Actions tab
 
 permissions:

@@ -458,6 +458,30 @@ window.MIGRATION_DATA = {
       "1,462 in 2015 (NBS POP07300)."
   ],
 
+  // Scannable methodology matrix — one row per phenomenon, rendered as a table at
+  // the top of the methodology dialog so readers can compare what each number
+  // measures, when, and where it falls short, without reading the full prose.
+  method_summary: [
+    { topic: "Diaspora abroad", source: "UN DESA", year: "2024",
+      measure: "Country-of-birth migrant stock",
+      limit: "Omits citizenship-reporting countries (DE/US/UK); misses naturalised Moldovans." },
+    { topic: "Refugees hosted", source: "UNHCR", year: "2026",
+      measure: "Operational refugee count (residing + TP)",
+      limit: "Humanitarian count; district map is TP holders only, not all refugees." },
+    { topic: "Foreign-born residents", source: "NBS Census", year: "2024",
+      measure: "Usual-resident count by country of birth",
+      limit: "Different concept from the UNHCR refugee count; smaller origins estimated." },
+    { topic: "Remittances", source: "NBM / World Bank", year: "2020 / 2024",
+      measure: "Bank transfers (by country) / BPM6 total & %GDP",
+      limit: "Different definitions and years; by-country geography is historical (2020)." },
+    { topic: "Registered flows", source: "NBS", year: "2024",
+      measure: "Formal annual emigrant/immigrant registrations",
+      limit: "Undercounts real movement; most emigrants never formally deregister." },
+    { topic: "Resident population", source: "NBS Census", year: "2024",
+      measure: "Usually-resident population by district",
+      limit: "Excludes Transnistria & Bender; not comparable to de-jure register." }
+  ],
+
   // Economic context shown in the analysis panel below the map. Professional
   // migration-economics framing with world-average benchmarks.
   context: {
@@ -632,6 +656,10 @@ window.MIGRATION_DATA = {
       direction: "out",
       source_id: "undesa_2024",
       vintage: "UN DESA 2024",
+      // Visible confidence badge (see updateModeBadges in app.js). Tone keys map
+      // to colours in styles.css: official | operational | census | estimated |
+      // proxy | partial | historical.
+      confidence: { label: "Official stock", tone: "official" },
       known_totals: { 2024: { value: 864257, label: "UN DESA 2024 emigrants, by origin" } },
       years: {
         // OFFICIAL — UN DESA 2024, Moldovan-born by country of destination.
@@ -678,6 +706,7 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "in",
       vintage: "UNHCR May-2026",
+      confidence: { label: "Operational count", tone: "operational" },
       source_ids: ["unhcr"],
       years: {
         // Ukrainian refugees only — UNHCR Moldova situation reports.
@@ -696,6 +725,9 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "in",
       vintage: "NBS Census 2024",
+      // Ukraine & Russia are confirmed census values; smaller origins are
+      // proportional estimates — flagged as "partly estimated".
+      confidence: { label: "Census · partly estimated", tone: "estimated" },
       source_ids: ["nbs_census_migration", "undesa_2024"],
       known_totals: { 2024: { value: 106700, label: "NBS 2024 Census total foreign-born" } },
       years: {
@@ -731,6 +763,9 @@ window.MIGRATION_DATA = {
       direction: "in",
       source_id: "nbm_transfers",
       vintage: "NBM 2020 by-country",
+      // Per-country split is a bank-transfer proxy and the geography is historical
+      // (2020); the headline %GDP / total figures are current (World Bank 2024).
+      confidence: { label: "Bank-transfer proxy · 2020 geography", tone: "proxy" },
       known_totals: { 2020: { value: 1486.74, label: "NBM 2020 total" } },
       years: {
         // OFFICIAL — NBM 2017 annual release (net settlements, USD m, rounded)
@@ -793,6 +828,7 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "out",
       vintage: "NBS registered flow",
+      confidence: { label: "Formal registrations · undercount", tone: "partial" },
       source_id: "nbs_migration",
       // As with immigrants, the table shows only the main destinations; they
       // sum to less than the cited all-destinations total, so reconcile with a
@@ -849,6 +885,7 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "in",
       vintage: "NBS registered flow",
+      confidence: { label: "Formal registrations · undercount", tone: "partial" },
       source_id: "nbs_migration",
       // The table lists only the main origin countries. They sum to far less
       // than the national total (the by-reason split alone — work 3,002 +
@@ -910,6 +947,7 @@ window.MIGRATION_DATA = {
       unit: "people",
       direction: "in",
       vintage: "NBS 2024 Census",
+      confidence: { label: "Census", tone: "census" },
       source_id: "nbs_census_2024",
       known_totals: { 2024: { value: 2409207, label: "NBS 2024 Census resident total" } },
       years: {

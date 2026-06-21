@@ -664,6 +664,25 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 .method-caveats { margin: 0; padding-left: 18px; }
 .method-caveats li { font-size: 13px; line-height: 1.55; color: var(--ink-soft); margin-bottom: 8px; }
 
+/* ---- Methodology summary matrix ---------------------------------------- */
+.method-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.method-table {
+  width: 100%; border-collapse: collapse; font-size: 12.5px; line-height: 1.45;
+}
+.method-table th, .method-table td {
+  text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.method-table thead th {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--ink-faint); font-weight: 500;
+  border-bottom: 1px solid var(--ink-faint);
+}
+.method-table tbody th { font-weight: 600; color: var(--ink); white-space: nowrap; }
+.method-table td { color: var(--ink-soft); }
+.method-table .num { font-family: var(--font-mono); white-space: nowrap; }
+.method-table tbody tr:last-child th, .method-table tbody tr:last-child td { border-bottom: 0; }
+
 /* ---- Responsive ----------------------------------------------------------- */
 @media (max-width: 880px) {
   .panel { grid-template-columns: 1fr; }
@@ -721,6 +740,39 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
   line-height: 1.5;
   transition: border-left-color 0.25s ease;
 }
+
+/* ---- Per-mode source/date + confidence badges -------------------------- */
+.mode-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0.55rem;
+}
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.mode-badge svg { opacity: 0.7; }
+.badge-source { color: var(--ink-soft); background: var(--surface); }
+/* Confidence tones: tinted from the phenomenon palette + status hues. */
+.badge-conf { font-weight: 500; border-color: transparent; }
+.tone-official  { color: #1f5e8c; background: color-mix(in srgb, var(--c-diaspora) 13%, transparent); }
+.tone-census    { color: #1f6e54; background: color-mix(in srgb, var(--c-pop) 14%, transparent); }
+.tone-operational { color: #9a5a12; background: color-mix(in srgb, var(--c-refugee) 16%, transparent); }
+.tone-estimated { color: #8a5a00; background: color-mix(in srgb, #C99A2E 22%, transparent); }
+.tone-proxy     { color: #533a82; background: color-mix(in srgb, var(--c-money) 15%, transparent); }
+.tone-partial   { color: #4c545c; background: color-mix(in srgb, var(--c-flow) 18%, transparent); }
+.tone-historical { color: #5a5f5b; background: color-mix(in srgb, var(--ink-faint) 18%, transparent); }
 
 /* ---- How to read this strip -------------------------------------------- */
 .howto-strip {
