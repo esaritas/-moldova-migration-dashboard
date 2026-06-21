@@ -4103,6 +4103,15 @@ window.MIGRATION_DATA = {
         + `figure — related to, but larger than, the TP total mapped by district. Both are separate `
         + `again from the census foreign-born residents on the next tab.</div>`;
       el.hidden = false;
+    } else if (mode === "emigration") {
+      el.innerHTML =
+        `<div><strong>Why some big destinations are missing.</strong> UN DESA counts the diaspora `
+        + `by <em>country of birth</em>, so destinations that report by citizenship instead — `
+        + `Germany, the United States and the United Kingdom — carry no Moldova-born cell and are `
+        + `absent here, not zero. Eurostat puts Moldova-born residents in Germany alone at roughly `
+        + `35,000. Counted by nationality the diaspora is larger still, about 1.0–1.2&nbsp;million; `
+        + `the unnamed remainder sits in the "Other destinations" row of the table.</div>`;
+      el.hidden = false;
     } else {
       el.hidden = true;
     }
