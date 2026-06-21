@@ -545,7 +545,7 @@ window.MIGRATION_DATA = {
       ]
     },
     population: {
-      takeaway: "The 2024 census counted 2,409,207 people usually living in Moldova, down 13.6% from 2014. Nearly one in three live in the capital, Chișinău, and just over half the country is still rural. The map shades every district by how many residents it has.",
+      takeaway: "The 2024 census counted 2,409,207 people usually living in Moldova — roughly 380,000 fewer than in 2014. Emigration is the main driver: the same diaspora you see in the 'Leaving Moldova' view is one reason the map below keeps getting lighter. Nearly one in three residents live in the capital, Chișinău; the rest of the country is majority rural.",
       headline: "Moldova's 2024 Population and Housing Census counted 2,409,207 usual residents on " +
                 "8 April 2024, 379,998 fewer than in 2014, a fall of 13.6% in a decade. The decline " +
                 "is uneven across the country: the capital, Chișinău, actually grew (to 720,128, " +

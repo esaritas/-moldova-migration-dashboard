@@ -7,6 +7,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Moldova in Motion — migration & remittances</title>
 
+  <!-- Open Graph / LinkedIn preview -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:title"       content="Moldova in Motion — migration &amp; remittances" />
+  <meta property="og:description" content="One in four people born in Moldova now live abroad. Six short data chapters on where Moldovans go, who arrives, and how much money flows back home." />
+  <meta property="og:url"         content="https://esaritas.github.io/-moldova-migration-dashboard/" />
+  <meta property="og:image"       content="https://esaritas.github.io/-moldova-migration-dashboard/og-preview.png" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card"       content="summary_large_image" />
+
   <!-- Fonts (degrade gracefully to system fonts if offline) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -159,6 +169,11 @@ h1 {
 .mode-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 /* divider before the NBS official-flow modes */
 .mode-sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line); }
+.modes-intro {
+  margin: 0 0 12px; max-width: 70ch;
+  font-size: 14px; line-height: 1.6; color: var(--ink-soft);
+}
+.modes-intro strong { color: var(--ink); font-weight: 600; }
 .modes-note {
   margin: 8px 2px 0; max-width: 70ch;
   font-size: 12px; line-height: 1.5; color: var(--ink-soft);
@@ -809,6 +824,20 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .concepts > summary .section-title, .milestones > summary .section-title { margin: 0; display: inline; }
 .concepts-body { margin-top: 14px; }
 .concepts-lede { font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; margin: 0 0 16px; max-width: 90ch; }
+.concepts-detail { margin: 16px 0 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.concepts-detail summary {
+  padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--ink-soft); list-style: none; user-select: none;
+  display: flex; align-items: center; gap: 8px;
+}
+.concepts-detail summary::-webkit-details-marker { display: none; }
+.concepts-detail summary:hover { color: var(--ink); background: var(--surface); }
+.concepts-detail .detail-caret { font-size: 10px; transition: transform .2s; }
+.concepts-detail[open] .detail-caret { transform: rotate(90deg); }
+.concepts-detail > .concept-grid,
+.concepts-detail > .concept-egs { padding: 0 16px; }
+.concepts-detail > .concept-grid { margin-top: 14px; }
+.concepts-detail > .concept-egs { padding-bottom: 14px; }
 .concept-grid {
   display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;
 }
@@ -1069,6 +1098,15 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
   }
   .mode-pill::-webkit-scrollbar { display: none; }
   .mode-pill .mode-btn { scroll-snap-align: start; min-height: 44px; white-space: nowrap; }
+  /* concept grid: 2 cols on tablet */
+  .concept-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  /* concept grid: 1 col on phone */
+  .concept-grid { grid-template-columns: 1fr; }
+  .modes-intro { font-size: 13px; }
+  /* play button: make disabled state clearly visible */
+  .play:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 </style>
@@ -1110,37 +1148,9 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
         <span class="chapter-num">02</span>
         <h2 class="chapter-title">How to read the numbers</h2>
       </div>
-      <p class="chapter-intro reveal">A <strong>stock</strong> is a count at one moment (how many people are abroad today). A <strong>flow</strong> is movement during a period (how many registered a move this year). Stocks are large and slow; flows are small and yearly. Mixing them is the most common mistake in reading migration data.</p>
+      <p class="chapter-intro reveal">Two terms unlock the rest of the dashboard. A <strong>stock</strong> is a headcount at one moment — how many people are abroad <em>right now</em>. A <strong>flow</strong> is movement over a period — how many formally registered a move <em>this year</em>. Mixing them is the most common mistake in reading migration data.</p>
 
-      <div class="concept-grid reveal">
-        <div class="concept-card c-blue">
-          <span class="concept-ico" data-ico="users"></span>
-          <h3>Diaspora stock</h3>
-          <p>People <em>born in Moldova</em> now living abroad, counted at one moment. <strong>864,257</strong> (UN DESA 2024). Built up over decades — not a single year's departures.</p>
-        </div>
-        <div class="concept-card c-green">
-          <span class="concept-ico" data-ico="globe"></span>
-          <h3>Foreign-born residents</h3>
-          <p>People <em>living in Moldova</em> who were born elsewhere. <strong>106,700</strong> at the 2024 census (4.4%). A residence stock — most hold Moldovan citizenship.</p>
-        </div>
-        <div class="concept-card c-orange">
-          <span class="concept-ico" data-ico="tent"></span>
-          <h3>Refugees hosted</h3>
-          <p>People who <em>fled to Moldova</em> and are protected here. <strong>141,058</strong> Ukrainians (UNHCR, May 2026). A humanitarian count — not the same as foreign-born residents.</p>
-        </div>
-        <div class="concept-card c-grey">
-          <span class="concept-ico" data-ico="route"></span>
-          <h3>Registered flows</h3>
-          <p>People who <em>formally registered</em> a move in a single year — a few thousand (NBS). A flow; tiny next to the stocks, because most who leave never deregister.</p>
-        </div>
-      </div>
-
-      <div class="concept-egs reveal">
-        <p class="concept-eg"><span class="eg-tag">Read it right</span> 864,000 Moldova-born people abroad does <strong>not</strong> mean 864,000 emigrated this year. It is a lifetime stock accumulated over decades.</p>
-        <p class="concept-eg"><span class="eg-tag">Read it right</span> 141,000 refugees in Moldova are <strong>not</strong> the same as the foreign-born residents in the census — different definitions, different sources, different people.</p>
-      </div>
-
-      <!-- Relative scale: emigration is Moldova's largest migration reality -->
+      <!-- Scale bar always visible — gives immediate orientation -->
       <div class="scale-compare reveal">
         <h3 class="scale-title">How the three stocks compare</h3>
         <div class="scale-row"><span class="scale-lbl">Diaspora abroad</span><div class="scale-bar c-blue" style="width:100%"><span>864,257</span></div></div>
@@ -1148,6 +1158,37 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
         <div class="scale-row"><span class="scale-lbl">Foreign-born residents</span><div class="scale-bar c-green" style="width:12.3%"><span>106,700</span></div></div>
         <p class="scale-insight">Emigration remains Moldova's largest migration reality: the diaspora abroad is roughly <strong>six times</strong> the refugee population it hosts and <strong>eight times</strong> its foreign-born residents.</p>
       </div>
+
+      <!-- Detail expandable for readers who want the full definitions -->
+      <details class="concepts-detail reveal">
+        <summary>Definitions &amp; common mistakes <span class="detail-caret">▸</span></summary>
+        <div class="concept-grid">
+          <div class="concept-card c-blue">
+            <span class="concept-ico" data-ico="users"></span>
+            <h3>Diaspora stock</h3>
+            <p>People <em>born in Moldova</em> now living abroad, counted at one moment. <strong>864,257</strong> (UN DESA 2024). Built up over decades — not a single year's departures.</p>
+          </div>
+          <div class="concept-card c-green">
+            <span class="concept-ico" data-ico="globe"></span>
+            <h3>Foreign-born residents</h3>
+            <p>People <em>living in Moldova</em> who were born elsewhere. <strong>106,700</strong> at the 2024 census (4.4%). A residence stock — most hold Moldovan citizenship.</p>
+          </div>
+          <div class="concept-card c-orange">
+            <span class="concept-ico" data-ico="tent"></span>
+            <h3>Refugees hosted</h3>
+            <p>People who <em>fled to Moldova</em> and are protected here. <strong>141,058</strong> Ukrainians (UNHCR, May 2026). A humanitarian count — not the same as foreign-born residents.</p>
+          </div>
+          <div class="concept-card c-grey">
+            <span class="concept-ico" data-ico="route"></span>
+            <h3>Registered flows</h3>
+            <p>People who <em>formally registered</em> a move in a single year — a few thousand (NBS). A flow; tiny next to the stocks, because most who leave never deregister.</p>
+          </div>
+        </div>
+        <div class="concept-egs">
+          <p class="concept-eg"><span class="eg-tag">Read it right</span> 864,000 Moldova-born people abroad does <strong>not</strong> mean 864,000 emigrated this year. It is a lifetime stock accumulated over decades.</p>
+          <p class="concept-eg"><span class="eg-tag">Read it right</span> 141,000 refugees in Moldova are <strong>not</strong> the same as the foreign-born residents in the census — different definitions, different sources, different people.</p>
+        </div>
+      </details>
     </section>
 
     <!-- ===================== 03 · EXPLORE THE DATA ===================== -->
@@ -1161,6 +1202,7 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
       <!-- Grouped segmented control: taxonomy lives in the grouping + one quiet
            label per group, not in per-button badges. The administrative NBS
            register sits in its own dashed group to signal lower confidence. -->
+      <p class="modes-intro reveal">Each button below switches the map and analysis panel to a different lens on Moldova's migration story. Start with <strong>Leaving Moldova</strong> for the biggest picture, then explore from there.</p>
       <div class="modes reveal" role="group" aria-label="Choose what to show">
         <div class="mode-group">
           <span class="mode-group-label">Who's abroad <span class="kind">stock</span></span>
@@ -1176,9 +1218,9 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
           </div>
         </div>
         <div class="mode-group">
-          <span class="mode-group-label">Population <span class="kind">census</span></span>
+          <span class="mode-group-label">Population <span class="kind">census · shrinking</span></span>
           <div class="mode-pill">
-            <button class="mode-btn" data-mode="population" aria-pressed="false"><span class="ico"></span>By district</button>
+            <button class="mode-btn" data-mode="population" aria-pressed="false"><span class="ico"></span>Residents by district</button>
           </div>
         </div>
         <div class="mode-group">
@@ -1342,6 +1384,8 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
         <span class="chapter-num">06</span>
         <h2 class="chapter-title">Sources &amp; methodology</h2>
       </div>
+      <p class="chapter-intro reveal">Moldova's numbers tell a story that is still unfinished. The diaspora is large, the population is shrinking, the remittances keep the economy afloat, and a quarter-million Ukrainians have passed through in search of safety. What comes next — whether emigrants return, whether the refugee wave recedes, whether remittances outlast the diaspora — will define the country for a generation. The data below is where that story currently stands.</p>
+
       <footer class="reveal">
         <p><strong>Sources &amp; caveats.</strong> <span class="src" id="sourceLine"></span></p>
         <p>Drawn from official sources: the National Bank of Moldova, UN DESA's International Migrant
@@ -1922,7 +1966,7 @@ window.MIGRATION_DATA = {
       ]
     },
     population: {
-      takeaway: "The 2024 census counted 2,409,207 people usually living in Moldova, down 13.6% from 2014. Nearly one in three live in the capital, Chișinău, and just over half the country is still rural. The map shades every district by how many residents it has.",
+      takeaway: "The 2024 census counted 2,409,207 people usually living in Moldova — roughly 380,000 fewer than in 2014. Emigration is the main driver: the same diaspora you see in the 'Leaving Moldova' view is one reason the map below keeps getting lighter. Nearly one in three residents live in the capital, Chișinău; the rest of the country is majority rural.",
       headline: "Moldova's 2024 Population and Housing Census counted 2,409,207 usual residents on " +
                 "8 April 2024, 379,998 fewer than in 2014, a fall of 13.6% in a decade. The decline " +
                 "is uneven across the country: the capital, Chișinău, actually grew (to 720,128, " +
@@ -3081,6 +3125,10 @@ window.MIGRATION_DATA = {
     });
     updateTrackFill();
     updateTimelineNote();
+    const hasMultipleYears = ys.filter(y => !!DATA.modes[mode].years[y]).length > 1;
+    playBtn.disabled = !hasMultipleYears;
+    playBtn.title = hasMultipleYears ? "Play through years" : "Timeline not available — only one data point";
+    if (!hasMultipleYears && timer) stopPlay();
   }
   // Narration line: shows the current year's annotation (mode-aware) during play.
   function updateTimelineNote() {
