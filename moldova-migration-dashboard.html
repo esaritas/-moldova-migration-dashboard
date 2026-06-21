@@ -837,6 +837,11 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 .proxy-head h4 { margin: 0; font-size: 13.5px; color: var(--ink); font-weight: 600; line-height: 1.35; }
 .proxy-note { margin: 0 0 12px; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
 .proxy-rows { display: flex; flex-direction: column; gap: 8px; }
+.proxy-item { display: flex; flex-direction: column; gap: 5px; }
+.proxy-rownote {
+  font-size: 11px; line-height: 1.45; color: var(--ink-soft);
+  padding: 2px 4px 0 11px; border-left: 2px solid color-mix(in srgb, var(--c-diaspora) 40%, var(--line));
+}
 .proxy-row {
   display: grid; grid-template-columns: 1.1fr 1.7fr 1.5fr; gap: 12px; align-items: center;
   padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
@@ -2121,7 +2126,8 @@ window.MIGRATION_DATA = {
         countries: [
           { country: "United States", value: "≈ 52,000", basis: "Born in Moldova · US Census ACS 2021", confidence: "Medium", source_id: "us_acs" },
           { country: "Germany", value: "≈ 35,000 – 122,000", basis: "Country of birth → migration background · 2022", confidence: "Low", source_id: "destatis_micro" },
-          { country: "United Kingdom", value: "≥ 3,400", basis: "Country of birth · ONS 2021 (severe undercount)", confidence: "Very low", source_id: "ons_cob" }
+          { country: "United Kingdom", value: "≥ 3,400", basis: "Country of birth · ONS 2021 (severe undercount)", confidence: "Very low", source_id: "ons_cob",
+            note: "Most Moldovans in the UK hold Romanian (EU) passports and are recorded as Romanian, so birthplace tables miss them — the true figure is many times higher." }
         ]
       }
     },
@@ -3646,13 +3652,15 @@ window.MIGRATION_DATA = {
       const src = sourceById(c.source_id);
       const cap = src ? sourceCaption(src) : "";
       const confClass = "conf-" + String(c.confidence).toLowerCase().replace(/\s+/g, "-");
-      return `<div class="proxy-row">`
+      return `<div class="proxy-item"><div class="proxy-row">`
         + `<div class="proxy-co">${esc(c.country)}</div>`
         + `<div class="proxy-est"><span class="proxy-num">${esc(c.value)}</span>`
         + `<span class="proxy-basis">${esc(c.basis)}</span></div>`
         + `<div class="proxy-conf"><span class="proxy-conf-tag ${confClass}">${esc(c.confidence)} confidence</span>`
         + (cap ? `<span class="proxy-src">${esc(cap)}</span>` : "")
-        + `</div></div>`;
+        + `</div></div>`
+        + (c.note ? `<div class="proxy-rownote">${esc(c.note)}</div>` : "")
+        + `</div>`;
     }).join("");
     el.innerHTML =
       `<div class="proxy-head"><span class="proxy-flag">Estimated · not in the total above</span>`

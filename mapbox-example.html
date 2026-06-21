@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mapbox-style map preview — Moldova in Motion</title>
+
+<!--
+  PROOF-OF-CONCEPT — not part of the live dashboard.
+  Shows how the district maps could look in a GPU map engine (3D extrusion,
+  pitch/rotate) as proposed in the expert review.
+
+  Built on MapLibre GL JS, the open-source fork of Mapbox GL JS. It shares the
+  same API and rendering, but needs no access token, so this file runs as-is.
+  A real Mapbox build would swap the <script>/style for mapbox-gl + a Mapbox
+  token and look essentially identical.
+
+  Data is read live from the dashboard's own files (moldova-adm1.js geometry +
+  data.js values), so the numbers match the production dashboard exactly.
+-->
+
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAFAF7; --surface:#fff; --line:#E7E7E0; --ink:#1F2421; --ink-soft:#6B7470; --ink-faint:#9AA09C;
+    --refugee:#E08A2E; --pop:#2E8B6B; --diaspora:#2B6CA8;
+    --font-display:"Space Grotesk",system-ui,sans-serif; --font-body:"Inter",system-ui,sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 48px}
+  .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 6px}
+  h1{font-family:var(--font-display);font-weight:600;letter-spacing:-.02em;font-size:30px;margin:0 0 8px}
+  .lede{font-size:15px;color:var(--ink-soft);max-width:70ch;margin:0 0 8px}
+  .note-box{font-size:13px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--diaspora);border-radius:10px;padding:11px 14px;margin:14px 0 18px;max-width:80ch}
+  .note-box strong{color:var(--ink)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:0 0 12px}
+  .ctrl-group{display:flex;flex-direction:column;gap:5px}
+  .ctrl-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding-left:2px}
+  .pill{display:inline-flex;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+  .pill button{appearance:none;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--ink-soft);padding:7px 13px;border-radius:999px;transition:.15s}
+  .pill button.on{background:var(--ink);color:#fff}
+  .pill button:hover:not(.on){color:var(--ink)}
+  .map-shell{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(31,36,33,.04),0 8px 28px rgba(31,36,33,.06)}
+  #map{width:100%;height:560px}
+  @media(max-width:560px){#map{height:440px}}
+  .legend{position:absolute;left:14px;bottom:14px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:11px;max-width:230px;backdrop-filter:blur(4px)}
+  .legend h4{margin:0 0 7px;font-size:11px;font-family:var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+  .legend .ramp{height:9px;border-radius:5px;margin:5px 0 4px}
+  .legend .scale{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint)}
+  .legend .hint{margin-top:8px;color:var(--ink-soft);line-height:1.4}
+  .maplibregl-popup{font-family:var(--font-body);max-width:260px!important}
+  .maplibregl-popup-content{border-radius:9px;padding:11px 13px;box-shadow:0 6px 24px rgba(31,36,33,.18)}
+  .tip-name{font-family:var(--font-display);font-weight:600;font-size:15px;margin-bottom:4px}
+  .tip-row{display:flex;justify-content:space-between;gap:16px;font-size:12.5px;color:var(--ink-soft)}
+  .tip-row b{font-family:var(--font-mono);color:var(--ink);font-weight:500}
+  .tip-ratio{margin-top:6px;padding-top:6px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-faint)}
+  .foot{font-size:12px;color:var(--ink-faint);margin-top:16px;max-width:80ch}
+  .foot a{color:var(--diaspora)}
+  .cmp{margin-top:30px}
+  .cmp h2{font-family:var(--font-display);font-size:18px;margin:0 0 12px}
+  table.cmp-t{width:100%;border-collapse:collapse;font-size:13px}
+  table.cmp-t th,table.cmp-t td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.cmp-t thead th{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint)}
+  table.cmp-t td:first-child{font-weight:600;color:var(--ink);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Prototype · GPU map engine preview</p>
+  <h1>What the maps could look like in Mapbox</h1>
+  <p class="lede">A working preview of the district map rendered as <strong>3D extruded columns</strong> — height shows the number of Ukrainian refugees (Temporary Protection holders), and the base colour shows resident population. Drag to rotate, scroll to zoom, hover a district for detail.</p>
+
+  <div class="note-box">
+    <strong>About this preview.</strong> It runs on <strong>MapLibre GL JS</strong>, the open-source engine that shares Mapbox GL JS's API and rendering — so it needs no paid access token and runs straight from this file. A production Mapbox version would look essentially the same. The geometry and figures are read live from the dashboard's own <code>moldova-adm1.js</code> and <code>data.js</code>, so they match the live site exactly (UNHCR TP holders, 27 Apr 2026; NBS Census population, 2024).
+  </div>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <span class="ctrl-label">Show</span>
+      <div class="pill" id="metricPill">
+        <button data-metric="combined" class="on">Refugees over population</button>
+        <button data-metric="tp">Refugees (TP)</button>
+        <button data-metric="pop">Population</button>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">View</span>
+      <div class="pill" id="dimPill">
+        <button data-dim="3d" class="on">3D</button>
+        <button data-dim="2d">Flat</button>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">Camera</span>
+      <div class="pill"><button id="resetBtn">Reset view</button></div>
+    </div>
+  </div>
+
+  <div class="map-shell">
+    <div id="map"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <p class="foot" id="foot"></p>
+
+  <div class="cmp">
+    <h2>How this compares to the current D3 / SVG maps</h2>
+    <table class="cmp-t">
+      <thead><tr><th>Aspect</th><th>Current (D3 + SVG)</th><th>Mapbox / MapLibre GL</th></tr></thead>
+      <tbody>
+        <tr><td>Rendering</td><td>SVG vectors, CPU</td><td>WebGL, GPU — smoother with many features</td></tr>
+        <tr><td>3D extrusion</td><td>Not available (flat choropleth)</td><td>Native <code>fill-extrusion</code> — height = a second variable</td></tr>
+        <tr><td>Pitch &amp; rotate</td><td>No</td><td>Yes — tilt and spin the map</td></tr>
+        <tr><td>Two variables at once</td><td>One (colour)</td><td>Two (colour + height), e.g. refugees over population</td></tr>
+        <tr><td>Token / cost</td><td>None</td><td>Mapbox needs a token &amp; has usage limits; MapLibre is free</td></tr>
+        <tr><td>Bundle weight</td><td>~Light (D3 only)</td><td>Heavier (~200 KB engine + style)</td></tr>
+        <tr><td>Offline</td><td>Works (geometry inlined)</td><td>Works for GeoJSON layers; basemap tiles need network</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="moldova-adm1.js"></script>
+<script src="data.js"></script>
+<script>
+(function(){
+  // ---- pull real data from the dashboard's own globals --------------------
+  var DATA = window.MIGRATION_DATA;
+  var GEO  = window.MOLDOVA_ADM1;
+  if(!DATA||!GEO){document.getElementById('map').innerHTML='<p style="padding:20px">Could not load data.js / moldova-adm1.js — open this file from the repository folder.</p>';return;}
+
+  function normName(s){return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/^(municipiul|raionul|uta|ato)\s+/i,"").toLowerCase().trim();}
+
+  var tp = {}, pop = {}, nm = {};
+  DATA.tp_choropleth.districts.forEach(function(d){tp[d.match]=d.tpHolders;nm[d.match]=d.name;});
+  DATA.population_choropleth.districts.forEach(function(d){pop[d.match]=d.population;nm[d.match]=d.name;});
+
+  var maxTp=0,maxPop=0;
+  Object.keys(tp).forEach(function(k){if(tp[k]>maxTp)maxTp=tp[k];});
+  Object.keys(pop).forEach(function(k){if(pop[k]!=null&&pop[k]>maxPop)maxPop=pop[k];});
+
+  // Build a GeoJSON where each district carries its joined values.
+  var feats = GEO.features.map(function(f){
+    var key = normName(f.properties.shapeName);
+    var t = tp[key]!=null?tp[key]:null, p = pop[key]!=null?pop[key]:null;
+    // refugees per 1,000 residents — the "load relative to population" measure
+    var per1k = (t!=null&&p)?(t/p*1000):null;
+    return {type:"Feature",geometry:f.geometry,properties:{
+      key:key, name:nm[key]||f.properties.shapeName, tp:t, pop:p, per1k:per1k
+    }};
+  });
+  var fc = {type:"FeatureCollection",features:feats};
+
+  // ---- colour ramps (light -> accent) -------------------------------------
+  var RAMP = {
+    tp:["#fbe6d2","#f4c98a","#e9a64e","#d97c1f","#a8560d"],
+    pop:["#dcefe2","#a9ddbb","#6cc491","#3a9d6a","#1f6e47"],
+    combined:["#dcefe2","#a9ddbb","#6cc491","#3a9d6a","#1f6e47"] // base colour = population
+  };
+  var METRIC = {
+    tp:{prop:"tp",max:maxTp,ramp:RAMP.tp,label:"Refugees (TP holders)",hLabel:"TP holders"},
+    pop:{prop:"pop",max:maxPop,ramp:RAMP.pop,label:"Resident population",hLabel:"Residents"},
+    combined:{prop:"pop",max:maxPop,ramp:RAMP.combined,hProp:"tp",hMax:maxTp,label:"Population (colour) + refugees (height)"}
+  };
+
+  var MAXH = 55000; // metres of extrusion for the largest value
+  function colorExpr(m){
+    var c=METRIC[m], stops=[];
+    for(var i=0;i<c.ramp.length;i++){stops.push(c.max*(i/(c.ramp.length-1)));stops.push(c.ramp[i]);}
+    return ["interpolate",["linear"],["coalesce",["get",c.prop],0]].concat(stops);
+  }
+  function heightExpr(m,dim){
+    if(dim==="2d")return 0;
+    var c=METRIC[m], hp=c.hProp||c.prop, hmax=c.hMax||c.max;
+    return ["*",["/",["coalesce",["get",hp],0],hmax],MAXH];
+  }
+
+  // ---- map ----------------------------------------------------------------
+  var START={center:[28.55,47.05],zoom:6.35,pitch:52,bearing:-18};
+  var map=new maplibregl.Map({
+    container:"map",
+    style:{version:8,sources:{},layers:[{id:"bg",type:"background",paint:{"background-color":"#FAFAF7"}}],glyphs:"https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf"},
+    center:START.center,zoom:START.zoom,pitch:START.pitch,bearing:START.bearing,
+    maxPitch:75,attributionControl:false
+  });
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
+  map.addControl(new maplibregl.AttributionControl({customAttribution:"Geometry: geoBoundaries (CC-BY 4.0) · Data: UNHCR, NBS"}),"bottom-right");
+
+  var metric="combined", dim="3d";
+
+  map.on("load",function(){
+    map.addSource("districts",{type:"geojson",data:fc});
+    map.addLayer({id:"fill",type:"fill-extrusion",source:"districts",paint:{
+      "fill-extrusion-color":colorExpr(metric),
+      "fill-extrusion-height":heightExpr(metric,dim),
+      "fill-extrusion-base":0,
+      "fill-extrusion-opacity":0.92
+    }});
+    map.addLayer({id:"edge",type:"line",source:"districts",paint:{"line-color":"#ffffff","line-width":1}});
+    drawLegend();
+  });
+
+  // hover popup
+  var popup=new maplibregl.Popup({closeButton:false,closeOnClick:false});
+  function fmt(n){return n==null?"—":n.toLocaleString("en-US");}
+  map.on("mousemove","fill",function(e){
+    map.getCanvas().style.cursor="pointer";
+    var p=e.features[0].properties;
+    var ratio=(p.per1k!=null&&p.per1k!=="")?Number(p.per1k).toFixed(1)+" refugees per 1,000 residents":"not enumerated";
+    popup.setLngLat(e.lngLat).setHTML(
+      '<div class="tip-name">'+p.name+'</div>'+
+      '<div class="tip-row"><span>Refugees (TP)</span><b>'+fmt(p.tp==null||p.tp===""?null:Number(p.tp))+'</b></div>'+
+      '<div class="tip-row"><span>Residents</span><b>'+fmt(p.pop==null||p.pop===""?null:Number(p.pop))+'</b></div>'+
+      '<div class="tip-ratio">'+ratio+'</div>'
+    ).addTo(map);
+  });
+  map.on("mouseleave","fill",function(){map.getCanvas().style.cursor="";popup.remove();});
+
+  // ---- controls -----------------------------------------------------------
+  function apply(){
+    map.setPaintProperty("fill","fill-extrusion-color",colorExpr(metric));
+    map.setPaintProperty("fill","fill-extrusion-height",heightExpr(metric,dim));
+    map.easeTo({pitch:dim==="2d"?0:52,duration:600});
+    drawLegend();
+  }
+  document.getElementById("metricPill").addEventListener("click",function(e){
+    var b=e.target.closest("button");if(!b)return;
+    metric=b.dataset.metric;
+    this.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});
+    apply();
+  });
+  document.getElementById("dimPill").addEventListener("click",function(e){
+    var b=e.target.closest("button");if(!b)return;
+    dim=b.dataset.dim;
+    this.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});
+    apply();
+  });
+  document.getElementById("resetBtn").addEventListener("click",function(){map.easeTo(Object.assign({duration:700},START,{pitch:dim==="2d"?0:START.pitch}));});
+
+  function drawLegend(){
+    var c=METRIC[metric];
+    var grad="linear-gradient(90deg,"+c.ramp.join(",")+")";
+    var foot=document.getElementById("foot");
+    var legendHint = metric==="combined"
+      ? "Tall + dark = many refugees in a populous district; tall + light = a heavy refugee load on a small population."
+      : (metric==="tp" ? "Height and colour both show TP holders." : "Height and colour both show resident population.");
+    document.getElementById("legend").innerHTML =
+      '<h4>'+c.label+'</h4>'+
+      '<div class="ramp" style="background:'+grad+'"></div>'+
+      '<div class="scale"><span>0</span><span>'+c.max.toLocaleString("en-US")+'</span></div>'+
+      '<div class="hint">'+legendHint+'</div>';
+    foot.innerHTML = metric==="combined"
+      ? "Chișinău dominates on both axes (≈56,400 TP holders, 720,000 residents). Watch for small northern raions like Ocnița and Dondușeni that rise sharply relative to their size — a refugee load the flat choropleth on the live dashboard can't show in one view."
+      : "";
+  }
+})();
+</script>
+</body>
+</html>
