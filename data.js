@@ -583,7 +583,8 @@ window.MIGRATION_DATA = {
         countries: [
           { country: "United States", value: "≈ 52,000", basis: "Born in Moldova · US Census ACS 2021", confidence: "Medium", source_id: "us_acs" },
           { country: "Germany", value: "≈ 35,000 – 122,000", basis: "Country of birth → migration background · 2022", confidence: "Low", source_id: "destatis_micro" },
-          { country: "United Kingdom", value: "≥ 3,400", basis: "Country of birth · ONS 2021 (severe undercount)", confidence: "Very low", source_id: "ons_cob" }
+          { country: "United Kingdom", value: "≥ 3,400", basis: "Country of birth · ONS 2021 (severe undercount)", confidence: "Very low", source_id: "ons_cob",
+            note: "Most Moldovans in the UK hold Romanian (EU) passports and are recorded as Romanian, so birthplace tables miss them — the true figure is many times higher." }
         ]
       }
     },

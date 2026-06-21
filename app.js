@@ -1091,13 +1091,15 @@
       const src = sourceById(c.source_id);
       const cap = src ? sourceCaption(src) : "";
       const confClass = "conf-" + String(c.confidence).toLowerCase().replace(/\s+/g, "-");
-      return `<div class="proxy-row">`
+      return `<div class="proxy-item"><div class="proxy-row">`
         + `<div class="proxy-co">${esc(c.country)}</div>`
         + `<div class="proxy-est"><span class="proxy-num">${esc(c.value)}</span>`
         + `<span class="proxy-basis">${esc(c.basis)}</span></div>`
         + `<div class="proxy-conf"><span class="proxy-conf-tag ${confClass}">${esc(c.confidence)} confidence</span>`
         + (cap ? `<span class="proxy-src">${esc(cap)}</span>` : "")
-        + `</div></div>`;
+        + `</div></div>`
+        + (c.note ? `<div class="proxy-rownote">${esc(c.note)}</div>` : "")
+        + `</div>`;
     }).join("");
     el.innerHTML =
       `<div class="proxy-head"><span class="proxy-flag">Estimated · not in the total above</span>`

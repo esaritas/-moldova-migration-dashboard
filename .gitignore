@@ -18,3 +18,10 @@ Thumbs.db
 
 # Redundant project archive
 *.zip
+
+# Local preview tooling (Mapbox/MapLibre example screenshots are generated on demand)
+node_modules/
+package.json
+package-lock.json
+_shot.js
+preview-*.png
