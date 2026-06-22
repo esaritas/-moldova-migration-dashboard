@@ -251,19 +251,24 @@
     return [];
   }
   function sourceById(id) { return SOURCES[id] || null; }
-  // Compact caption for a single source: "Publisher · indicator_code · as of date".
+  // Compact caption for a single source: "Publisher · indicator_code · [coverage ·] as of/retrieved date".
   function sourceCaption(s) {
     if (!s) return "";
     const bits = [s.publisher];
     if (s.indicator_code) bits.push(s.indicator_code);
-    if (s.accessed) bits.push("as of " + s.accessed);
+    if (s.coverage) bits.push(s.coverage);
+    // When a data-coverage span is given, the access date is just when we pulled
+    // it — say "retrieved" so it isn't misread as the data's currency.
+    if (s.accessed) bits.push((s.coverage ? "retrieved " : "as of ") + s.accessed);
     return bits.join(" · ");
   }
   // Fuller one-line citation for the footer: "Publisher, label (code), as of date".
   function citation(s) {
     if (!s) return "";
     const code = s.indicator_code ? ` (${s.indicator_code})` : "";
-    return `${s.publisher}, ${s.label}${code}, as of ${s.accessed}`;
+    const cov = s.coverage ? `, ${s.coverage}` : "";
+    const date = s.accessed ? `, ${s.coverage ? "retrieved" : "as of"} ${s.accessed}` : "";
+    return `${s.publisher}, ${s.label}${code}${cov}${date}`;
   }
   function captionsFor(obj) {
     return sourceIdsFor(obj).map(id => sourceCaption(sourceById(id))).filter(Boolean).join("  ·  ");

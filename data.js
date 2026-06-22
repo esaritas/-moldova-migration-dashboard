@@ -406,6 +406,7 @@ window.MIGRATION_DATA = {
       publisher: "National Bureau of Statistics of the Republic of Moldova",
       url: "https://statbank.statistica.md/PxWeb/pxweb/en/20%20Populatia%20si%20procesele%20demografice/20%20Populatia%20si%20procesele%20demografice__POP070/POP07060.px/",
       indicator_code: "PxWeb POP07060 (General Inspectorate of Border Police)",
+      coverage: "data 2014–2024",
       accessed: "2026-06-22",
       definition: "Immigrants and emigrants defined by the international 12-month rule (a change of " +
                   "usual residence lasting at least 12 months), estimated from Border Police records.",
