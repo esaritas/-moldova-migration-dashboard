@@ -1655,6 +1655,69 @@
     }
   }
 
+  // ---- Labour migration: the East→West shift (Italy vs Russia, 2010–2024) ---
+  // A two-line crossover chart with direct end-labels and a crossover marker,
+  // telling the "centre of gravity moved west" story over time. Reads the same
+  // UN DESA emigration series as the bar chart, so the two never disagree.
+  function renderEastWest() {
+    const host = document.getElementById("ewChart");
+    if (!host) return;
+    const yrs = [2010, 2015, 2020, 2024];
+    const series = [
+      { key: "Italy", color: "#2B6CA8" },   // EU / west
+      { key: "Russia", color: "#BC6A4A" }   // post-Soviet / east
+    ];
+    const valAt = (yr, name) => {
+      const rec = (DATA.modes.emigration.years[yr] || []).find(r => r.country === name);
+      return rec ? rec.value : null;
+    };
+    const data = series.map(s => ({
+      key: s.key, color: s.color,
+      points: yrs.map(yr => ({ year: yr, value: valAt(yr, s.key) })).filter(p => p.value != null)
+    })).filter(s => s.points.length);
+    if (!data.length) return;
+    const maxV = d3.max(data.flatMap(s => s.points.map(p => p.value))) || 1;
+
+    const W = 460, H = 252, ml = 40, mr = 78, mt = 24, mb = 28;
+    const x = d3.scaleLinear().domain([2010, 2024]).range([ml, W - mr]);
+    const y = d3.scaleLinear().domain([0, maxV * 1.06]).nice().range([H - mb, mt]);
+
+    const svg = d3.select(host).html("").append("svg")
+      .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "ew-svg")
+      .attr("role", "img").attr("aria-label", "Moldova-born residents in Italy versus Russia, 2010 to 2024");
+
+    y.ticks(3).forEach(t => {
+      svg.append("line").attr("class", "ew-grid").attr("x1", ml).attr("x2", W - mr).attr("y1", y(t)).attr("y2", y(t));
+      svg.append("text").attr("class", "ew-ytick").attr("x", ml - 6).attr("y", y(t) + 3).attr("text-anchor", "end").text(fmtShort(t));
+    });
+    yrs.forEach(yr => svg.append("text").attr("class", "ew-xtick")
+      .attr("x", x(yr)).attr("y", H - 9).attr("text-anchor", "middle").text(yr));
+
+    // Crossover marker (~2020: Italy 200,676 edges past Russia 198,728).
+    const cx = 2020;
+    svg.append("line").attr("class", "ew-cross").attr("x1", x(cx)).attr("x2", x(cx)).attr("y1", mt + 14).attr("y2", H - mb);
+    svg.append("text").attr("class", "ew-cross-lbl").attr("x", x(cx)).attr("y", mt + 6).attr("text-anchor", "middle").text("Italy overtakes Russia");
+
+    const line = d3.line().x(d => x(d.year)).y(d => y(d.value)).curve(d3.curveMonotoneX);
+    data.forEach(s => {
+      svg.append("path").datum(s.points).attr("class", "ew-line").attr("stroke", s.color).attr("d", line);
+      svg.selectAll(null).data(s.points).join("circle").attr("class", "ew-dot")
+        .attr("cx", d => x(d.year)).attr("cy", d => y(d.value)).attr("r", 3).attr("fill", s.color);
+      const last = s.points[s.points.length - 1];
+      const lbl = svg.append("text").attr("class", "ew-series-lbl")
+        .attr("x", x(last.year) + 7).attr("y", y(last.value) + 1).attr("fill", s.color);
+      lbl.append("tspan").attr("class", "ew-series-name").text(s.key);
+      lbl.append("tspan").attr("class", "ew-series-val").attr("x", x(last.year) + 7).attr("dy", 12).text(d3.format(",")(last.value));
+    });
+
+    const srcEl = document.getElementById("ewSrc");
+    if (srcEl) {
+      const o = { source_id: "undesa_2024" };
+      srcEl.textContent = "Source: " + captionsFor(o);
+      srcEl.title = citationsFor(o);
+    }
+  }
+
   // ---- Audience pathways + Simple/Advanced view ----------------------------
   function scrollToSel(sel) {
     const el = document.querySelector(sel);
@@ -1794,6 +1857,7 @@
   buildGlance();
   buildMilestones();
   renderLabourDest();
+  renderEastWest();
   initStory();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
