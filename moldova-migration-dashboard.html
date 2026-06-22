@@ -1089,6 +1089,7 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .ew-cross-lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .03em; fill: var(--ink-faint); }
 .ew-series-name { font-size: 11.5px; font-weight: 600; }
 .ew-series-val { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-soft); }
+.ltm-band { fill: color-mix(in srgb, #BC6A4A 11%, transparent); }
 
 @media (max-width: 720px) {
   .labour-grid { grid-template-columns: 1fr; gap: 18px; }
@@ -1375,7 +1376,7 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
           </div>
         </div>
       </div>
-      <p class="modes-note">The dashed group comes from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year, a far smaller thing than the diaspora and refugee stocks. <a href="#ch-concepts" class="jit-link">What's a stock vs a flow?</a></p>
+      <p class="modes-note">The dashed group comes from Moldova's <strong>official NBS register</strong>, which captures only a few thousand moves a year, a far smaller thing than the diaspora and refugee stocks. NBS also publishes a much larger border-crossing series (105,804 immigrants in 2024) &mdash; see <a href="#ch-labour" class="jit-link">Labour migration</a>. <a href="#ch-concepts" class="jit-link">What's a stock vs a flow?</a></p>
 
       <!-- Source/date + confidence badges for the active mode (built by app.js).
            Makes the vintage and reliability of each lens visible at point of use. -->
@@ -1525,6 +1526,14 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
           <p class="ewshift-sub">Russia was the largest recorded destination through the 2010s; Italy overtook it around 2020 as EU routes opened and post-2014 ties deepened. Moldova-born residents, 2010&ndash;2024.</p>
           <div id="ewChart"><!-- two-line chart built by app.js --></div>
           <div class="src-caption" id="ewSrc"></div>
+        </div>
+        <!-- Long-term migration: the bigger official flow series (NBS POP07060) -->
+        <div class="ewshift">
+          <h3 class="ewshift-title">More churn than the register shows</h3>
+          <p class="ewshift-sub">Beyond the small domicile register, NBS publishes a far larger flow series using the international 12-month rule (from border-crossing data). It captures long-term moves the register misses &mdash; and emigration has run ahead of immigration every year. Persons per year, 2014&ndash;2024.</p>
+          <div id="ltmigChart"><!-- immigrants vs emigrants, built by app.js --></div>
+          <p class="labour-note" id="ltmigNote"></p>
+          <div class="src-caption" id="ltmigSrc"></div>
         </div>
         <div class="labour-limits">
           <strong>Data limitations.</strong> There is no comprehensive, regularly published public breakdown of the diaspora by <em>occupation, skill level or sector</em>. Qualitatively, Moldovans abroad are concentrated in construction, domestic and care work, agriculture, hospitality and transport, but this dashboard does not chart it for lack of an authoritative, current source. Registered NBS flows also undercount real movement, so labour-migration totals here should be read as lower bounds.
@@ -1975,6 +1984,20 @@ window.MIGRATION_DATA = {
              "recorded as Romanian (EU) passport holders, so birthplace tables capture only a " +
              "fraction. Earlier ONS country-of-birth estimates put Moldova-born near 3,400 (2015).",
       note: "Listed to flag the gap; no reliable birthplace headcount exists, so only a floor is shown."
+    },
+    nbs_ltmig: {
+      label: "Long-term international migration (12-month rule, border-crossing)",
+      publisher: "National Bureau of Statistics of the Republic of Moldova",
+      url: "https://statbank.statistica.md/PxWeb/pxweb/en/20%20Populatia%20si%20procesele%20demografice/20%20Populatia%20si%20procesele%20demografice__POP070/POP07060.px/",
+      indicator_code: "PxWeb POP07060 (General Inspectorate of Border Police)",
+      accessed: "2026-06-22",
+      definition: "Immigrants and emigrants defined by the international 12-month rule (a change of " +
+                  "usual residence lasting at least 12 months), estimated from Border Police records.",
+      scope: "An order of magnitude larger than the domicile-registration series (POP07100/POP07300): " +
+             "in 2024, 105,804 immigrants and 123,406 emigrants. Immigration is dominated by returning " +
+             "Moldovan citizens (40,173) and Romanian-passport holders (19,052), plus Ukrainians " +
+             "(23,265); net migration stays negative every year.",
+      note: "Different methodology from the registered-flow series — the two are not comparable."
     }
   },
   // Single source of truth for definitions (cards link here in item 8).
@@ -2073,6 +2096,42 @@ window.MIGRATION_DATA = {
       "1,462 in 2015 (NBS POP07300)."
   ],
 
+  // Long-term international migration (NBS POP07060, Border Police, 12-month rule).
+  // The internationally-comparable flow series — roughly 16x the domicile-register
+  // counts the map's "Registered flows" view uses. Verified from the PxWeb API.
+  ltmigration: {
+    source_id: "nbs_ltmig",
+    years: [
+      { year: 2014, imm: 98731,  emi: 122955 },
+      { year: 2015, imm: 105834, emi: 127277 },
+      { year: 2016, imm: 107303, emi: 153405 },
+      { year: 2017, imm: 107580, emi: 158259 },
+      { year: 2018, imm: 116739, emi: 158788 },
+      { year: 2019, imm: 116196, emi: 153289 },
+      { year: 2020, imm: 65167,  emi: 72372 },
+      { year: 2021, imm: 68356,  emi: 113769 },
+      { year: 2022, imm: 177875, emi: 241448 },
+      { year: 2023, imm: 97517,  emi: 130084 },
+      { year: 2024, imm: 105804, emi: 123406 }
+    ],
+    // 2024 immigrants by citizenship (POP07060). Returning Moldovan citizens and
+    // Romanian-passport holders dominate — most "immigrants" are Moldovans coming home.
+    imm_2024_by_citizenship: [
+      { name: "Moldova (returning)", value: 40173 },
+      { name: "Ukraine", value: 23265 },
+      { name: "Romania", value: 19052 },
+      { name: "Russia", value: 6668 },
+      { name: "Bulgaria", value: 2153 },
+      { name: "Italy", value: 1838 },
+      { name: "Germany", value: 1668 },
+      { name: "Israel", value: 1473 },
+      { name: "Turkey", value: 1020 },
+      { name: "USA", value: 947 },
+      { name: "Other", value: 7547 }
+    ],
+    total_2024: { imm: 105804, emi: 123406 }
+  },
+
   // Scannable methodology matrix — one row per phenomenon, rendered as a table at
   // the top of the methodology dialog so readers can compare what each number
   // measures, when, and where it falls short, without reading the full prose.
@@ -2092,6 +2151,9 @@ window.MIGRATION_DATA = {
     { topic: "Registered flows", source: "NBS", year: "2024",
       measure: "Formal annual emigrant/immigrant registrations",
       limit: "Undercounts real movement; most emigrants never formally deregister." },
+    { topic: "Long-term flows", source: "NBS (Border Police)", year: "2024",
+      measure: "12-month-rule migration (POP07060): 105,804 in / 123,406 out",
+      limit: "~16× the register; immigration is mostly returning Moldovan/Romanian-passport citizens." },
     { topic: "Resident population", source: "NBS Census", year: "2024",
       measure: "Usually-resident population by district",
       limit: "Excludes Transnistria & Bender; not comparable to de-jure register." }
@@ -4313,6 +4375,69 @@ window.MIGRATION_DATA = {
     }
   }
 
+  // ---- Long-term migration: immigrants vs emigrants (NBS POP07060) ----------
+  // The internationally-comparable border-crossing series (12-month rule), ~16×
+  // the domicile register the map's "Registered flows" view uses. Shows the
+  // persistent net outflow and the 2022 war-churn spike; the note explains that
+  // most "immigrants" are Moldovans returning home.
+  function renderLtMig() {
+    const host = document.getElementById("ltmigChart");
+    const D = DATA.ltmigration;
+    if (!host || !D) return;
+    const rows = D.years;
+    const W = 470, H = 264, ml = 46, mr = 94, mt = 26, mb = 28;
+    const x = d3.scaleLinear().domain(d3.extent(rows, d => d.year)).range([ml, W - mr]);
+    const maxV = d3.max(rows, d => Math.max(d.imm, d.emi)) || 1;
+    const y = d3.scaleLinear().domain([0, maxV * 1.06]).nice().range([H - mb, mt]);
+    const COL = { emi: "#BC6A4A", imm: "#2B6CA8" };
+
+    const svg = d3.select(host).html("").append("svg")
+      .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "ew-svg")
+      .attr("role", "img").attr("aria-label", "Long-term immigrants versus emigrants, Moldova, 2014 to 2024");
+
+    y.ticks(3).forEach(t => {
+      svg.append("line").attr("class", "ew-grid").attr("x1", ml).attr("x2", W - mr).attr("y1", y(t)).attr("y2", y(t));
+      svg.append("text").attr("class", "ew-ytick").attr("x", ml - 6).attr("y", y(t) + 3).attr("text-anchor", "end").text(fmtShort(t));
+    });
+    [2014, 2018, 2022, 2024].forEach(yr => svg.append("text").attr("class", "ew-xtick")
+      .attr("x", x(yr)).attr("y", H - 9).attr("text-anchor", "middle").text(yr));
+
+    // Net-outflow band between the emigrant (upper) and immigrant (lower) lines.
+    svg.append("path").datum(rows).attr("class", "ltm-band")
+      .attr("d", d3.area().x(d => x(d.year)).y0(d => y(d.imm)).y1(d => y(d.emi)).curve(d3.curveMonotoneX));
+    const mkLine = key => d3.line().x(d => x(d.year)).y(d => y(d[key])).curve(d3.curveMonotoneX);
+    svg.append("path").datum(rows).attr("class", "ew-line").attr("stroke", COL.emi).attr("d", mkLine("emi"));
+    svg.append("path").datum(rows).attr("class", "ew-line").attr("stroke", COL.imm).attr("d", mkLine("imm"));
+
+    const p22 = rows.find(d => d.year === 2022);
+    if (p22) svg.append("text").attr("class", "ew-cross-lbl")
+      .attr("x", x(2022)).attr("y", y(p22.emi) - 6).attr("text-anchor", "middle").text("2022: war churn");
+
+    const last = rows[rows.length - 1];
+    const emiY = y(last.emi) - 2;
+    const immY = Math.max(y(last.imm) + 4, emiY + 28);   // keep the two labels apart
+    const endLabel = (yy, color, name, val) => {
+      const t = svg.append("text").attr("class", "ew-series-lbl").attr("x", x(last.year) + 7).attr("y", yy).attr("fill", color);
+      t.append("tspan").attr("class", "ew-series-name").text(name);
+      t.append("tspan").attr("class", "ew-series-val").attr("x", x(last.year) + 7).attr("dy", 12).text(d3.format(",")(val));
+    };
+    endLabel(emiY, COL.emi, "Emigrants", last.emi);
+    endLabel(immY, COL.imm, "Immigrants", last.imm);
+
+    const noteEl = document.getElementById("ltmigNote");
+    if (noteEl) {
+      const t = D.total_2024, b = D.imm_2024_by_citizenship;
+      const top = b.slice(0, 3).map(r => `${r.name} ${d3.format(",")(r.value)} (${Math.round(r.value / t.imm * 100)}%)`).join(", ");
+      noteEl.innerHTML = `In 2024 NBS recorded <strong>${d3.format(",")(t.imm)}</strong> long-term immigrants and `
+        + `<strong>${d3.format(",")(t.emi)}</strong> emigrants &mdash; about 16&times; the domicile-register counts on the map's `
+        + `<a href="#mode=immigration_flow&amp;year=2024" class="jit-link">Registered-flows</a> view, because this series counts `
+        + `everyone who moves for 12 months or more. Largest immigrant groups by citizenship: ${esc(top)} &mdash; i.e. mostly `
+        + `Moldovans returning home (those who hold Romanian passports are counted under Romania).`;
+    }
+    const srcEl = document.getElementById("ltmigSrc");
+    if (srcEl) { const o = { source_id: "nbs_ltmig" }; srcEl.textContent = "Source: " + captionsFor(o); srcEl.title = citationsFor(o); }
+  }
+
   // ---- Audience pathways + Simple/Advanced view ----------------------------
   function scrollToSel(sel) {
     const el = document.querySelector(sel);
@@ -4453,6 +4578,7 @@ window.MIGRATION_DATA = {
   buildMilestones();
   renderLabourDest();
   renderEastWest();
+  renderLtMig();
   initStory();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";

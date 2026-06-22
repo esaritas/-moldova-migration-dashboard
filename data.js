@@ -400,6 +400,20 @@ window.MIGRATION_DATA = {
              "recorded as Romanian (EU) passport holders, so birthplace tables capture only a " +
              "fraction. Earlier ONS country-of-birth estimates put Moldova-born near 3,400 (2015).",
       note: "Listed to flag the gap; no reliable birthplace headcount exists, so only a floor is shown."
+    },
+    nbs_ltmig: {
+      label: "Long-term international migration (12-month rule, border-crossing)",
+      publisher: "National Bureau of Statistics of the Republic of Moldova",
+      url: "https://statbank.statistica.md/PxWeb/pxweb/en/20%20Populatia%20si%20procesele%20demografice/20%20Populatia%20si%20procesele%20demografice__POP070/POP07060.px/",
+      indicator_code: "PxWeb POP07060 (General Inspectorate of Border Police)",
+      accessed: "2026-06-22",
+      definition: "Immigrants and emigrants defined by the international 12-month rule (a change of " +
+                  "usual residence lasting at least 12 months), estimated from Border Police records.",
+      scope: "An order of magnitude larger than the domicile-registration series (POP07100/POP07300): " +
+             "in 2024, 105,804 immigrants and 123,406 emigrants. Immigration is dominated by returning " +
+             "Moldovan citizens (40,173) and Romanian-passport holders (19,052), plus Ukrainians " +
+             "(23,265); net migration stays negative every year.",
+      note: "Different methodology from the registered-flow series — the two are not comparable."
     }
   },
   // Single source of truth for definitions (cards link here in item 8).
@@ -498,6 +512,42 @@ window.MIGRATION_DATA = {
       "1,462 in 2015 (NBS POP07300)."
   ],
 
+  // Long-term international migration (NBS POP07060, Border Police, 12-month rule).
+  // The internationally-comparable flow series — roughly 16x the domicile-register
+  // counts the map's "Registered flows" view uses. Verified from the PxWeb API.
+  ltmigration: {
+    source_id: "nbs_ltmig",
+    years: [
+      { year: 2014, imm: 98731,  emi: 122955 },
+      { year: 2015, imm: 105834, emi: 127277 },
+      { year: 2016, imm: 107303, emi: 153405 },
+      { year: 2017, imm: 107580, emi: 158259 },
+      { year: 2018, imm: 116739, emi: 158788 },
+      { year: 2019, imm: 116196, emi: 153289 },
+      { year: 2020, imm: 65167,  emi: 72372 },
+      { year: 2021, imm: 68356,  emi: 113769 },
+      { year: 2022, imm: 177875, emi: 241448 },
+      { year: 2023, imm: 97517,  emi: 130084 },
+      { year: 2024, imm: 105804, emi: 123406 }
+    ],
+    // 2024 immigrants by citizenship (POP07060). Returning Moldovan citizens and
+    // Romanian-passport holders dominate — most "immigrants" are Moldovans coming home.
+    imm_2024_by_citizenship: [
+      { name: "Moldova (returning)", value: 40173 },
+      { name: "Ukraine", value: 23265 },
+      { name: "Romania", value: 19052 },
+      { name: "Russia", value: 6668 },
+      { name: "Bulgaria", value: 2153 },
+      { name: "Italy", value: 1838 },
+      { name: "Germany", value: 1668 },
+      { name: "Israel", value: 1473 },
+      { name: "Turkey", value: 1020 },
+      { name: "USA", value: 947 },
+      { name: "Other", value: 7547 }
+    ],
+    total_2024: { imm: 105804, emi: 123406 }
+  },
+
   // Scannable methodology matrix — one row per phenomenon, rendered as a table at
   // the top of the methodology dialog so readers can compare what each number
   // measures, when, and where it falls short, without reading the full prose.
@@ -517,6 +567,9 @@ window.MIGRATION_DATA = {
     { topic: "Registered flows", source: "NBS", year: "2024",
       measure: "Formal annual emigrant/immigrant registrations",
       limit: "Undercounts real movement; most emigrants never formally deregister." },
+    { topic: "Long-term flows", source: "NBS (Border Police)", year: "2024",
+      measure: "12-month-rule migration (POP07060): 105,804 in / 123,406 out",
+      limit: "~16× the register; immigration is mostly returning Moldovan/Romanian-passport citizens." },
     { topic: "Resident population", source: "NBS Census", year: "2024",
       measure: "Usually-resident population by district",
       limit: "Excludes Transnistria & Bender; not comparable to de-jure register." }
