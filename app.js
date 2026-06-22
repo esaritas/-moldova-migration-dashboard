@@ -1776,16 +1776,57 @@
 
     const noteEl = document.getElementById("ltmigNote");
     if (noteEl) {
-      const t = D.total_2024, b = D.imm_2024_by_citizenship;
-      const top = b.slice(0, 3).map(r => `${r.name} ${d3.format(",")(r.value)} (${Math.round(r.value / t.imm * 100)}%)`).join(", ");
-      noteEl.innerHTML = `In 2024 NBS recorded <strong>${d3.format(",")(t.imm)}</strong> long-term immigrants and `
-        + `<strong>${d3.format(",")(t.emi)}</strong> emigrants &mdash; about 16&times; the domicile-register counts on the map's `
-        + `<a href="#mode=immigration_flow&amp;year=2024" class="jit-link">Registered-flows</a> view, because this series counts `
-        + `everyone who moves for 12 months or more. Largest immigrant groups by citizenship: ${esc(top)} &mdash; i.e. mostly `
-        + `Moldovans returning home (those who hold Romanian passports are counted under Romania).`;
+      const t = D.total_2024;
+      noteEl.innerHTML = `About <strong>56%</strong> of these long-term "immigrants" are Moldovans returning home `
+        + `&mdash; 40,173 Moldovan citizens plus 19,052 who hold Romanian (EU) passports (mostly Moldovans too). `
+        + `Genuine foreign immigration is smaller and led by Ukrainians (23,265), reflecting the war. The `
+        + `${d3.format(",")(t.imm)} total is about 16&times; the domicile-register count on the map's `
+        + `<a href="#mode=immigration_flow&amp;year=2024" class="jit-link">Registered-flows</a> view, which captures `
+        + `only formal changes of permanent residence.`;
     }
     const srcEl = document.getElementById("ltmigSrc");
     if (srcEl) { const o = { source_id: "nbs_ltmig" }; srcEl.textContent = "Source: " + captionsFor(o); srcEl.title = citationsFor(o); }
+  }
+
+  // ---- Long-term migration: 2024 immigrants by citizenship (bar chart) ------
+  // The "breakdown per country" from POP07060 is a CITIZENSHIP split, not a
+  // destination/origin geography, so it belongs in a bar chart (not the flow
+  // map). Two tones make the headline visible: returning Moldovan-origin
+  // citizens (Moldova + Romanian-passport holders) vs genuine foreign nationals.
+  function renderLtMigBreakdown() {
+    const host = document.getElementById("ltmigBreakdown");
+    const D = DATA.ltmigration;
+    if (!host || !D) return;
+    const total = D.total_2024.imm;
+    let rows = D.imm_2024_by_citizenship.slice();
+    const other = rows.find(r => r.name === "Other");
+    rows = rows.filter(r => r.name !== "Other").sort((a, b) => b.value - a.value);
+    if (other) rows.push(other);              // keep the residual last
+    const max = d3.max(rows, r => r.value) || 1;
+    const returnee = new Set(["Moldova (returning)", "Romania"]);
+
+    const W = 400, mL = 86, mR = 66, mT = 8, rowH = 23, barH = 12;
+    const H = mT + rows.length * rowH + 4;
+    const x = d3.scaleLinear().domain([0, max]).range([mL, W - mR]);
+
+    const svg = d3.select(host).html("").append("svg")
+      .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "lbar-svg")
+      .attr("role", "img").attr("aria-label", "2024 long-term immigrants to Moldova by citizenship");
+
+    rows.forEach((r, i) => {
+      const cy = mT + i * rowH + rowH / 2;
+      const disp = r.name.replace(" (returning)", "");
+      svg.append("text").attr("class", "lbar-name").attr("text-anchor", "end")
+        .attr("x", mL - 8).attr("y", cy + 3.5).text(disp);
+      svg.append("rect").attr("class", "lbar-track")
+        .attr("x", mL).attr("y", cy - barH / 2).attr("width", x.range()[1] - mL).attr("height", barH).attr("rx", 3);
+      svg.append("rect").attr("class", returnee.has(r.name) ? "ltmb-bar ltmb-return" : "ltmb-bar ltmb-foreign")
+        .attr("x", mL).attr("y", cy - barH / 2).attr("width", Math.max(1, x(r.value) - mL)).attr("height", barH).attr("rx", 3);
+      const pct = Math.round(r.value / total * 100);
+      const v = svg.append("text").attr("class", "lbar-val").attr("x", x(r.value) + 5).attr("y", cy + 3.5);
+      v.append("tspan").text(d3.format(",")(r.value));
+      if (pct >= 1) v.append("tspan").attr("class", "lbar-pct").attr("dx", 4).text(pct + "%");
+    });
   }
 
   // ---- Audience pathways + Simple/Advanced view ----------------------------
@@ -1929,6 +1970,7 @@
   renderLabourDest();
   renderEastWest();
   renderLtMig();
+  renderLtMigBreakdown();
   initStory();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
