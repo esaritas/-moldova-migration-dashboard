@@ -1720,6 +1720,69 @@
     }
   }
 
+  // ---- Long-term migration: immigrants vs emigrants (NBS POP07060) ----------
+  // The internationally-comparable border-crossing series (12-month rule), ~16×
+  // the domicile register the map's "Registered flows" view uses. Shows the
+  // persistent net outflow and the 2022 war-churn spike; the note explains that
+  // most "immigrants" are Moldovans returning home.
+  function renderLtMig() {
+    const host = document.getElementById("ltmigChart");
+    const D = DATA.ltmigration;
+    if (!host || !D) return;
+    const rows = D.years;
+    const W = 470, H = 264, ml = 46, mr = 94, mt = 26, mb = 28;
+    const x = d3.scaleLinear().domain(d3.extent(rows, d => d.year)).range([ml, W - mr]);
+    const maxV = d3.max(rows, d => Math.max(d.imm, d.emi)) || 1;
+    const y = d3.scaleLinear().domain([0, maxV * 1.06]).nice().range([H - mb, mt]);
+    const COL = { emi: "#BC6A4A", imm: "#2B6CA8" };
+
+    const svg = d3.select(host).html("").append("svg")
+      .attr("viewBox", `0 0 ${W} ${H}`).attr("class", "ew-svg")
+      .attr("role", "img").attr("aria-label", "Long-term immigrants versus emigrants, Moldova, 2014 to 2024");
+
+    y.ticks(3).forEach(t => {
+      svg.append("line").attr("class", "ew-grid").attr("x1", ml).attr("x2", W - mr).attr("y1", y(t)).attr("y2", y(t));
+      svg.append("text").attr("class", "ew-ytick").attr("x", ml - 6).attr("y", y(t) + 3).attr("text-anchor", "end").text(fmtShort(t));
+    });
+    [2014, 2018, 2022, 2024].forEach(yr => svg.append("text").attr("class", "ew-xtick")
+      .attr("x", x(yr)).attr("y", H - 9).attr("text-anchor", "middle").text(yr));
+
+    // Net-outflow band between the emigrant (upper) and immigrant (lower) lines.
+    svg.append("path").datum(rows).attr("class", "ltm-band")
+      .attr("d", d3.area().x(d => x(d.year)).y0(d => y(d.imm)).y1(d => y(d.emi)).curve(d3.curveMonotoneX));
+    const mkLine = key => d3.line().x(d => x(d.year)).y(d => y(d[key])).curve(d3.curveMonotoneX);
+    svg.append("path").datum(rows).attr("class", "ew-line").attr("stroke", COL.emi).attr("d", mkLine("emi"));
+    svg.append("path").datum(rows).attr("class", "ew-line").attr("stroke", COL.imm).attr("d", mkLine("imm"));
+
+    const p22 = rows.find(d => d.year === 2022);
+    if (p22) svg.append("text").attr("class", "ew-cross-lbl")
+      .attr("x", x(2022)).attr("y", y(p22.emi) - 6).attr("text-anchor", "middle").text("2022: war churn");
+
+    const last = rows[rows.length - 1];
+    const emiY = y(last.emi) - 2;
+    const immY = Math.max(y(last.imm) + 4, emiY + 28);   // keep the two labels apart
+    const endLabel = (yy, color, name, val) => {
+      const t = svg.append("text").attr("class", "ew-series-lbl").attr("x", x(last.year) + 7).attr("y", yy).attr("fill", color);
+      t.append("tspan").attr("class", "ew-series-name").text(name);
+      t.append("tspan").attr("class", "ew-series-val").attr("x", x(last.year) + 7).attr("dy", 12).text(d3.format(",")(val));
+    };
+    endLabel(emiY, COL.emi, "Emigrants", last.emi);
+    endLabel(immY, COL.imm, "Immigrants", last.imm);
+
+    const noteEl = document.getElementById("ltmigNote");
+    if (noteEl) {
+      const t = D.total_2024, b = D.imm_2024_by_citizenship;
+      const top = b.slice(0, 3).map(r => `${r.name} ${d3.format(",")(r.value)} (${Math.round(r.value / t.imm * 100)}%)`).join(", ");
+      noteEl.innerHTML = `In 2024 NBS recorded <strong>${d3.format(",")(t.imm)}</strong> long-term immigrants and `
+        + `<strong>${d3.format(",")(t.emi)}</strong> emigrants &mdash; about 16&times; the domicile-register counts on the map's `
+        + `<a href="#mode=immigration_flow&amp;year=2024" class="jit-link">Registered-flows</a> view, because this series counts `
+        + `everyone who moves for 12 months or more. Largest immigrant groups by citizenship: ${esc(top)} &mdash; i.e. mostly `
+        + `Moldovans returning home (those who hold Romanian passports are counted under Romania).`;
+    }
+    const srcEl = document.getElementById("ltmigSrc");
+    if (srcEl) { const o = { source_id: "nbs_ltmig" }; srcEl.textContent = "Source: " + captionsFor(o); srcEl.title = citationsFor(o); }
+  }
+
   // ---- Audience pathways + Simple/Advanced view ----------------------------
   function scrollToSel(sel) {
     const el = document.querySelector(sel);
@@ -1860,6 +1923,7 @@
   buildMilestones();
   renderLabourDest();
   renderEastWest();
+  renderLtMig();
   initStory();
   const scopeEl = document.getElementById("scopeNote");
   if (scopeEl) scopeEl.textContent = DATA.scope_note || "";
