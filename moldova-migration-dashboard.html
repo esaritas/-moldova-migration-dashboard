@@ -1990,6 +1990,7 @@ window.MIGRATION_DATA = {
       publisher: "National Bureau of Statistics of the Republic of Moldova",
       url: "https://statbank.statistica.md/PxWeb/pxweb/en/20%20Populatia%20si%20procesele%20demografice/20%20Populatia%20si%20procesele%20demografice__POP070/POP07060.px/",
       indicator_code: "PxWeb POP07060 (General Inspectorate of Border Police)",
+      coverage: "data 2014–2024",
       accessed: "2026-06-22",
       definition: "Immigrants and emigrants defined by the international 12-month rule (a change of " +
                   "usual residence lasting at least 12 months), estimated from Border Police records.",
@@ -2906,19 +2907,24 @@ window.MIGRATION_DATA = {
     return [];
   }
   function sourceById(id) { return SOURCES[id] || null; }
-  // Compact caption for a single source: "Publisher · indicator_code · as of date".
+  // Compact caption for a single source: "Publisher · indicator_code · [coverage ·] as of/retrieved date".
   function sourceCaption(s) {
     if (!s) return "";
     const bits = [s.publisher];
     if (s.indicator_code) bits.push(s.indicator_code);
-    if (s.accessed) bits.push("as of " + s.accessed);
+    if (s.coverage) bits.push(s.coverage);
+    // When a data-coverage span is given, the access date is just when we pulled
+    // it — say "retrieved" so it isn't misread as the data's currency.
+    if (s.accessed) bits.push((s.coverage ? "retrieved " : "as of ") + s.accessed);
     return bits.join(" · ");
   }
   // Fuller one-line citation for the footer: "Publisher, label (code), as of date".
   function citation(s) {
     if (!s) return "";
     const code = s.indicator_code ? ` (${s.indicator_code})` : "";
-    return `${s.publisher}, ${s.label}${code}, as of ${s.accessed}`;
+    const cov = s.coverage ? `, ${s.coverage}` : "";
+    const date = s.accessed ? `, ${s.coverage ? "retrieved" : "as of"} ${s.accessed}` : "";
+    return `${s.publisher}, ${s.label}${code}${cov}${date}`;
   }
   function captionsFor(obj) {
     return sourceIdsFor(obj).map(id => sourceCaption(sourceById(id))).filter(Boolean).join("  ·  ");
