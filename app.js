@@ -1637,7 +1637,9 @@
       // faint full-extent track shows how each bar sits against the max
       svg.append("rect").attr("class", "lbar-track")
         .attr("x", mL).attr("y", cy - barH / 2).attr("width", x.range()[1] - mL).attr("height", barH).attr("rx", 3);
-      svg.append("rect").attr("class", "lbar-bar")
+      // Highlight the leader (Economist-style): the top bar blazes in the accent,
+      // the rest recede to a lighter tint so the eye lands on #1 first.
+      svg.append("rect").attr("class", i === 0 ? "lbar-bar lbar-lead" : "lbar-bar")
         .attr("x", mL).attr("y", cy - barH / 2).attr("width", Math.max(1, x(r.value) - mL)).attr("height", barH).attr("rx", 3);
       const pct = total ? Math.round(r.value / total * 100) : null;
       const val = svg.append("text").attr("class", "lbar-val")
