@@ -1805,7 +1805,7 @@
     const max = d3.max(rows, r => r.value) || 1;
     const returnee = new Set(["Moldova (returning)", "Romania"]);
 
-    const W = 400, mL = 86, mR = 66, mT = 8, rowH = 23, barH = 12;
+    const W = 400, mL = 86, mR = 66, mT = 6, rowH = 19, barH = 10;
     const H = mT + rows.length * rowH + 4;
     const x = d3.scaleLinear().domain([0, max]).range([mL, W - mR]);
 
@@ -1999,5 +1999,17 @@
     applyHashToState();
     setAccent(); buildTimeline(); renderMap(); renderTable(); renderContext();
     applyMapFraming();
+  });
+
+  // In-text links that switch the map view (#mode=…) change state far above the
+  // click point, so without scrolling they feel unresponsive. Bring the map into
+  // view after the hashchange re-render. (Plain #ch-… anchors scroll natively.)
+  document.body.addEventListener("click", (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#mode="]');
+    if (!a) return;
+    setTimeout(() => {
+      const panel = document.querySelector(".panel");
+      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
   });
 })();
