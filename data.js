@@ -198,11 +198,11 @@ window.MIGRATION_DATA = {
     { year: 2022, modes: ["immigration"],
       text: "War breaks out in Ukraine, and the number of people fleeing across the border surges (UNHCR)." },
     { year: 2024, modes: ["immigration"],
-      text: "Around 136,000 refugees from Ukraine are now living in Moldova (UNHCR)." },
+      text: "Around 136,000 refugees from Ukraine are now living in the Republic of Moldova (UNHCR)." },
     { year: 2020, modes: ["remittances"],
       text: "Russia's share slips to third place as Israel takes the top spot; EU countries together already account for more than a third of flows (NBM, 2020)." },
     { year: 2022, modes: ["remittances"],
-      text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. EU sources — led by Italy, Germany, the UK and France — now account for most formal flows." },
+      text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. Sources in the European Union, led by Italy, Germany, the United Kingdom and France, now account for most formal flows." },
     { year: 2024, modes: ["emigration"],
       text: "The recorded diaspora tilts toward the EU, with Italy now in the lead as the Russia-born count falls (UN DESA)." }
   ],
@@ -364,13 +364,13 @@ window.MIGRATION_DATA = {
     // birthplace matrix omits Moldova-born there. These sources estimate that
     // omitted population on a place-of-birth (or migration-background) basis.
     us_acs: {
-      label: "American Community Survey — population by place of birth (Moldova)",
+      label: "American Community Survey, population by place of birth (Moldova)",
       publisher: "U.S. Census Bureau",
       url: "https://www.census.gov/programs-surveys/acs/",
       indicator_code: "ACS · place of birth = Moldova",
       accessed: "2026-06-21",
-      definition: "People living in the United States who were born in Moldova — a " +
-                  "place-of-birth basis, the same concept UN DESA uses elsewhere.",
+      definition: "People living in the United States who were born in the Republic of Moldova. " +
+                  "This is a place of birth basis, the same concept the United Nations uses elsewhere.",
       scope: "ACS estimate ≈52,000 (2021), up from ≈43,600 (2015). Captures naturalised " +
              "US citizens born in Moldova, whom UN DESA's bilateral matrix omits because " +
              "the US reports by citizenship.",
@@ -382,24 +382,26 @@ window.MIGRATION_DATA = {
       url: "https://www.destatis.de/EN/Themes/Society-Environment/Population/Migration-Integration/_node.html",
       indicator_code: "Eurostat migr_pop3ctb · Destatis Mikrozensus (Migrationshintergrund)",
       accessed: "2026-06-21",
-      definition: "Moldova-born residents of Germany (Eurostat, country of birth) and the " +
-                  "broader Moldovan migration-background population (Destatis Mikrozensus).",
-      scope: "≈35,000 on a country-of-birth basis (Eurostat); the wider migration-background " +
-             "concept — which adds dual-nationals and descendants — runs far higher (≈120,000, " +
-             "2022). Germany reports to UN DESA by citizenship, so none of this is in the 864,257.",
-      note: "Two different concepts; shown as a range rather than a single value."
+      definition: "Residents of Germany who were born in the Republic of Moldova, on the Eurostat " +
+                  "country of birth basis, together with the broader Moldovan migration background " +
+                  "population from the Destatis Mikrozensus.",
+      scope: "About 35,000 on the country of birth basis from Eurostat. The wider migration background " +
+             "concept, which adds dual nationals and descendants, runs far higher, at about 120,000 in " +
+             "2022. Germany reports to the United Nations by citizenship, so none of this appears in the 864,257.",
+      note: "These are two different concepts, so the figure is shown as a range rather than a single value."
     },
     ons_cob: {
-      label: "Census 2021 — usual residents by country of birth (Moldova)",
-      publisher: "Office for National Statistics (UK)",
+      label: "Census 2021, usual residents by country of birth (Moldova)",
+      publisher: "Office for National Statistics (United Kingdom)",
       url: "https://www.ons.gov.uk/datasets/TS012/editions/2021",
       indicator_code: "Census 2021 · TS012 country of birth",
       accessed: "2026-06-21",
-      definition: "Usual residents of England & Wales born in Moldova.",
-      scope: "Badly undercounts the community: most Moldovans in the UK entered and are " +
-             "recorded as Romanian (EU) passport holders, so birthplace tables capture only a " +
-             "fraction. Earlier ONS country-of-birth estimates put Moldova-born near 3,400 (2015).",
-      note: "Listed to flag the gap; no reliable birthplace headcount exists, so only a floor is shown."
+      definition: "Usual residents of England and Wales who were born in the Republic of Moldova.",
+      scope: "This badly undercounts the community, because most Moldovans in the United Kingdom " +
+             "entered and are recorded as holders of Romanian passports from the European Union, so " +
+             "the country of birth tables capture only a fraction. Earlier estimates put the number " +
+             "born in the Republic of Moldova near 3,400 in 2015.",
+      note: "It is listed to flag the gap. No reliable count by country of birth exists, so only a floor is shown."
     },
     nbs_ltmig: {
       label: "Long-term international migration (12-month rule, border-crossing)",
@@ -414,7 +416,7 @@ window.MIGRATION_DATA = {
              "in 2024, 105,804 immigrants and 123,406 emigrants. Immigration is dominated by returning " +
              "Moldovan citizens (40,173) and Romanian-passport holders (19,052), plus Ukrainians " +
              "(23,265); net migration stays negative every year.",
-      note: "Different methodology from the registered-flow series — the two are not comparable."
+      note: "This uses a different methodology from the registered flow series, so the two are not comparable."
     }
   },
   // Single source of truth for definitions (cards link here in item 8).
@@ -604,20 +606,20 @@ window.MIGRATION_DATA = {
     },
     emigration: {
       takeaway: "About 864,000 people born in Moldova now live abroad. That is roughly one in four of everyone born here, and more than a third of all the people still living in the country today.",
-      headline: "Few countries have been shaped by emigration the way Moldova has. UN DESA's " +
-                "2024 edition counts 864,257 people born in Moldova who now live abroad. It is " +
-                "a strict count by country of birth, so it leaves out places that report by " +
-                "citizenship instead (Germany, the US and the UK) and quietly loses anyone who " +
-                "has since naturalised. On that birthplace basis the number has been climbing, " +
-                "from 812,653 in 2020 to 864,257 in 2024. Eurostat's independent country-of-birth " +
-                "statistics (migr_pop3ctb) for EU member states alone confirm over 400,000 " +
-                "Moldova-born residents across Italy, Romania, France, Spain and Portugal — " +
-                "consistent with the five EU rows in this dashboard — with Germany adding " +
-                "roughly 35,000 more that UN DESA's bilateral matrix omits because Germany " +
-                "reports by citizenship. Counted by nationality rather than birthplace the diaspora " +
-                "is larger still: the Prague Process puts Moldovan nationals abroad at about " +
-                "1.16 million in 2020, and Moldova's own population gap of about 0.86 million " +
-                "points to a real diaspora of roughly 1.0 to 1.2 million.",
+      headline: "Few countries have been shaped by emigration the way the Republic of Moldova has. " +
+                "The 2024 edition from the United Nations counts 864,257 people born in the country who " +
+                "now live abroad. It is a strict count by country of birth, so it leaves out places that " +
+                "report by citizenship instead, namely Germany, the United States and the United Kingdom, " +
+                "and it quietly loses anyone who has since naturalised. On that birthplace basis the number " +
+                "has been climbing, from 812,653 in 2020 to 864,257 in 2024. Eurostat's independent figures " +
+                "by country of birth for European Union member states alone confirm more than 400,000 people " +
+                "born in the Republic of Moldova living across Italy, Romania, France, Spain and Portugal. " +
+                "That is consistent with the five European Union rows in this dashboard, and Germany adds " +
+                "roughly 35,000 more that the United Nations matrix omits because Germany reports by " +
+                "citizenship. Counted by nationality rather than by birthplace, the diaspora is larger still. " +
+                "The Prague Process puts Moldovan nationals abroad at about 1.16 million in 2020, and the " +
+                "country's own population gap of about 0.86 million points to a real diaspora of roughly " +
+                "1.0 to 1.2 million.",
       indicators: [
         { term: "Diaspora (UN DESA 2024)", value: "864k", sub: "country-of-birth total · about 1.0 to 1.2M on a citizenship basis", world: null, icon: "users", source_id: "undesa_2024", def_id: "emigrant_stock" },
         { term: "EU alone (Eurostat)", value: "400k+", sub: "Moldova-born in EU27 (Eurostat migr_pop3ctb 2022) · Germany adds ~35k not in UN DESA", world: null, icon: "globe", source_id: "eurostat_migr", def_id: "diaspora_basis" },
@@ -638,23 +640,22 @@ window.MIGRATION_DATA = {
           { country: "United States", value: "≈ 52,000", basis: "Born in Moldova · US Census ACS 2021", confidence: "Medium", source_id: "us_acs" },
           { country: "Germany", value: "≈ 35,000 – 122,000", basis: "Country of birth → migration background · 2022", confidence: "Low", source_id: "destatis_micro" },
           { country: "United Kingdom", value: "≥ 3,400", basis: "Country of birth · ONS 2021 (severe undercount)", confidence: "Very low", source_id: "ons_cob",
-            note: "Most Moldovans in the UK hold Romanian (EU) passports and are recorded as Romanian, so birthplace tables miss them — the true figure is many times higher." }
+            note: "Most Moldovans in the United Kingdom hold Romanian passports from the European Union and are recorded as Romanian, so the tables by country of birth miss them. The true figure is many times higher." }
         ]
       }
     },
     immigration: {
-      takeaway: "Since the early days of 2022, Moldova has taken in more than 141,000 Ukrainians fleeing the war, one of the highest shares anywhere in Europe at about one refugee for every 17 residents. Roughly two in five are children. The map shows where the people granted Temporary Protection have settled.",
-      headline: "When Russia launched its full-scale invasion of Ukraine in February 2022, Moldova " +
-                "found itself receiving one of the largest refugee inflows per person anywhere in " +
-                "Europe. As of 31 May 2026 UNHCR counts 141,058 Ukrainian refugees still in the " +
-                "country, with 92,405 of them enrolled in Temporary Protection (recorded 27 April " +
-                "2026 and valid through March 2027). The population skews young and female: about " +
-                "38% of those in Moldova are children under 18, roughly 39% are adult women, and " +
-                "about 23% are adult men — a demographic pattern typical of conflict displacement, " +
-                "where men of military age often remain in or return to Ukraine. These are UNHCR's " +
-                "operational figures, and they are a different thing from the 52,400 Ukraine-born " +
-                "usual residents the 2024 census recorded, which you can explore on the " +
-                "Foreign-born residents tab.",
+      takeaway: "Since the early days of 2022, the Republic of Moldova has taken in more than 141,000 Ukrainians fleeing the war. That is one of the highest shares anywhere in Europe, at about one refugee for every 17 residents, and roughly two in five of them are children. The map shows where the people granted Temporary Protection have settled.",
+      headline: "When Russia launched its full invasion of Ukraine in February 2022, the Republic of " +
+                "Moldova found itself receiving one of the largest refugee inflows per person anywhere in " +
+                "Europe. As of 31 May 2026, UNHCR counts 141,058 Ukrainian refugees still in the " +
+                "country, with 92,405 of them enrolled in Temporary Protection, recorded on 27 April " +
+                "2026 and valid through March 2027. The population skews young and female. About " +
+                "38 percent of those in the country are children under 18, roughly 39 percent are adult women, " +
+                "and about 23 percent are adult men. This is a demographic pattern that is typical of conflict " +
+                "displacement, where men of military age often remain in or return to Ukraine. These are the " +
+                "operational figures from UNHCR, and they are a different thing from the 52,400 residents born " +
+                "in Ukraine that the 2024 census recorded, which you can explore on the Foreign born residents tab.",
       indicators: [
         { term: "Residing (May 2026)", value: "141,058", sub: "Ukrainian refugees remaining · UNHCR 31 May 2026", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
         { term: "Temporary Protection", value: "92,405", sub: "TP enrolled 27 Apr 2026 (UNHCR); valid to Mar 2027", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
@@ -702,19 +703,20 @@ window.MIGRATION_DATA = {
       ]
     },
     remittances: {
-      takeaway: "The money Moldovans abroad send home is worth about 10.5% of GDP, nearly double the global average and more than half the size of the state budget. The map shows where it came from in 2020; since 2022 Russia's share has effectively collapsed.",
-      panel_note: "Country breakdown: NBM 2020 (last year with a published by-country breakdown). NBM aggregate net settlements 2023: ≈$1.63bn. World Bank broader BPM6 measure: $1.92bn (2024). Economic indicators: World Bank 2024.",
+      takeaway: "The money that Moldovans abroad send home is worth about 10.5 percent of GDP. That is nearly double the global average and more than half the size of the state budget. The map shows where it came from in 2020. Since 2022 the share from Russia has effectively collapsed.",
+      panel_note: "The breakdown by country is from the National Bank of Moldova for 2020, the last year with a published breakdown by country. The aggregate net settlements from the National Bank came to about 1.63 billion dollars in 2023. The broader World Bank measure puts total remittances at 1.92 billion dollars in 2024, and the economic indicators on this view use the World Bank figures for 2024.",
       headline: "Money sent home is one of the pillars of the economy. Even after sliding from its " +
-                "2006 peak of 34.5%, it still amounts to about 10.5% of GDP, roughly double the world " +
-                "average. The geography of those flows has also shifted dramatically. Russia was the " +
-                "single largest source from at least 2015 through 2019, contributing more than a " +
-                "quarter of all formal transfers. By 2020 Israel had overtaken it. Then, after " +
+                "peak of 34.5 percent in 2006, it still amounts to about 10.5 percent of GDP, roughly " +
+                "double the world average. The geography of those flows has also shifted dramatically. " +
+                "Russia was the single largest source from at least 2015 through 2019, contributing more " +
+                "than a quarter of all formal transfers. By 2020 Israel had overtaken it. Then, after the " +
                 "Western financial sanctions on Russia in 2022, transfers from Russia through Moldovan " +
-                "banks essentially stopped — their share fell from around 14% in 2020 to near zero. " +
-                "EU member states, led by Italy, Germany, the United Kingdom and France, now account " +
-                "for the large majority of formal inflows. The NBM's total net settlements (a narrower " +
-                "bank-only measure) came to about $1.63bn in 2023; the World Bank's broader BPM6 " +
-                "series puts total remittances at $1.92bn in 2024.",
+                "banks essentially stopped, and their share fell from around 14 percent in 2020 to near " +
+                "zero. Member states of the European Union, led by Italy, Germany, the United Kingdom and " +
+                "France, now account for the large majority of formal inflows. The total net settlements " +
+                "reported by the National Bank of Moldova, which is a narrower measure covering banks only, " +
+                "came to about 1.63 billion dollars in 2023. The broader World Bank series puts total " +
+                "remittances at 1.92 billion dollars in 2024.",
       // Remittances-to-GDP over time. Recent years exact; earlier approximate.
       gdp_series_source_id: "wb_remit_gdp",
       gdp_series: [
@@ -832,7 +834,7 @@ window.MIGRATION_DATA = {
     // DISTINCT measure from UNHCR refugee count above — census usual-residence concept.
     immigration_census: {
       label: "Foreign-born residents",
-      sublabel: "NBS 2024 Census — by country of birth",
+      sublabel: "NBS 2024 Census, by country of birth",
       unit: "people",
       direction: "in",
       vintage: "NBS Census 2024",
