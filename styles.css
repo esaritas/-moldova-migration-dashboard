@@ -1073,6 +1073,8 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .ltmig-key-foreign { background: color-mix(in srgb, var(--c-pop) 72%, var(--surface)); }
 .ltmb-return { fill: var(--c-diaspora); }
 .ltmb-foreign { fill: color-mix(in srgb, var(--c-pop) 72%, var(--surface)); }
+/* Secondary detail chart — keep it noticeably smaller than the line charts. */
+#ltmigBreakdown .lbar-svg { max-width: 440px; }
 
 /* "Three different immigration numbers" disambiguation box */
 .measures-box { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
