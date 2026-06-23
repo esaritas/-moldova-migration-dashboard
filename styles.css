@@ -1073,8 +1073,15 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .ltmig-key-foreign { background: color-mix(in srgb, var(--c-pop) 72%, var(--surface)); }
 .ltmb-return { fill: var(--c-diaspora); }
 .ltmb-foreign { fill: color-mix(in srgb, var(--c-pop) 72%, var(--surface)); }
-/* Secondary detail chart — keep it noticeably smaller than the line charts. */
 #ltmigBreakdown .lbar-svg { max-width: 440px; }
+
+/* The two long-term charts sit side by side to cut scrolling; stack on narrow screens. */
+.ltmig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; margin-top: 6px; }
+.ltmig-col { min-width: 0; }
+.ltmig-col .ltmig-subh { margin-top: 0; }
+/* Inside the grid each chart fills its own column so the pair stays balanced. */
+.ltmig-grid .ew-svg, .ltmig-grid .lbar-svg { max-width: 100%; }
+@media (max-width: 760px) { .ltmig-grid { grid-template-columns: 1fr; gap: 20px; } }
 
 /* "Three different immigration numbers" disambiguation box */
 .measures-box { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }

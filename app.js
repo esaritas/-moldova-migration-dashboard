@@ -1182,10 +1182,10 @@
       pwSplitBar(el, {
         part: foreignBorn,
         whole: m.population_resident,
-        partLabel: "Foreign-born",
-        wholeLabel: "Moldova-born",
+        partLabel: "Born abroad",
+        wholeLabel: "Born in the country",
         accent,
-        readout: "About 1 in 23 residents was born outside Moldova (4.4%).",
+        readout: "About 1 in 23 residents was born outside the Republic of Moldova, which is 4.4 percent.",
         denomLabel: "Whole = usually-resident population · NBS 2024 Census"
       });
       el.hidden = false;
@@ -1627,7 +1627,7 @@
 
     // Axis caption + gridlines with value ticks → this is the "scale".
     svg.append("text").attr("x", mL).attr("y", 9).attr("class", "lbar-axislabel")
-      .text("Moldova-born residents");
+      .text("People born in the Republic of Moldova");
     x.ticks(4).forEach(t => {
       svg.append("line").attr("class", "lbar-grid")
         .attr("x1", x(t)).attr("x2", x(t)).attr("y1", mT - 4).attr("y2", H - 6);
@@ -1777,12 +1777,11 @@
     const noteEl = document.getElementById("ltmigNote");
     if (noteEl) {
       const t = D.total_2024;
-      noteEl.innerHTML = `About <strong>56%</strong> of these long-term "immigrants" are Moldovans returning home `
-        + `&mdash; 40,173 Moldovan citizens plus 19,052 who hold Romanian (EU) passports (mostly Moldovans too). `
-        + `Genuine foreign immigration is smaller and led by Ukrainians (23,265), reflecting the war. The `
-        + `${d3.format(",")(t.imm)} total is about 16&times; the domicile-register count on the map's `
-        + `<a href="#mode=immigration_flow&amp;year=2024" class="jit-link">Registered-flows</a> view, which captures `
-        + `only formal changes of permanent residence.`;
+      noteEl.innerHTML = `About <strong>56 percent</strong> of these long stay immigrants are Moldovans returning home. `
+        + `They include 40,173 Moldovan citizens and a further 19,052 who hold Romanian passports, most of whom are also Moldovans. `
+        + `Genuine foreign immigration is smaller and is led by Ukrainians, with 23,265 arrivals, which reflects the war. `
+        + `The total of ${d3.format(",")(t.imm)} is about sixteen times the count in the domicile register shown on the map's `
+        + `<a href="#mode=immigration_flow&amp;year=2024" class="jit-link">Registered flows</a> view, which records only formal changes of permanent residence.`;
     }
     const srcEl = document.getElementById("ltmigSrc");
     if (srcEl) { const o = { source_id: "nbs_ltmig" }; srcEl.textContent = "Source: " + captionsFor(o); srcEl.title = citationsFor(o); }
@@ -1920,28 +1919,29 @@
     if (!el) return;
     if (mode === "remittances") {
       el.innerHTML =
-        `<div><strong>Reading the remittance map.</strong> The per-country split is the latest `
-        + `<em>published</em> geographic breakdown (NBM 2020 net settlements) and is shown as history, `
-        + `not today's pattern: since the 2022 sanctions, transfers from Russia have collapsed and EU `
-        + `sources now dominate. The headline totals on this view (10.5% of GDP, $1.92bn in 2024) are `
-        + `current — only the country geography is historical.</div>`;
+        `<div><strong>How to read the remittance map.</strong> The split by country is the most recent `
+        + `<em>published</em> geographic breakdown, the 2020 net settlements from the National Bank of Moldova, `
+        + `and it is shown as history rather than as today's pattern. Since the sanctions of 2022, transfers `
+        + `from Russia have collapsed and sources in the European Union now dominate. The headline figures on `
+        + `this view, 10.5 percent of GDP and 1.92 billion dollars in 2024, are current. Only the geography by `
+        + `country is historical.</div>`;
       el.hidden = false;
     } else if (mode === "immigration") {
       el.innerHTML =
-        `<div><strong>Reading the refugee map.</strong> The district map shows <em>Temporary `
-        + `Protection holders</em> (≈92,405, UNHCR Apr 2026), not all Ukrainian refugees in the `
-        + `country. The headline count of 141,058 is the broader UNHCR <em>residing-refugee</em> `
-        + `figure — related to, but larger than, the TP total mapped by district. Both are separate `
-        + `again from the census foreign-born residents on the next tab.</div>`;
+        `<div><strong>How to read the refugee map.</strong> The district map shows <em>Temporary `
+        + `Protection holders</em>, about 92,405 as recorded by UNHCR in April 2026, not all of the Ukrainian `
+        + `refugees in the country. The headline count of 141,058 is the broader UNHCR figure for refugees `
+        + `residing in the country. It is related to the figure mapped by district, but larger. Both are `
+        + `separate again from the foreign born residents counted in the census, on the next tab.</div>`;
       el.hidden = false;
     } else if (mode === "emigration") {
       el.innerHTML =
-        `<div><strong>Why some big destinations are missing.</strong> UN DESA counts the diaspora `
-        + `by <em>country of birth</em>, so destinations that report by citizenship instead — `
-        + `Germany, the United States and the United Kingdom — carry no Moldova-born cell and are `
-        + `absent here, not zero. Eurostat puts Moldova-born residents in Germany alone at roughly `
-        + `35,000. Counted by nationality the diaspora is larger still, about 1.0–1.2&nbsp;million; `
-        + `the unnamed remainder sits in the "Other destinations" row of the table.</div>`;
+        `<div><strong>Why some large destinations are missing.</strong> The United Nations counts the diaspora `
+        + `by <em>country of birth</em>. Destinations that count their residents by citizenship instead, namely `
+        + `Germany, the United States and the United Kingdom, therefore carry no figure here. They are absent, `
+        + `not zero. Eurostat puts the number of people born in the Republic of Moldova and living in Germany `
+        + `alone at roughly 35,000. Counted by nationality, the diaspora is larger still, at about 1.0 to 1.2 `
+        + `million. The unnamed remainder sits in the row labelled Other destinations in the table.</div>`;
       el.hidden = false;
     } else {
       el.hidden = true;
