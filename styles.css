@@ -1040,7 +1040,7 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .labour-limits em { font-style: normal; font-weight: 600; color: var(--ink); }
 
 /* labour destination bar chart (SVG, built by app.js) */
-.lbar-svg { width: 100%; height: auto; display: block; }
+.lbar-svg { width: 100%; height: auto; display: block; max-width: 560px; }
 .lbar-grid { stroke: var(--line); stroke-width: 1; }
 .lbar-tick { font-family: var(--font-mono); font-size: 9px; fill: var(--ink-faint); }
 .lbar-axislabel { font-family: var(--font-mono); font-size: 8px; letter-spacing: .08em; text-transform: uppercase; fill: var(--ink-faint); }
