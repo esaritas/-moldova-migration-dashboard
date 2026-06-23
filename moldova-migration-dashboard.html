@@ -1099,6 +1099,22 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .ltmb-return { fill: var(--c-diaspora); }
 .ltmb-foreign { fill: color-mix(in srgb, var(--c-pop) 72%, var(--surface)); }
 
+/* "Three different immigration numbers" disambiguation box */
+.measures-box { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.measures-title { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
+.measures-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.measure { display: flex; flex-direction: column; gap: 3px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.measure-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; align-self: flex-start; }
+.tag-flow { color: #1f5e8c; background: color-mix(in srgb, var(--c-diaspora) 13%, transparent); }
+.tag-stock { color: #1f6e54; background: color-mix(in srgb, var(--c-pop) 14%, transparent); }
+.measure-num { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: -.02em; line-height: 1.1; color: var(--ink); margin-top: 4px; }
+.measure-name { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.measure-desc { font-size: 11.5px; line-height: 1.45; color: var(--ink-soft); }
+.measure-desc strong { color: var(--ink); font-weight: 600; }
+.measures-foot { font-size: 12px; line-height: 1.5; color: var(--ink-soft); margin: 12px 0 0; }
+.measures-foot strong { color: var(--ink); }
+@media (max-width: 680px) { .measures-grid { grid-template-columns: 1fr; } }
+
 @media (max-width: 720px) {
   .labour-grid { grid-template-columns: 1fr; gap: 18px; }
 }
@@ -1540,7 +1556,7 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
           <h3 class="ewshift-title">More churn than the register shows</h3>
           <p class="ewshift-sub">Beyond the small domicile register, NBS publishes a far larger flow series using the international 12-month rule (from border-crossing data). It captures long-term moves the register misses &mdash; and emigration has run ahead of immigration every year. Persons per year, 2014&ndash;2024.</p>
           <div id="ltmigChart"><!-- immigrants vs emigrants, built by app.js --></div>
-          <h4 class="ltmig-subh">Who the 2024 immigrants are, by citizenship</h4>
+          <h4 class="ltmig-subh">The 105,804 long-term immigrants (2024), by citizenship</h4>
           <p class="ltmig-legend">
             <span class="ltmig-key ltmig-key-return"></span>Returning Moldovan-origin (Moldova + Romanian passports)
             <span class="ltmig-key ltmig-key-foreign"></span>Foreign nationals
@@ -1548,6 +1564,31 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
           <div id="ltmigBreakdown"><!-- immigrants by citizenship, built by app.js --></div>
           <p class="labour-note" id="ltmigNote"></p>
           <div class="src-caption" id="ltmigSrc"></div>
+        </div>
+        <!-- Disambiguation: three different "immigration" numbers users conflate -->
+        <div class="measures-box">
+          <h4 class="measures-title">Three different &ldquo;immigration&rdquo; numbers &mdash; and why they differ</h4>
+          <div class="measures-grid">
+            <div class="measure">
+              <span class="measure-tag tag-flow">Flow &middot; per year</span>
+              <span class="measure-num">~6,600</span>
+              <span class="measure-name">Registered immigrants</span>
+              <span class="measure-desc">NBS register &mdash; only people who <strong>formally change permanent residence</strong>. Shown on the map's Registered-flows view.</span>
+            </div>
+            <div class="measure">
+              <span class="measure-tag tag-flow">Flow &middot; per year</span>
+              <span class="measure-num">~105,804</span>
+              <span class="measure-name">Long-term immigrants</span>
+              <span class="measure-desc">NBS border-crossing (12-month rule) &mdash; <strong>anyone staying a year or more</strong>, about 56% returning Moldovans. The chart above.</span>
+            </div>
+            <div class="measure">
+              <span class="measure-tag tag-stock">Stock &middot; one moment</span>
+              <span class="measure-num">106,700</span>
+              <span class="measure-name">Foreign-born residents</span>
+              <span class="measure-desc">2024 Census &mdash; people <strong>living here who were born abroad</strong>, built up over decades. The map's Foreign-born view.</span>
+            </div>
+          </div>
+          <p class="measures-foot"><strong>Why 105,804 and 106,700 look alike but aren't:</strong> a <em>flow</em> is movement during one year; a <em>stock</em> is a headcount at one moment. One is a single year's arrivals (mostly Moldovans coming home), the other the whole foreign-born population. They count different people.</p>
         </div>
         <div class="labour-limits">
           <strong>Data limitations.</strong> There is no comprehensive, regularly published public breakdown of the diaspora by <em>occupation, skill level or sector</em>. Qualitatively, Moldovans abroad are concentrated in construction, domestic and care work, agriculture, hospitality and transport, but this dashboard does not chart it for lack of an authoritative, current source. Registered NBS flows also undercount real movement, so labour-migration totals here should be read as lower bounds.

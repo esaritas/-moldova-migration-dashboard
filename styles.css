@@ -1074,6 +1074,22 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .ltmb-return { fill: var(--c-diaspora); }
 .ltmb-foreign { fill: color-mix(in srgb, var(--c-pop) 72%, var(--surface)); }
 
+/* "Three different immigration numbers" disambiguation box */
+.measures-box { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.measures-title { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
+.measures-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.measure { display: flex; flex-direction: column; gap: 3px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.measure-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; align-self: flex-start; }
+.tag-flow { color: #1f5e8c; background: color-mix(in srgb, var(--c-diaspora) 13%, transparent); }
+.tag-stock { color: #1f6e54; background: color-mix(in srgb, var(--c-pop) 14%, transparent); }
+.measure-num { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: -.02em; line-height: 1.1; color: var(--ink); margin-top: 4px; }
+.measure-name { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.measure-desc { font-size: 11.5px; line-height: 1.45; color: var(--ink-soft); }
+.measure-desc strong { color: var(--ink); font-weight: 600; }
+.measures-foot { font-size: 12px; line-height: 1.5; color: var(--ink-soft); margin: 12px 0 0; }
+.measures-foot strong { color: var(--ink); }
+@media (max-width: 680px) { .measures-grid { grid-template-columns: 1fr; } }
+
 @media (max-width: 720px) {
   .labour-grid { grid-template-columns: 1fr; gap: 18px; }
 }
