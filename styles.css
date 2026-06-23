@@ -4,15 +4,16 @@
    ========================================================================== */
 
 :root {
-  /* Neutrals */
-  --bg:            #FAFAF7;   /* page */
+  /* Neutrals — clean white / minimal, cool (not warm cream) */
+  --bg:            #FFFFFF;   /* page */
   --surface:       #FFFFFF;   /* cards */
-  --line:          #E7E7E0;   /* hairlines */
-  --land:          #ECEBE4;   /* map countries */
+  --subtle:        #F6F7F8;   /* inset / secondary fills on white cards */
+  --line:          #E6E7E9;   /* hairlines */
+  --land:          #EBEDF0;   /* map countries */
   --land-edge:     #FFFFFF;   /* country borders */
-  --ink:           #1F2421;   /* primary text */
-  --ink-soft:      #6B7470;   /* secondary text */
-  --ink-faint:     #9AA09C;   /* captions */
+  --ink:           #1A1C1E;   /* primary text */
+  --ink-soft:      #585E66;   /* secondary text */
+  --ink-faint:     #8B9097;   /* captions */
 
   /* Phenomenon colour logic (consistent across the whole dashboard):
        diaspora / emigration   = blue
@@ -32,7 +33,7 @@
   --accent:  var(--c-diaspora);   /* set per mode at runtime */
 
   --radius: 10px;
-  --shadow: 0 1px 2px rgba(31, 36, 33, 0.04), 0 6px 24px rgba(31, 36, 33, 0.04);
+  --shadow: 0 1px 2px rgba(17, 20, 24, 0.04), 0 4px 16px rgba(17, 20, 24, 0.05);
 
   --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
   --font-body:    "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -231,7 +232,7 @@ h1 {
 
 /* SVG map elements */
 .country { fill: var(--land); stroke: var(--land-edge); stroke-width: .5px; }
-.country.moldova { fill: #DCDACE; }
+.country.moldova { fill: #D9DCE0; }
 
 /* Moldova districts choropleth (Temporary Protection holders) */
 .districts path.district { stroke: #fff; stroke-width: .6px; cursor: pointer; transition: opacity .12s ease; }
@@ -413,7 +414,7 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 /* Readout + denominator note live in HTML (not SVG) so long lines wrap. */
 .pw-cap { max-width: 520px; margin-top: 8px; }
 .pw-readout { font-size: 12px; font-weight: 500; color: var(--ink); line-height: 1.4; }
-.pw-denom { font-size: 10px; color: #9aa09c; margin-top: 3px; line-height: 1.4; }
+.pw-denom { font-size: 10px; color: #8B9097; margin-top: 3px; line-height: 1.4; }
 /* animate fill on mode change, but respect reduced-motion */
 @media (prefers-reduced-motion: no-preference) {
   .pw-svg rect[fill]:not([fill="none"]) {
@@ -454,7 +455,7 @@ tbody td { padding: 9px 6px; font-size: 13.5px; vertical-align: middle; }
 .stat {
   display: flex; gap: 12px; align-items: flex-start;
   border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 12px 14px; background: var(--bg);
+  padding: 12px 14px; background: var(--subtle);
 }
 .stat-ico {
   flex: none; width: 36px; height: 36px; border-radius: 9px;
@@ -642,7 +643,7 @@ footer strong { color: var(--ink-soft); font-weight: 600; }
 }
 .method-close {
   flex: none; width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 8px;
-  background: var(--bg); color: var(--ink-soft); font-size: 20px; line-height: 1; cursor: pointer;
+  background: var(--subtle); color: var(--ink-soft); font-size: 20px; line-height: 1; cursor: pointer;
 }
 .method-close:hover { color: var(--ink); }
 .method-close:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
@@ -931,7 +932,7 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
   display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;
 }
 .concept-card {
-  background: var(--bg); border: 1px solid var(--line);
+  background: var(--subtle); border: 1px solid var(--line);
   border-left: 3px solid var(--tone); border-radius: 8px; padding: 13px 14px;
 }
 .concept-card h3 { font-size: 13.5px; margin: 8px 0 5px; color: var(--ink); }
@@ -976,7 +977,7 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 }
 .milestone {
   flex: 0 0 200px; scroll-snap-align: start;
-  background: var(--bg); border: 1px solid var(--line);
+  background: var(--subtle); border: 1px solid var(--line);
   border-top: 3px solid var(--tone, var(--c-flow)); border-radius: 8px; padding: 12px 13px;
 }
 .milestone-year {
@@ -1028,13 +1029,13 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .labour-col h3 { font-size: 13.5px; margin: 0 0 12px; color: var(--ink); }
 .labour-note { font-size: 11px; color: var(--ink-faint); line-height: 1.45; margin: 10px 0 0; }
 .labour-cards { display: grid; gap: 10px; }
-.labour-card { background: var(--bg); border: 1px solid var(--line); border-left: 3px solid var(--c-diaspora); border-radius: 8px; padding: 11px 13px; }
+.labour-card { background: var(--subtle); border: 1px solid var(--line); border-left: 3px solid var(--c-diaspora); border-radius: 8px; padding: 11px 13px; }
 .labour-card h4 { font-size: 12.5px; margin: 0 0 5px; color: var(--ink); }
 .labour-card p { font-size: 12px; line-height: 1.5; color: var(--ink-soft); margin: 0; }
 .labour-card p strong { color: var(--c-diaspora); }
 .labour-limits {
   margin-top: 18px; font-size: 12px; line-height: 1.55; color: var(--ink-soft);
-  background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 11px 14px;
+  background: var(--subtle); border: 1px dashed var(--line); border-radius: 8px; padding: 11px 14px;
 }
 .labour-limits strong { color: var(--ink); }
 .labour-limits em { font-style: normal; font-weight: 600; color: var(--ink); }
@@ -1087,7 +1088,7 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .measures-box { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .measures-title { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
 .measures-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.measure { display: flex; flex-direction: column; gap: 3px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.measure { display: flex; flex-direction: column; gap: 3px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--subtle); }
 .measure-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; align-self: flex-start; }
 .tag-flow { color: #1f5e8c; background: color-mix(in srgb, var(--c-diaspora) 13%, transparent); }
 .tag-stock { color: #1f6e54; background: color-mix(in srgb, var(--c-pop) 14%, transparent); }

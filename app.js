@@ -17,7 +17,7 @@
   // Sequential greens for the population choropleth — population/foreign-born =
   // green in the same colour logic.
   const POP_SCALE = ["#E1EFE8", "#B6DBC8", "#7FC0A1", "#46A079", "#1F7A55"];
-  const NO_DATA_FILL = "#EFEDE7";
+  const NO_DATA_FILL = "#ECEEF1";
   // Normalize a district name for joining: strip diacritics + admin prefixes, lowercase.
   function normName(s) {
     return (s || "")
@@ -579,7 +579,7 @@
 
     const yNd = barH + 12;
     g.append("rect").attr("x", 0).attr("y", yNd).attr("width", 14).attr("height", 14)
-      .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#d8d8d2").attr("stroke-width", 1);
+      .attr("rx", 3).attr("fill", NO_DATA_FILL).attr("stroke", "#E0E3E7").attr("stroke-width", 1);
     g.append("text").attr("class", "legend-label").attr("x", 14 + 8).attr("y", yNd + 11).text("no data");
   }
 
@@ -1255,7 +1255,7 @@
       .attr("viewBox", `0 0 ${W} 34`).attr("class", "pw-svg")
       .attr("role", "img").attr("aria-label", o.readout + " " + o.denomLabel);
     // grey whole
-    svg.append("rect").attr("x", 0).attr("y", 0).attr("width", W).attr("height", barH).attr("rx", 5).attr("fill", "#d8d8d2");
+    svg.append("rect").attr("x", 0).attr("y", 0).attr("width", W).attr("height", barH).attr("rx", 5).attr("fill", "#E0E3E7");
     // accent part
     svg.append("rect").attr("x", 0).attr("y", 0).attr("width", partPx).attr("height", barH).attr("rx", 5).attr("fill", o.accent);
     if (partPx > 90)
@@ -1284,12 +1284,12 @@
       .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-depop")
       .attr("role", "img").attr("aria-label", o.readout);
     // 2014 row
-    svg.append("text").attr("x", 0).attr("y", 11).attr("fill", "#9aa09c").attr("font-size", 10).text("2014 census");
-    svg.append("rect").attr("x", 0).attr("y", labelH).attr("width", W).attr("height", barH).attr("rx", 4).attr("fill", "#c8ccc6");
+    svg.append("text").attr("x", 0).attr("y", 11).attr("fill", "#8B9097").attr("font-size", 10).text("2014 census");
+    svg.append("rect").attr("x", 0).attr("y", labelH).attr("width", W).attr("height", barH).attr("rx", 4).attr("fill", "#D2D6DB");
     svg.append("text").attr("x", W - 4).attr("y", labelH + barH / 2 + 4).attr("text-anchor", "end").attr("fill", "#555").attr("font-size", 10).text(fmtShort(o.pop2014));
     // 2024 row
-    svg.append("text").attr("x", 0).attr("y", labelH + barH + gap + 11).attr("fill", "#9aa09c").attr("font-size", 10).text("2024 census");
-    svg.append("rect").attr("x", 0).attr("y", row2Y).attr("width", w2024).attr("height", barH).attr("rx", 4).attr("fill", "#9aa09c");
+    svg.append("text").attr("x", 0).attr("y", labelH + barH + gap + 11).attr("fill", "#8B9097").attr("font-size", 10).text("2024 census");
+    svg.append("rect").attr("x", 0).attr("y", row2Y).attr("width", w2024).attr("height", barH).attr("rx", 4).attr("fill", "#8B9097");
     // loss segment
     svg.append("rect").attr("x", w2024).attr("y", row2Y).attr("width", wLoss).attr("height", barH)
       .attr("rx", 4).attr("fill", o.accent).attr("opacity", 0.18)
@@ -1328,7 +1328,7 @@
         .attr("x", col * cell + (cell - icoW) / 2)
         .attr("y", row * cell + (cell - icoH) / 2)
         .attr("width", icoW).attr("height", icoH)
-        .attr("fill", isAccent ? o.accent : "#c8ccc6");
+        .attr("fill", isAccent ? o.accent : "#D2D6DB");
     }
     const box = document.createElement("div"); box.className = "pw-item";
     box.appendChild(svg.node());
@@ -1357,7 +1357,7 @@
           .attr("rx", 2.5)
           // Filled cells carry the story; empties recede to near-white so the
           // ~10 accent squares read at a glance instead of a wall of 100 cubes.
-          .attr("fill", isFilled ? o.accent : "#ececE5").attr("opacity", isFilled ? 0.9 : 0.4);
+          .attr("fill", isFilled ? o.accent : "#ECEEF1").attr("opacity", isFilled ? 0.9 : 0.4);
         if (isRefEdge)
           svg.append("rect").attr("x", x).attr("y", y).attr("width", cell).attr("height", cell)
             .attr("rx", 3).attr("fill", "none")
@@ -1386,21 +1386,21 @@
       .attr("viewBox", `0 0 ${W} ${totalH}`).attr("class", "pw-svg pw-budget")
       .attr("role", "img").attr("aria-label", o.readout);
     // Row 1: remittances
-    svg.append("text").attr("x", 0).attr("y", 11).attr("fill", "#9aa09c").attr("font-size", 10).text("Annual remittances");
+    svg.append("text").attr("x", 0).attr("y", 11).attr("fill", "#8B9097").attr("font-size", 10).text("Annual remittances");
     svg.append("rect").attr("x", 0).attr("y", labelH).attr("width", remitPx).attr("height", barH).attr("rx", 4).attr("fill", o.accent).attr("opacity", 0.85);
     svg.append("text").attr("x", remitPx + 5).attr("y", labelH + barH / 2 + 4.5).attr("fill", o.accent).attr("font-size", 10)
       .text(`~${o.remitMdl.toFixed(1)} bn MDL`);
     // Row 2: state budget (full width = scale)
     const row2 = labelH + barH + gap;
-    svg.append("text").attr("x", 0).attr("y", row2 + 11).attr("fill", "#9aa09c").attr("font-size", 10).text("State budget revenue 2024");
-    svg.append("rect").attr("x", 0).attr("y", row2 + labelH).attr("width", W).attr("height", barH).attr("rx", 4).attr("fill", "#d8d8d2");
+    svg.append("text").attr("x", 0).attr("y", row2 + 11).attr("fill", "#8B9097").attr("font-size", 10).text("State budget revenue 2024");
+    svg.append("rect").attr("x", 0).attr("y", row2 + labelH).attr("width", W).attr("height", barH).attr("rx", 4).attr("fill", "#E0E3E7");
     // tint the remittance share within the budget bar
     svg.append("rect").attr("x", 0).attr("y", row2 + labelH).attr("width", remitPx).attr("height", barH).attr("rx", 4).attr("fill", o.accent).attr("opacity", 0.22);
     svg.append("text").attr("x", W / 2).attr("y", row2 + labelH + barH / 2 + 4.5).attr("text-anchor", "middle")
       .attr("fill", "#555").attr("font-size", 10).text(`${o.budgetMdl} bn MDL`);
     // FX note + readout
     const noteY = row2 + labelH + barH + 15;
-    svg.append("text").attr("x", 0).attr("y", noteY).attr("fill", "#b0b4b0").attr("font-size", 9).text(`FX: ${o.fxLabel}`);
+    svg.append("text").attr("x", 0).attr("y", noteY).attr("fill", "#A2A8AF").attr("font-size", 9).text(`FX: ${o.fxLabel}`);
     const box = document.createElement("div"); box.className = "pw-item";
     box.appendChild(svg.node());
     pwCaption(box, o.readout);
@@ -1536,7 +1536,7 @@
     const m = DATA.context.moldova;
     const tp = (DATA.tp_choropleth && DATA.tp_choropleth.meta) || {};
     const KPIS = [
-      { label: "Moldova-born abroad", value: d3.format(",")(m.diaspora_estimate),
+      { label: "Moldovans abroad", value: d3.format(",")(m.diaspora_estimate),
         sub: "Diaspora stock · UN DESA 2024", tone: "c-blue", mode: "emigration" },
       { label: "Resident population", value: "2.41M",
         sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: "population" },
