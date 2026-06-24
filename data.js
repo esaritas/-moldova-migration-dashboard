@@ -1136,6 +1136,29 @@ window.MIGRATION_DATA = {
           { name: "Centre", in: 70246, out: 80813 },
           { name: "South", in: 21813, out: 32476 },
           { name: "ATU Găgăuzia", in: 3572, out: 4693 }
+        ],
+        // Net internal migration by district (table 3.12, arrivals minus
+        // departures). Names corrected from the English file's literal
+        // mistranslations (Sîngerei, Călărași, Strășeni). Only Chișinău, its
+        // suburban ring and Bălți gain; every rural district loses.
+        districts: [
+          { name: "Mun. Bălți", net: 5794 }, { name: "Anenii Noi", net: 3940 },
+          { name: "Ialoveni", net: 3286 }, { name: "Criuleni", net: 558 },
+          { name: "Strășeni", net: 293 }, { name: "Edineț", net: 250 },
+          { name: "Dubăsari", net: 169 }, { name: "Taraclia", net: 134 },
+          { name: "Orhei", net: -280 }, { name: "Cahul", net: -392 },
+          { name: "Basarabeasca", net: -468 }, { name: "Ocnița", net: -573 },
+          { name: "Rîșcani", net: -578 }, { name: "Căușeni", net: -624 },
+          { name: "Briceni", net: -838 }, { name: "Dondușeni", net: -1277 },
+          { name: "Soroca", net: -1386 }, { name: "Leova", net: -1408 },
+          { name: "Șoldănești", net: -1469 }, { name: "Rezina", net: -1848 },
+          { name: "Drochia", net: -2024 }, { name: "Cimișlia", net: -2300 },
+          { name: "Ștefan Vodă", net: -2527 }, { name: "Ungheni", net: -2566 },
+          { name: "Florești", net: -2593 }, { name: "Nisporeni", net: -2675 },
+          { name: "Sîngerei", net: -2803 }, { name: "Glodeni", net: -2826 },
+          { name: "Călărași", net: -2873 }, { name: "Cantemir", net: -3078 },
+          { name: "Telenești", net: -3461 }, { name: "Hîncești", net: -3641 },
+          { name: "Fălești", net: -4117 }
         ]
       }
     }

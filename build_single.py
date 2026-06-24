@@ -19,28 +19,30 @@ def read(name):
         return f.read()
 
 def main():
+    import re
     html = read("index.html")
     # Guard: inline JS must not contain a literal </script> (it would close early).
     for js in ("world-data.js", "moldova-adm1.js", "data.js", "app.js"):
         if "</script>" in read(js).lower():
             raise SystemExit(f"{js} contains a literal </script>; cannot safely inline.")
 
-    replacements = {
-        '<link rel="stylesheet" href="styles.css" />':
-            "<style>\n" + read("styles.css") + "\n</style>",
-        '<script src="world-data.js"></script>':
-            "<script>\n" + read("world-data.js") + "\n</script>",
-        '<script src="moldova-adm1.js"></script>':
-            "<script>\n" + read("moldova-adm1.js") + "\n</script>",
-        '<script src="data.js"></script>':
-            "<script>\n" + read("data.js") + "\n</script>",
-        '<script src="app.js"></script>':
-            "<script>\n" + read("app.js") + "\n</script>",
-    }
-    for find, repl in replacements.items():
-        if find not in html:
-            raise SystemExit(f"Expected tag not found in index.html: {find}")
-        html = html.replace(find, repl)
+    # Regex patterns tolerate cache-busting query strings (e.g. styles.css?v=123).
+    replacements = [
+        (r'<link rel="stylesheet" href="styles\.css[^"]*"\s*/>',
+            "<style>\n" + read("styles.css") + "\n</style>"),
+        (r'<script src="world-data\.js[^"]*"></script>',
+            "<script>\n" + read("world-data.js") + "\n</script>"),
+        (r'<script src="moldova-adm1\.js[^"]*"></script>',
+            "<script>\n" + read("moldova-adm1.js") + "\n</script>"),
+        (r'<script src="data\.js[^"]*"></script>',
+            "<script>\n" + read("data.js") + "\n</script>"),
+        (r'<script src="app\.js[^"]*"></script>',
+            "<script>\n" + read("app.js") + "\n</script>"),
+    ]
+    for pat, repl in replacements:
+        if not re.search(pat, html):
+            raise SystemExit(f"Expected tag not found in index.html: {pat}")
+        html = re.sub(pat, lambda m: repl, html, count=1)
 
     banner = ("<!-- AUTO-GENERATED single-file build by build_single.py — do not edit by hand.\n"
               "     Edit index.html / styles.css / data.js / app.js, then re-run build_single.py. -->\n")
