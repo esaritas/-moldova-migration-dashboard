@@ -1084,6 +1084,23 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .ltmig-grid .ew-svg, .ltmig-grid .lbar-svg { max-width: 100%; }
 @media (max-width: 760px) { .ltmig-grid { grid-template-columns: 1fr; gap: 20px; } }
 
+/* Census detail card (Foreign-born view): citizenship split + reasons */
+.census-card { margin-top: 20px; padding: 15px 16px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--subtle); }
+.census-title { font-size: 13.5px; font-weight: 600; color: var(--ink); margin: 0 0 6px; }
+.census-title-2 { margin-top: 18px; }
+.census-sub { font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); margin: 0 0 10px; }
+.cit-bar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; margin: 0 0 7px; }
+.cit-seg { display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--font-mono); font-size: 11px; font-weight: 500; min-width: 28px; }
+.cit-mol { background: var(--c-pop); }
+.cit-for { background: var(--c-refugee); }
+.cit-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 11.5px; color: var(--ink-soft); }
+.cit-key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.cit-key-mol { background: var(--c-pop); }
+.cit-key-for { background: var(--c-refugee); }
+.creason-svg { max-width: 480px; }
+.creason-bar { fill: color-mix(in srgb, var(--c-pop) 68%, var(--surface)); }
+.creason-forced { fill: var(--c-refugee); }
+
 /* "Three different immigration numbers" disambiguation box */
 .measures-box { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .measures-title { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 12px; }
