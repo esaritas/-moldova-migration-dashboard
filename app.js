@@ -1229,7 +1229,7 @@
   }
 
   // 100%-stacked reason mix per nationality (table 3.8).
-  const RBN_COLORS = ["#E0883E", "#2B6CA8", "#6E4FA3", "#2E8B6B", "#8B9097"]; // forced, family, studies, work, other
+  const RBN_COLORS = ["#CF5B3B", "#2B6CA8", "#E0A93F", "#2E8B6B", "#9AA0A6"]; // forced, family, studies, work, other
   function buildReasonsByNat(rbn, legendEl) {
     const f = d3.format(",");
     if (legendEl) legendEl.innerHTML = rbn.order.map((o, k) =>
