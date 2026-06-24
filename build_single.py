@@ -22,7 +22,7 @@ def main():
     import re
     html = read("index.html")
     # Guard: inline JS must not contain a literal </script> (it would close early).
-    for js in ("world-data.js", "moldova-adm1.js", "data.js", "app.js"):
+    for js in ("d3.v7.min.js", "world-data.js", "moldova-adm1.js", "data.js", "app.js"):
         if "</script>" in read(js).lower():
             raise SystemExit(f"{js} contains a literal </script>; cannot safely inline.")
 
@@ -30,6 +30,8 @@ def main():
     replacements = [
         (r'<link rel="stylesheet" href="styles\.css[^"]*"\s*/>',
             "<style>\n" + read("styles.css") + "\n</style>"),
+        (r'<script src="d3\.v7\.min\.js[^"]*"></script>',
+            "<script>\n" + read("d3.v7.min.js") + "\n</script>"),
         (r'<script src="world-data\.js[^"]*"></script>',
             "<script>\n" + read("world-data.js") + "\n</script>"),
         (r'<script src="moldova-adm1\.js[^"]*"></script>',

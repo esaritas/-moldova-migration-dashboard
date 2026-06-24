@@ -20,36 +20,48 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260623d" />
+  <link rel="stylesheet" href="styles.css?v=20260623e" />
 </head>
 <body>
 
-  <!-- Moldovan carpet (covor) motif, a geometric kilim tile used as a faint,
-       seamless background pattern. Diamonds touch the tile edge-midpoints so the
-       lattice repeats cleanly; corner rosettes are completed by adjacent tiles. -->
+  <!-- Moldovan carpet (covor / scoarta) motif used as a faint, seamless
+       background watermark. Built from the two signature elements of a
+       Bessarabian scoarta: the hooked rhombus (romb cu carlige, the stylised
+       "ram's horns") and the eight-pointed star (steaua). Central rhombi,
+       edge-midpoint rhombi and corner stars are laid out so the field repeats
+       cleanly and reads as a woven carpet. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
-      <pattern id="covor" width="120" height="120" patternUnits="userSpaceOnUse">
-        <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
-          <!-- diamond lattice -->
-          <path d="M60 0 L120 60 L60 120 L0 60 Z"/>
-          <!-- toothed inner diamond -->
-          <path d="M60 22 L98 60 L60 98 L22 60 Z"/>
-          <!-- hooks (cârlige) on the inner diamond points -->
-          <path d="M60 22 l-9 9 M60 22 l9 9"/>
-          <path d="M98 60 l-9 -9 M98 60 l-9 9"/>
-          <path d="M60 98 l-9 -9 M60 98 l9 -9"/>
-          <path d="M22 60 l9 -9 M22 60 l9 9"/>
-          <!-- central eight-point star (two overlaid squares) -->
-          <path d="M60 44 L76 60 L60 76 L44 60 Z"/>
-          <path d="M49 49 L71 49 L71 71 L49 71 Z"/>
-          <circle cx="60" cy="60" r="3" fill="currentColor" stroke="none"/>
-          <!-- corner rosettes (each completed across four tiles) -->
-          <path d="M0 -11 L11 0 L0 11 L-11 0 Z"/>
-          <path d="M120 -11 L131 0 L120 11 L109 0 Z"/>
-          <path d="M0 109 L11 120 L0 131 L-11 120 Z"/>
-          <path d="M120 109 L131 120 L120 131 L109 120 Z"/>
-        </g>
+      <!-- eight-pointed star: two overlapping squares (steaua) -->
+      <g id="cv-star" fill="currentColor" stroke="none">
+        <rect x="-7" y="-7" width="14" height="14"/>
+        <rect x="-7" y="-7" width="14" height="14" transform="rotate(45)"/>
+      </g>
+      <!-- hooked rhombus with ram's-horn tips and a concentric inner diamond -->
+      <g id="cv-romb" fill="none" stroke="currentColor" stroke-width="1.5"
+         stroke-linejoin="round" stroke-linecap="round">
+        <path d="M0 -30 L30 0 L0 30 L-30 0 Z"/>
+        <path d="M0 -18 L18 0 L0 18 L-18 0 Z"/>
+        <!-- ram's-horn chevrons projecting from the four tips -->
+        <path d="M-7 -37 L0 -30 L7 -37
+                 M37 -7 L30 0 L37 7
+                 M-7 37 L0 30 L7 37
+                 M-37 -7 L-30 0 L-37 7"/>
+      </g>
+      <pattern id="covor" width="160" height="160" patternUnits="userSpaceOnUse">
+        <!-- central medallion: hooked rhombus enclosing a star -->
+        <use href="#cv-romb" transform="translate(80 80)"/>
+        <use href="#cv-star" transform="translate(80 80)"/>
+        <!-- smaller rhombi at the edge midpoints (shared with neighbour tiles) -->
+        <use href="#cv-romb" transform="translate(80 0) scale(0.62)"/>
+        <use href="#cv-romb" transform="translate(80 160) scale(0.62)"/>
+        <use href="#cv-romb" transform="translate(0 80) scale(0.62)"/>
+        <use href="#cv-romb" transform="translate(160 80) scale(0.62)"/>
+        <!-- eight-pointed stars at the corners (completed across four tiles) -->
+        <use href="#cv-star" transform="translate(0 0)"/>
+        <use href="#cv-star" transform="translate(160 0)"/>
+        <use href="#cv-star" transform="translate(0 160)"/>
+        <use href="#cv-star" transform="translate(160 160)"/>
       </pattern>
     </defs>
   </svg>
@@ -421,10 +433,13 @@
   </dialog>
 
   <!-- Libraries & data (load order matters) -->
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="world-data.js?v=20260623d"></script>
-  <script src="moldova-adm1.js?v=20260623d"></script>
-  <script src="data.js?v=20260623d"></script>
-  <script src="app.js?v=20260623d"></script>
+  <!-- d3 is vendored locally so the dashboard never depends on a CDN being
+       reachable (a blocked CDN previously left the page blank). CDN is a fallback. -->
+  <script src="d3.v7.min.js?v=20260623e"></script>
+  <script>window.d3 || document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/d3@7"><\/scr' + 'ipt>');</script>
+  <script src="world-data.js?v=20260623e"></script>
+  <script src="moldova-adm1.js?v=20260623e"></script>
+  <script src="data.js?v=20260623e"></script>
+  <script src="app.js?v=20260623e"></script>
 </body>
 </html>
