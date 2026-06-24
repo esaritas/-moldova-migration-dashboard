@@ -60,8 +60,6 @@
     immigration: "#E08A2E",         // refugees hosted — orange
     immigration_census: "#2E8B6B",  // foreign-born residents — green
     remittances: "#6E4FA3",         // remittances — purple
-    emigration_flow: "#5C7FA8",     // registered emigration — muted blue
-    immigration_flow: "#5E8C76",    // registered immigration — muted green
     population: "#2E8B6B"           // resident population — green (population family)
   };
   // Chart title per mode (the economics panel chart).
@@ -69,8 +67,6 @@
     emigration: "Moldovans abroad, by main destination (stock)",
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
-    emigration_flow: "Registered emigrants per year (NBS)",
-    immigration_flow: "Registered immigrants per year (NBS)",
     population: "Resident population, by census year (NBS)"
   };
 
@@ -95,7 +91,6 @@
   const MODE_ICON = {
     emigration: "depart", immigration: "tent", remittances: "banknote",
     immigration_census: "users",
-    emigration_flow: "depart", immigration_flow: "arrive",
     population: "landmark"
   };
 
@@ -1724,14 +1719,15 @@
         sub: "Enrolled · UNHCR 27 Apr 2026", tone: "c-orange", mode: "immigration" },
       { label: "Annual remittances", value: "$1.92bn",
         sub: "10.5% of GDP · World Bank 2024", tone: "c-purple", mode: "remittances" },
-      { label: "Emigrants / year", value: "≈4,000",
-        sub: "Registered flow · NBS 2024", tone: "c-blue", mode: "emigration_flow" },
-      { label: "Immigrants / year", value: "≈6,600",
-        sub: "Registered flow · NBS 2024", tone: "c-green", mode: "immigration_flow" }
+      { label: "Long-term immigrants / year", value: "105,804",
+        sub: "2024 · NBS long-term migration", tone: "c-green", section: "ch-labour" },
+      { label: "Long-term emigrants / year", value: "123,486",
+        sub: "2024 · NBS long-term migration", tone: "c-blue", section: "ch-labour" }
     ];
     grid.innerHTML = KPIS.map(k => {
-      const tag = k.mode ? "button" : "div";
-      const attr = k.mode ? ` type="button" data-goto="${k.mode}"` : "";
+      const tag = (k.mode || k.section) ? "button" : "div";
+      const attr = k.mode ? ` type="button" data-goto="${k.mode}"`
+                 : k.section ? ` type="button" data-section="${k.section}"` : "";
       return `<${tag} class="kpi ${k.tone}"${attr}>`
         + `<div class="kpi-label">${esc(k.label)}</div>`
         + `<div class="kpi-value">${esc(k.value)}</div>`
@@ -1745,6 +1741,12 @@
         updateHash();
         const panel = document.querySelector(".panel");
         if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+    grid.querySelectorAll("button.kpi[data-section]").forEach(b => {
+      b.addEventListener("click", () => {
+        const sec = document.getElementById(b.dataset.section);
+        if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     });
   }
@@ -1956,8 +1958,7 @@
       noteEl.innerHTML = `About <strong>56 percent</strong> of these long stay immigrants are Moldovans returning home. `
         + `They include 40,173 Moldovan citizens and a further 19,052 who hold Romanian passports, most of whom are also Moldovans. `
         + `Genuine foreign immigration is smaller and is led by Ukrainians, with 23,265 arrivals, which reflects the war. `
-        + `The total of ${d3.format(",")(t.imm)} is about sixteen times the count in the domicile register shown on the map's `
-        + `<a href="#mode=immigration_flow&amp;year=2024" class="jit-link">Registered flows</a> view, which records only formal changes of permanent residence.`;
+        + `The total of ${d3.format(",")(t.imm)} is about sixteen times the few thousand a year in the administrative domicile register, which counts only people who formally change their permanent residence.`;
     }
     const srcEl = document.getElementById("ltmigSrc");
     if (srcEl) { const o = { source_id: "nbs_ltmig" }; srcEl.textContent = "Source: " + captionsFor(o); srcEl.title = citationsFor(o); }

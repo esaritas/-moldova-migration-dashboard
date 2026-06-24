@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260623f" />
+  <link rel="stylesheet" href="styles.css?v=20260623g" />
 </head>
 <body>
 
@@ -189,15 +189,8 @@
             <button class="mode-btn" data-mode="remittances" aria-pressed="false"><span class="ico"></span>Money sent home</button>
           </div>
         </div>
-        <div class="mode-group mode-group-admin">
-          <span class="mode-group-label">Registered flows <span class="kind">NBS, per year</span></span>
-          <div class="mode-pill mode-pill-dashed">
-            <button class="mode-btn mode-btn-nbs" data-mode="emigration_flow" aria-pressed="false"><span class="ico"></span>Emigrants / year</button>
-            <button class="mode-btn mode-btn-nbs" data-mode="immigration_flow" aria-pressed="false"><span class="ico"></span>Immigrants / year</button>
-          </div>
-        </div>
       </div>
-      <p class="modes-note">The dashed group comes from the <strong>official register of the National Bureau of Statistics</strong>, which captures only a few thousand moves a year, a far smaller thing than the diaspora and refugee stocks. The Bureau also publishes a much larger border crossing series, with 105,804 immigrants in 2024. You can see it under <a href="#ch-labour" class="jit-link">Labour migration</a>. <a href="#ch-concepts" class="jit-link">What is the difference between a stock and a flow?</a></p>
+      <p class="modes-note">A note on yearly flows. The <strong>National Bureau of Statistics</strong> also keeps an administrative register of permanent-residence changes, but it records only a few thousand moves a year because most people who leave never formally deregister, so it badly understates real movement. The fuller and more honest picture, with 105,804 immigrants and 123,486 emigrants in 2024, comes from the long-term migration series you can explore under <a href="#ch-labour" class="jit-link">Labour migration</a>. <a href="#ch-concepts" class="jit-link">What is the difference between a stock and a flow?</a></p>
 
       <!-- Source/date + confidence badges for the active mode (built by app.js).
            Makes the vintage and reliability of each lens visible at point of use. -->
@@ -435,11 +428,11 @@
   <!-- Libraries & data (load order matters) -->
   <!-- d3 is vendored locally so the dashboard never depends on a CDN being
        reachable (a blocked CDN previously left the page blank). CDN is a fallback. -->
-  <script src="d3.v7.min.js?v=20260623f"></script>
+  <script src="d3.v7.min.js?v=20260623g"></script>
   <script>window.d3 || document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/d3@7"><\/scr' + 'ipt>');</script>
-  <script src="world-data.js?v=20260623f"></script>
-  <script src="moldova-adm1.js?v=20260623f"></script>
-  <script src="data.js?v=20260623f"></script>
-  <script src="app.js?v=20260623f"></script>
+  <script src="world-data.js?v=20260623g"></script>
+  <script src="moldova-adm1.js?v=20260623g"></script>
+  <script src="data.js?v=20260623g"></script>
+  <script src="app.js?v=20260623g"></script>
 </body>
 </html>
