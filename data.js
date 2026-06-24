@@ -891,7 +891,39 @@ window.MIGRATION_DATA = {
           { label: "Work or business", value: 1496 },
           { label: "Other reasons", value: 628 },
           { label: "Not declared", value: 627 }
-        ]
+        ],
+        // Age and sex of the foreign-born population (table 3.3). Female-skewed
+        // and old: average age 52.1 (men 47.2, women 55.2).
+        pyramid: {
+          avg: { total: 52.1, male: 47.2, female: 55.2 },
+          male_total: 41644, female_total: 65074,
+          bands: [
+            { age: "0-4", m: 2186, f: 2006 }, { age: "5-9", m: 2223, f: 2160 },
+            { age: "10-14", m: 1966, f: 1840 }, { age: "15-19", m: 1830, f: 1535 },
+            { age: "20-24", m: 1500, f: 1649 }, { age: "25-29", m: 1304, f: 1583 },
+            { age: "30-34", m: 1854, f: 2595 }, { age: "35-39", m: 2760, f: 3463 },
+            { age: "40-44", m: 2441, f: 3033 }, { age: "45-49", m: 2197, f: 2551 },
+            { age: "50-54", m: 2039, f: 2931 }, { age: "55-59", m: 2486, f: 4030 },
+            { age: "60-64", m: 3767, f: 6665 }, { age: "65-69", m: 4790, f: 8534 },
+            { age: "70-74", m: 4214, f: 8582 }, { age: "75-79", m: 2112, f: 5174 },
+            { age: "80+", m: 1975, f: 6743 }
+          ]
+        },
+        // Reason for staying by nationality (table 3.8), foreign citizens.
+        // vals order: forced, family, studies, work, other. Totals are the
+        // published per-nationality totals; a small "not declared" gap is excluded.
+        reasons_by_nat: {
+          order: ["Forced displacement", "Family", "Studies", "Work", "Other"],
+          nats: [
+            { name: "Ukraine", total: 18877, vals: [14494, 2980, 191, 500, 351] },
+            { name: "Russia", total: 2040, vals: [288, 1430, 46, 121, 61] },
+            { name: "India", total: 1055, vals: [1, 14, 1020, 9, 5] },
+            { name: "Romania", total: 945, vals: [13, 664, 45, 114, 59] },
+            { name: "Turkey", total: 402, vals: [12, 170, 28, 171, 7] },
+            { name: "Israel", total: 314, vals: [6, 47, 244, 9, 4] },
+            { name: "Other", total: 2502, vals: [201, 1276, 214, 572, 141] }
+          ]
+        }
       }
     },
 
@@ -1092,6 +1124,19 @@ window.MIGRATION_DATA = {
       known_totals: { 2024: { value: 2409207, label: "NBS 2024 Census resident total" } },
       years: {
         2024: []   // choropleth-driven; rows live in population_choropleth.districts
+      },
+      // Internal migration between development regions (table 3.12). 233,299 people
+      // had moved district at the time of the census. Chișinău is the only net
+      // gainer; every other region loses people to the capital.
+      internal_migration: {
+        total: 233299,
+        regions: [
+          { name: "Mun. Chișinău", in: 78215, out: 33372 },
+          { name: "North", in: 59453, out: 72424 },
+          { name: "Centre", in: 70246, out: 80813 },
+          { name: "South", in: 21813, out: 32476 },
+          { name: "ATU Găgăuzia", in: 3572, out: 4693 }
+        ]
       }
     }
   }
