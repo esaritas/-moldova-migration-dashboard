@@ -20,48 +20,70 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260623g" />
+  <link rel="stylesheet" href="styles.css?v=20260623h" />
 </head>
 <body>
 
   <!-- Moldovan carpet (covor / scoarta) motif used as a faint, seamless
-       background watermark. Built from the two signature elements of a
-       Bessarabian scoarta: the hooked rhombus (romb cu carlige, the stylised
-       "ram's horns") and the eight-pointed star (steaua). Central rhombi,
-       edge-midpoint rhombi and corner stars are laid out so the field repeats
-       cleanly and reads as a woven carpet. -->
+       background watermark. A floral Bessarabian design: the covor basarabean
+       is known for stylised roses and leafy vines rather than pure geometry.
+       A central rose medallion is joined by curving stems and almond leaves to
+       roses at the tile corners and smaller flowers at the edge midpoints, so
+       the floral field repeats cleanly across tiles. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
-      <!-- eight-pointed star: two overlapping squares (steaua) -->
-      <g id="cv-star" fill="currentColor" stroke="none">
-        <rect x="-7" y="-7" width="14" height="14"/>
-        <rect x="-7" y="-7" width="14" height="14" transform="rotate(45)"/>
+      <!-- a single rounded petal and an almond leaf, reused below -->
+      <path id="cv-petal" d="M0 0 C 8 -8 9 -22 0 -30 C -9 -22 -8 -8 0 0 Z"/>
+      <path id="cv-leaf"  d="M0 0 C 5 -6 5 -15 0 -20 C -5 -15 -5 -6 0 0 Z"/>
+      <!-- layered rose: a ring of eight outer petals with eight smaller inner
+           petals offset between them, around an open centre -->
+      <g id="cv-rose" fill="currentColor" stroke="none">
+        <use href="#cv-petal" transform="rotate(0)"/>
+        <use href="#cv-petal" transform="rotate(45)"/>
+        <use href="#cv-petal" transform="rotate(90)"/>
+        <use href="#cv-petal" transform="rotate(135)"/>
+        <use href="#cv-petal" transform="rotate(180)"/>
+        <use href="#cv-petal" transform="rotate(225)"/>
+        <use href="#cv-petal" transform="rotate(270)"/>
+        <use href="#cv-petal" transform="rotate(315)"/>
+        <g transform="rotate(22.5) scale(0.55)">
+          <use href="#cv-petal" transform="rotate(0)"/>
+          <use href="#cv-petal" transform="rotate(45)"/>
+          <use href="#cv-petal" transform="rotate(90)"/>
+          <use href="#cv-petal" transform="rotate(135)"/>
+          <use href="#cv-petal" transform="rotate(180)"/>
+          <use href="#cv-petal" transform="rotate(225)"/>
+          <use href="#cv-petal" transform="rotate(270)"/>
+          <use href="#cv-petal" transform="rotate(315)"/>
+        </g>
+        <circle r="5" fill="var(--bg,#fff)"/>
+        <circle r="2.4"/>
       </g>
-      <!-- hooked rhombus with ram's-horn tips and a concentric inner diamond -->
-      <g id="cv-romb" fill="none" stroke="currentColor" stroke-width="1.5"
-         stroke-linejoin="round" stroke-linecap="round">
-        <path d="M0 -30 L30 0 L0 30 L-30 0 Z"/>
-        <path d="M0 -18 L18 0 L0 18 L-18 0 Z"/>
-        <!-- ram's-horn chevrons projecting from the four tips -->
-        <path d="M-7 -37 L0 -30 L7 -37
-                 M37 -7 L30 0 L37 7
-                 M-7 37 L0 30 L7 37
-                 M-37 -7 L-30 0 L-37 7"/>
-      </g>
-      <pattern id="covor" width="160" height="160" patternUnits="userSpaceOnUse">
-        <!-- central medallion: hooked rhombus enclosing a star -->
-        <use href="#cv-romb" transform="translate(80 80)"/>
-        <use href="#cv-star" transform="translate(80 80)"/>
-        <!-- smaller rhombi at the edge midpoints (shared with neighbour tiles) -->
-        <use href="#cv-romb" transform="translate(80 0) scale(0.62)"/>
-        <use href="#cv-romb" transform="translate(80 160) scale(0.62)"/>
-        <use href="#cv-romb" transform="translate(0 80) scale(0.62)"/>
-        <use href="#cv-romb" transform="translate(160 80) scale(0.62)"/>
-        <!-- eight-pointed stars at the corners (completed across four tiles) -->
-        <use href="#cv-star" transform="translate(0 0)"/>
-        <use href="#cv-star" transform="translate(160 0)"/>
-        <use href="#cv-star" transform="translate(0 160)"/>
-        <use href="#cv-star" transform="translate(160 160)"/>
+      <pattern id="covor" width="170" height="170" patternUnits="userSpaceOnUse">
+        <!-- curving stems linking the central rose to the corner roses -->
+        <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+          <path d="M85 85 C 60 65 35 50 0 0   M85 85 C 110 65 135 50 170 0
+                   M85 85 C 60 105 35 120 0 170   M85 85 C 110 105 135 120 170 170"/>
+        </g>
+        <g fill="currentColor" stroke="none">
+          <!-- almond leaves along the stems -->
+          <use href="#cv-leaf" transform="translate(54 46) rotate(145)"/>
+          <use href="#cv-leaf" transform="translate(116 46) rotate(215)"/>
+          <use href="#cv-leaf" transform="translate(54 124) rotate(35)"/>
+          <use href="#cv-leaf" transform="translate(116 124) rotate(325)"/>
+          <!-- central rose medallion -->
+          <use href="#cv-rose" transform="translate(85 85)"/>
+          <!-- corner roses (completed across the four neighbouring tiles) -->
+          <use href="#cv-rose" transform="translate(0 0) scale(0.6)"/>
+          <use href="#cv-rose" transform="translate(170 0) scale(0.6)"/>
+          <use href="#cv-rose" transform="translate(0 170) scale(0.6)"/>
+          <use href="#cv-rose" transform="translate(170 170) scale(0.6)"/>
+          <!-- smaller flowers at the edge midpoints (shared with neighbours) -->
+          <use href="#cv-rose" transform="translate(85 0) scale(0.42)"/>
+          <use href="#cv-rose" transform="translate(85 170) scale(0.42)"/>
+          <use href="#cv-rose" transform="translate(0 85) scale(0.42)"/>
+          <use href="#cv-rose" transform="translate(170 85) scale(0.42)"/>
+        </g>
       </pattern>
     </defs>
   </svg>
@@ -428,11 +450,11 @@
   <!-- Libraries & data (load order matters) -->
   <!-- d3 is vendored locally so the dashboard never depends on a CDN being
        reachable (a blocked CDN previously left the page blank). CDN is a fallback. -->
-  <script src="d3.v7.min.js?v=20260623g"></script>
+  <script src="d3.v7.min.js?v=20260623h"></script>
   <script>window.d3 || document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/d3@7"><\/scr' + 'ipt>');</script>
-  <script src="world-data.js?v=20260623g"></script>
-  <script src="moldova-adm1.js?v=20260623g"></script>
-  <script src="data.js?v=20260623g"></script>
-  <script src="app.js?v=20260623g"></script>
+  <script src="world-data.js?v=20260623h"></script>
+  <script src="moldova-adm1.js?v=20260623h"></script>
+  <script src="data.js?v=20260623h"></script>
+  <script src="app.js?v=20260623h"></script>
 </body>
 </html>
