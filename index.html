@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260623b" />
+  <link rel="stylesheet" href="styles.css?v=20260623c" />
 </head>
 <body>
 
@@ -59,6 +59,11 @@
     </symbol>
   </svg>
 
+  <!-- Faint full-page Tree of Life watermark behind all content. -->
+  <div class="bg-watermark" aria-hidden="true">
+    <svg focusable="false"><use href="#treeOfLife"/></svg>
+  </div>
+
   <!-- Scroll progress + chapter navigation (built/driven by app.js) -->
   <div class="story-progress" aria-hidden="true"><span id="storyProgressBar"></span></div>
   <nav class="story-nav" id="storyNav" aria-label="Jump to a chapter"><!-- built by app.js --></nav>
@@ -68,7 +73,6 @@
     <!-- ===================== INTRO ===================== -->
     <section class="chapter chapter-intro-sec" id="ch-intro" data-nav="Intro">
       <header class="hero reveal">
-        <svg class="hero-motif" aria-hidden="true" focusable="false"><use href="#treeOfLife"/></svg>
         <p class="eyebrow"><span class="eyebrow-ico"></span>Republic of Moldova &middot; people &amp; remittances</p>
         <h1>Moldova in Motion</h1>
         <p class="story-subhead">Roughly one in four people born in the Republic of Moldova now live somewhere else, yet their money, their families and the crises they pass through still tie them home.</p>
@@ -407,7 +411,6 @@
           <button type="button" class="link-btn" id="openMethod">Methodology &amp; sources</button></p>
         <p class="data-stamp" id="dataStamp"></p>
       </footer>
-      <svg class="foot-motif reveal" aria-hidden="true" focusable="false"><use href="#treeOfLife"/></svg>
     </section>
   </div>
 
@@ -422,9 +425,9 @@
 
   <!-- Libraries & data (load order matters) -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="world-data.js?v=20260623b"></script>
-  <script src="moldova-adm1.js?v=20260623b"></script>
-  <script src="data.js?v=20260623b"></script>
-  <script src="app.js?v=20260623b"></script>
+  <script src="world-data.js?v=20260623c"></script>
+  <script src="moldova-adm1.js?v=20260623c"></script>
+  <script src="data.js?v=20260623c"></script>
+  <script src="app.js?v=20260623c"></script>
 </body>
 </html>
