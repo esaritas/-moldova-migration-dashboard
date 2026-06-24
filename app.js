@@ -1068,6 +1068,7 @@
     renderCtxDefs(ctx);
     renderDiasporaProxy(ctx);
     renderCensusDetail();
+    renderInternalMigration();
     updateModeBadges();
     updateModeWarning();
 
@@ -1151,14 +1152,68 @@
     const molPct = Math.round(c.moldovan / c.total * 100);
     const forPct = 100 - molPct;
 
-    // Reasons mini bar chart (SVG), forced displacement highlighted.
+    el.innerHTML =
+      `<h4 class="census-title">A closer look at the ${f(c.total)} residents born abroad</h4>`
+      + `<div class="census-sub">Most of them are not foreign nationals at all. ${f(c.moldovan)} of them, about ${molPct} percent, hold Moldovan citizenship (including ${f(c.dual)} with dual citizenship). Only ${f(c.foreign)} hold another country's citizenship.</div>`
+      + `<div class="cit-bar" role="img" aria-label="${molPct} percent hold Moldovan citizenship, ${forPct} percent foreign">`
+      + `<div class="cit-seg cit-mol" style="width:${(c.moldovan / c.total * 100).toFixed(1)}%">${molPct}%</div>`
+      + `<div class="cit-seg cit-for" style="width:${(c.foreign / c.total * 100).toFixed(1)}%">${forPct}%</div></div>`
+      + `<div class="cit-legend"><span><span class="cit-key cit-key-mol"></span>Moldovan citizenship · ${f(c.moldovan)}</span>`
+      + `<span><span class="cit-key cit-key-for"></span>Foreign citizenship · ${f(c.foreign)}</span></div>`
+      + `<div class="census-grid">`
+      + `<div><h4 class="census-title census-title-2">Age and sex of the foreign-born</h4>`
+      + `<div class="census-sub">Older and mostly women (average age ${cd.pyramid.avg.total}). Many arrived in the Soviet era and have grown old here.</div>`
+      + `<div id="censusPyramid"></div></div>`
+      + `<div><h4 class="census-title census-title-2">Why the ${f(cd.reasons_total)} foreign citizens are here</h4>`
+      + `<div class="census-sub">Among residents who hold another country's citizenship, forced displacement (the Ukrainian refugee inflow) is by far the largest reason, followed by family.</div>`
+      + `<div id="censusReasons"></div></div>`
+      + `</div>`
+      + `<h4 class="census-title census-title-2">The reason differs sharply by nationality</h4>`
+      + `<div class="census-sub">Each bar is one nationality's mix of reasons. Ukrainians are here through forced displacement, Indians almost entirely to study, Russians and Romanians mainly for family.</div>`
+      + `<div class="rbn-legend" id="rbnLegend"></div>`
+      + `<div id="censusReasonsByNat"></div>`
+      + `<div class="src-caption">Source: National Bureau of Statistics of the Republic of Moldova · 2024 PHC Migration Characteristics (tables 3.2, 3.3, 3.6, 3.8)</div>`;
+
+    const pyHost = el.querySelector("#censusPyramid");
+    if (pyHost) pyHost.appendChild(buildPyramid(cd.pyramid));
+    const rHost = el.querySelector("#censusReasons");
+    if (rHost) rHost.appendChild(buildReasonBars(cd));
+    const rbnHost = el.querySelector("#censusReasonsByNat");
+    if (rbnHost) rbnHost.appendChild(buildReasonsByNat(cd.reasons_by_nat, el.querySelector("#rbnLegend")));
+    el.hidden = false;
+  }
+
+  // Population pyramid for the foreign-born: men left, women right, youngest at the bottom.
+  function buildPyramid(pyr) {
+    const bands = pyr.bands, n = bands.length;
+    const W = 360, rowH = 12, gap = 2.4, mT = 16, mB = 4, midGap = 44;
+    const H = mT + n * (rowH + gap) + mB;
+    const half = (W - midGap) / 2, cx = W / 2;
+    const maxV = d3.max(bands, b => Math.max(b.m, b.f)) || 1;
+    const x = d3.scaleLinear().domain([0, maxV]).range([0, half]);
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "pyr-svg")
+      .attr("role", "img").attr("aria-label", "Age and sex pyramid of the foreign-born population");
+    svg.append("text").attr("class", "pyr-head pyr-m-t").attr("x", cx - midGap / 2 - 4).attr("y", 11).attr("text-anchor", "end").text("Men");
+    svg.append("text").attr("class", "pyr-head pyr-f-t").attr("x", cx + midGap / 2 + 4).attr("y", 11).attr("text-anchor", "start").text("Women");
+    bands.forEach((b, i) => {
+      const y = mT + (n - 1 - i) * (rowH + gap);
+      svg.append("rect").attr("class", "pyr-m").attr("x", cx - midGap / 2 - x(b.m)).attr("y", y).attr("width", x(b.m)).attr("height", rowH);
+      svg.append("rect").attr("class", "pyr-f").attr("x", cx + midGap / 2).attr("y", y).attr("width", x(b.f)).attr("height", rowH);
+      svg.append("text").attr("class", "pyr-age").attr("x", cx).attr("y", y + rowH - 2.5).attr("text-anchor", "middle").text(b.age);
+    });
+    return svg.node();
+  }
+
+  // Overall reasons-for-staying bars (forced displacement highlighted).
+  function buildReasonBars(cd) {
+    const f = d3.format(",");
     const rows = cd.reasons.slice().sort((a, b) => b.value - a.value);
     const rmax = d3.max(rows, r => r.value) || 1;
-    const W = 400, mL = 126, mR = 60, mT = 6, rowH = 21, barH = 11;
+    const W = 420, mL = 142, mR = 56, mT = 4, rowH = 20, barH = 11;
     const H = mT + rows.length * rowH + 4;
     const x = d3.scaleLinear().domain([0, rmax]).range([mL, W - mR]);
     const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "lbar-svg creason-svg")
-      .attr("role", "img").attr("aria-label", "Reasons foreign citizens give for staying, 2024 census");
+      .attr("role", "img").attr("aria-label", "Reasons foreign citizens give for staying");
     rows.forEach((r, i) => {
       const cy = mT + i * rowH + rowH / 2;
       const forced = /forced/i.test(r.label);
@@ -1170,19 +1225,76 @@
       v.append("tspan").text(f(r.value));
       if (pct >= 1) v.append("tspan").attr("class", "lbar-pct").attr("dx", 4).text(pct + "%");
     });
+    return svg.node();
+  }
 
+  // 100%-stacked reason mix per nationality (table 3.8).
+  const RBN_COLORS = ["#E0883E", "#2B6CA8", "#6E4FA3", "#2E8B6B", "#8B9097"]; // forced, family, studies, work, other
+  function buildReasonsByNat(rbn, legendEl) {
+    const f = d3.format(",");
+    if (legendEl) legendEl.innerHTML = rbn.order.map((o, k) =>
+      `<span class="rbn-key"><span class="rbn-sw" style="background:${RBN_COLORS[k]}"></span>${esc(o)}</span>`).join("");
+    const nats = rbn.nats;
+    const W = 460, mL = 70, mR = 8, mT = 4, rowH = 26, barH = 15, gapAfterName = 6;
+    const H = mT + nats.length * rowH + 4;
+    const x0 = mL, x1 = W - mR;
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "rbn-svg")
+      .attr("role", "img").attr("aria-label", "Reason for staying by nationality, 2024 census");
+    nats.forEach((nt, i) => {
+      const cy = mT + i * rowH + rowH / 2;
+      const sum = nt.vals.reduce((a, b) => a + b, 0) || 1;
+      svg.append("text").attr("class", "rbn-name").attr("text-anchor", "end").attr("x", mL - gapAfterName).attr("y", cy + 1).text(nt.name);
+      svg.append("text").attr("class", "rbn-total").attr("text-anchor", "end").attr("x", mL - gapAfterName).attr("y", cy + 11).text(f(nt.total));
+      let cursor = x0;
+      const fullW = x1 - x0;
+      nt.vals.forEach((v, k) => {
+        const w = v / sum * fullW;
+        if (w > 0) {
+          svg.append("rect").attr("class", "rbn-seg").attr("x", cursor).attr("y", cy - barH / 2).attr("width", w).attr("height", barH).attr("fill", RBN_COLORS[k]);
+          const pct = Math.round(v / sum * 100);
+          if (w > 24) svg.append("text").attr("class", "rbn-pct").attr("x", cursor + w / 2).attr("y", cy + 3).attr("text-anchor", "middle").text(pct + "%");
+        }
+        cursor += w;
+      });
+    });
+    return svg.node();
+  }
+
+  // ---- Internal migration (population view): net by development region ------
+  function renderInternalMigration() {
+    const el = document.getElementById("internalMig");
+    if (!el) return;
+    const im = (DATA.modes[mode] || {}).internal_migration;
+    if (!im) { el.hidden = true; el.innerHTML = ""; return; }
+    const f = d3.format(",");
+    const regions = im.regions.map(r => ({ name: r.name, net: r.in - r.out, in: r.in, out: r.out }))
+      .sort((a, b) => b.net - a.net);
+    const maxAbs = d3.max(regions, r => Math.abs(r.net)) || 1;
+    const W = 460, mL = 118, mR = 96, mT = 6, rowH = 30, barH = 16;
+    const H = mT + regions.length * rowH + 6;
+    const cx = mL + (W - mL - mR) / 2;     // zero line, centred in the plot area
+    const halfW = (W - mL - mR) / 2;
+    const x = d3.scaleLinear().domain([0, maxAbs]).range([0, halfW]);
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "imig-svg")
+      .attr("role", "img").attr("aria-label", "Net internal migration by development region");
+    svg.append("line").attr("class", "imig-zero").attr("x1", cx).attr("x2", cx).attr("y1", mT).attr("y2", H - 6);
+    regions.forEach((r, i) => {
+      const cy = mT + i * rowH + rowH / 2;
+      const gain = r.net >= 0;
+      const w = x(Math.abs(r.net));
+      svg.append("text").attr("class", "imig-name").attr("text-anchor", "end").attr("x", mL - 10).attr("y", cy + 3.5).text(r.name);
+      svg.append("rect").attr("class", gain ? "imig-gain" : "imig-loss")
+        .attr("x", gain ? cx : cx - w).attr("y", cy - barH / 2).attr("width", Math.max(1, w)).attr("height", barH).attr("rx", 3);
+      svg.append("text").attr("class", "imig-val").attr("text-anchor", gain ? "start" : "end")
+        .attr("x", gain ? cx + w + 5 : cx - w - 5).attr("y", cy + 3.5)
+        .text((gain ? "+" : "−") + f(Math.abs(r.net)));
+    });
     el.innerHTML =
-      `<h4 class="census-title">A closer look at the ${f(c.total)} residents born abroad</h4>`
-      + `<div class="census-sub">Most of them are not foreign nationals at all. ${f(c.moldovan)} of them, about ${molPct} percent, hold Moldovan citizenship (including ${f(c.dual)} with dual citizenship). Only ${f(c.foreign)} hold another country's citizenship.</div>`
-      + `<div class="cit-bar" role="img" aria-label="${molPct} percent hold Moldovan citizenship, ${forPct} percent foreign">`
-      + `<div class="cit-seg cit-mol" style="width:${(c.moldovan / c.total * 100).toFixed(1)}%">${molPct}%</div>`
-      + `<div class="cit-seg cit-for" style="width:${(c.foreign / c.total * 100).toFixed(1)}%">${forPct}%</div></div>`
-      + `<div class="cit-legend"><span><span class="cit-key cit-key-mol"></span>Moldovan citizenship · ${f(c.moldovan)}</span>`
-      + `<span><span class="cit-key cit-key-for"></span>Foreign citizenship · ${f(c.foreign)}</span></div>`
-      + `<h4 class="census-title census-title-2">Why the ${f(cd.reasons_total)} foreign citizens are here</h4>`
-      + `<div class="census-sub">Among the residents who hold another country's citizenship, forced displacement, that is the Ukrainian refugee inflow, is by far the largest reason, followed by family.</div>`
-      + `<div id="censusReasons"></div>`;
-    const host = el.querySelector("#censusReasons");
+      `<h4 class="census-title">Inside the country, everyone moves to Chișinău</h4>`
+      + `<div class="census-sub">At the census, ${f(im.total)} people had moved to a different district. Net internal migration, the arrivals minus the departures for each development region, leaves the capital as the only winner. Every other region loses people to it.</div>`
+      + `<div id="imigChart"></div>`
+      + `<div class="src-caption">Source: National Bureau of Statistics of the Republic of Moldova · 2024 PHC Migration Characteristics (table 3.12)</div>`;
+    const host = el.querySelector("#imigChart");
     if (host) host.appendChild(svg.node());
     el.hidden = false;
   }

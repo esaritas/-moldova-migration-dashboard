@@ -1097,9 +1097,34 @@ button.kpi:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px; 
 .cit-key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
 .cit-key-mol { background: var(--c-pop); }
 .cit-key-for { background: var(--c-refugee); }
-.creason-svg { max-width: 480px; }
+.creason-svg { max-width: 100%; }
 .creason-bar { fill: color-mix(in srgb, var(--c-pop) 68%, var(--surface)); }
 .creason-forced { fill: var(--c-refugee); }
+/* two-column sub-layout inside the census card */
+.census-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; margin-top: 2px; }
+@media (max-width: 720px) { .census-grid { grid-template-columns: 1fr; gap: 8px; } }
+/* age/sex pyramid */
+.pyr-svg { width: 100%; height: auto; display: block; max-width: 360px; }
+.pyr-m { fill: #5B83AE; } .pyr-f { fill: #C2738E; }
+.pyr-head { font-family: var(--font-mono); font-size: 9px; letter-spacing: .04em; }
+.pyr-m-t { fill: #5B83AE; } .pyr-f-t { fill: #C2738E; }
+.pyr-age { font-family: var(--font-mono); font-size: 7px; fill: var(--ink-faint); }
+/* reasons by nationality (100% stacked) */
+.rbn-svg { width: 100%; height: auto; display: block; max-width: 560px; }
+.rbn-name { font-family: var(--font-body); font-size: 11px; font-weight: 600; fill: var(--ink); }
+.rbn-total { font-family: var(--font-mono); font-size: 8.5px; fill: var(--ink-faint); }
+.rbn-seg { stroke: var(--surface); stroke-width: 0.5; }
+.rbn-pct { font-family: var(--font-mono); font-size: 8px; fill: #fff; }
+.rbn-legend { display: flex; flex-wrap: wrap; gap: 5px 14px; font-size: 11px; color: var(--ink-soft); margin: 0 0 8px; }
+.rbn-key { display: inline-flex; align-items: center; }
+.rbn-sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
+/* internal migration diverging bars */
+.imig-svg { width: 100%; height: auto; display: block; max-width: 560px; }
+.imig-zero { stroke: var(--line); stroke-width: 1; }
+.imig-gain { fill: var(--c-pop); }
+.imig-loss { fill: #C2603F; }
+.imig-name { font-family: var(--font-body); font-size: 11.5px; fill: var(--ink); }
+.imig-val { font-family: var(--font-mono); font-size: 10px; fill: var(--ink); }
 
 /* "Three different immigration numbers" disambiguation box */
 .measures-box { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
