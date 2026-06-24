@@ -2839,6 +2839,29 @@ window.MIGRATION_DATA = {
           { name: "Centre", in: 70246, out: 80813 },
           { name: "South", in: 21813, out: 32476 },
           { name: "ATU Găgăuzia", in: 3572, out: 4693 }
+        ],
+        // Net internal migration by district (table 3.12, arrivals minus
+        // departures). Names corrected from the English file's literal
+        // mistranslations (Sîngerei, Călărași, Strășeni). Only Chișinău, its
+        // suburban ring and Bălți gain; every rural district loses.
+        districts: [
+          { name: "Mun. Bălți", net: 5794 }, { name: "Anenii Noi", net: 3940 },
+          { name: "Ialoveni", net: 3286 }, { name: "Criuleni", net: 558 },
+          { name: "Strășeni", net: 293 }, { name: "Edineț", net: 250 },
+          { name: "Dubăsari", net: 169 }, { name: "Taraclia", net: 134 },
+          { name: "Orhei", net: -280 }, { name: "Cahul", net: -392 },
+          { name: "Basarabeasca", net: -468 }, { name: "Ocnița", net: -573 },
+          { name: "Rîșcani", net: -578 }, { name: "Căușeni", net: -624 },
+          { name: "Briceni", net: -838 }, { name: "Dondușeni", net: -1277 },
+          { name: "Soroca", net: -1386 }, { name: "Leova", net: -1408 },
+          { name: "Șoldănești", net: -1469 }, { name: "Rezina", net: -1848 },
+          { name: "Drochia", net: -2024 }, { name: "Cimișlia", net: -2300 },
+          { name: "Ștefan Vodă", net: -2527 }, { name: "Ungheni", net: -2566 },
+          { name: "Florești", net: -2593 }, { name: "Nisporeni", net: -2675 },
+          { name: "Sîngerei", net: -2803 }, { name: "Glodeni", net: -2826 },
+          { name: "Călărași", net: -2873 }, { name: "Cantemir", net: -3078 },
+          { name: "Telenești", net: -3461 }, { name: "Hîncești", net: -3641 },
+          { name: "Fălești", net: -4117 }
         ]
       }
     }
@@ -4109,42 +4132,54 @@ window.MIGRATION_DATA = {
     return svg.node();
   }
 
-  // ---- Internal migration (population view): net by development region ------
+  // ---- Internal migration (population view): net by region and district ----
+  function divergingBars(items, o) {
+    o = o || {};
+    const f = d3.format(",");
+    const W = o.W || 460, mL = o.mL || 118, mR = o.mR || 92, mT = 6;
+    const rowH = o.rowH || 28, barH = o.barH || 15;
+    const H = mT + items.length * rowH + 6;
+    const halfW = (W - mL - mR) / 2, cx = mL + halfW;
+    const maxAbs = d3.max(items, d => Math.abs(d.net)) || 1;
+    const x = d3.scaleLinear().domain([0, maxAbs]).range([0, halfW]);
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "imig-svg")
+      .attr("role", "img").attr("aria-label", o.aria || "net migration");
+    svg.append("line").attr("class", "imig-zero").attr("x1", cx).attr("x2", cx).attr("y1", mT).attr("y2", H - 6);
+    items.forEach((r, i) => {
+      const cy = mT + i * rowH + rowH / 2, gain = r.net >= 0, w = Math.max(1, x(Math.abs(r.net)));
+      svg.append("text").attr("class", "imig-name").attr("text-anchor", "end").attr("x", mL - 10).attr("y", cy + 3.2)
+        .style("font-size", (o.nameSize || 11.5) + "px").text(r.name);
+      svg.append("rect").attr("class", gain ? "imig-gain" : "imig-loss")
+        .attr("x", gain ? cx : cx - w).attr("y", cy - barH / 2).attr("width", w).attr("height", barH).attr("rx", 2.5);
+      svg.append("text").attr("class", "imig-val").attr("text-anchor", gain ? "start" : "end")
+        .attr("x", gain ? cx + w + 5 : cx - w - 5).attr("y", cy + 3.2)
+        .style("font-size", (o.valSize || 10) + "px").text((gain ? "+" : "−") + f(Math.abs(r.net)));
+    });
+    return svg.node();
+  }
+
   function renderInternalMigration() {
     const el = document.getElementById("internalMig");
     if (!el) return;
     const im = (DATA.modes[mode] || {}).internal_migration;
     if (!im) { el.hidden = true; el.innerHTML = ""; return; }
     const f = d3.format(",");
-    const regions = im.regions.map(r => ({ name: r.name, net: r.in - r.out, in: r.in, out: r.out }))
-      .sort((a, b) => b.net - a.net);
-    const maxAbs = d3.max(regions, r => Math.abs(r.net)) || 1;
-    const W = 460, mL = 118, mR = 96, mT = 6, rowH = 30, barH = 16;
-    const H = mT + regions.length * rowH + 6;
-    const cx = mL + (W - mL - mR) / 2;     // zero line, centred in the plot area
-    const halfW = (W - mL - mR) / 2;
-    const x = d3.scaleLinear().domain([0, maxAbs]).range([0, halfW]);
-    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "imig-svg")
-      .attr("role", "img").attr("aria-label", "Net internal migration by development region");
-    svg.append("line").attr("class", "imig-zero").attr("x1", cx).attr("x2", cx).attr("y1", mT).attr("y2", H - 6);
-    regions.forEach((r, i) => {
-      const cy = mT + i * rowH + rowH / 2;
-      const gain = r.net >= 0;
-      const w = x(Math.abs(r.net));
-      svg.append("text").attr("class", "imig-name").attr("text-anchor", "end").attr("x", mL - 10).attr("y", cy + 3.5).text(r.name);
-      svg.append("rect").attr("class", gain ? "imig-gain" : "imig-loss")
-        .attr("x", gain ? cx : cx - w).attr("y", cy - barH / 2).attr("width", Math.max(1, w)).attr("height", barH).attr("rx", 3);
-      svg.append("text").attr("class", "imig-val").attr("text-anchor", gain ? "start" : "end")
-        .attr("x", gain ? cx + w + 5 : cx - w - 5).attr("y", cy + 3.5)
-        .text((gain ? "+" : "−") + f(Math.abs(r.net)));
-    });
+    const regions = im.regions.map(r => ({ name: r.name, net: r.in - r.out })).sort((a, b) => b.net - a.net);
+    const districts = (im.districts || []).slice().sort((a, b) => b.net - a.net);
+    const gainers = districts.filter(d => d.net > 0).length;
+
     el.innerHTML =
       `<h4 class="census-title">Inside the country, everyone moves to Chișinău</h4>`
-      + `<div class="census-sub">At the census, ${f(im.total)} people had moved to a different district. Net internal migration, the arrivals minus the departures for each development region, leaves the capital as the only winner. Every other region loses people to it.</div>`
-      + `<div id="imigChart"></div>`
+      + `<div class="census-sub">At the census, ${f(im.total)} people had moved to a different district. Net internal migration, the arrivals minus the departures, leaves the capital as the only big winner among the development regions.</div>`
+      + `<div id="imigRegions"></div>`
+      + `<h4 class="census-title census-title-2">A closer look, district by district</h4>`
+      + `<div class="census-sub">Only ${gainers} districts gained people. They are Chișinău's suburban ring (Ialoveni, Anenii Noi, Criuleni, Strășeni) and the northern city of Bălți. Every other district lost people, mostly to the capital.</div>`
+      + `<div id="imigDistricts"></div>`
       + `<div class="src-caption">Source: National Bureau of Statistics of the Republic of Moldova · 2024 PHC Migration Characteristics (table 3.12)</div>`;
-    const host = el.querySelector("#imigChart");
-    if (host) host.appendChild(svg.node());
+    const rHost = el.querySelector("#imigRegions");
+    if (rHost) rHost.appendChild(divergingBars(regions, { rowH: 30, barH: 16, mL: 118, mR: 96, aria: "Net internal migration by development region" }));
+    const dHost = el.querySelector("#imigDistricts");
+    if (dHost) dHost.appendChild(divergingBars(districts, { rowH: 15, barH: 9, mL: 96, mR: 76, nameSize: 9.5, valSize: 8.5, aria: "Net internal migration by district" }));
     el.hidden = false;
   }
 
