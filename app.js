@@ -1067,6 +1067,7 @@
     renderPartWhole();
     renderCtxDefs(ctx);
     renderDiasporaProxy(ctx);
+    renderCensusDetail();
     updateModeBadges();
     updateModeWarning();
 
@@ -1132,6 +1133,57 @@
       + `<h4>${esc(px.title)}</h4></div>`
       + `<p class="proxy-note">${esc(px.note)}</p>`
       + `<div class="proxy-rows">${rows}</div>`;
+    el.hidden = false;
+  }
+
+  // ---- Census detail: foreign-born citizenship + reasons for staying -------
+  // Shown only on the Foreign-born view. Two official census facts (2024 PHC):
+  // most of the foreign-born hold Moldovan citizenship, and among the foreign
+  // citizens the dominant reason for being here is forced displacement (the
+  // Ukrainian refugee inflow). Numbers come straight from DATA.
+  function renderCensusDetail() {
+    const el = document.getElementById("censusDetail");
+    if (!el) return;
+    const cd = (DATA.modes[mode] || {}).census_detail;
+    if (!cd) { el.hidden = true; el.innerHTML = ""; return; }
+    const f = d3.format(",");
+    const c = cd.citizenship;
+    const molPct = Math.round(c.moldovan / c.total * 100);
+    const forPct = 100 - molPct;
+
+    // Reasons mini bar chart (SVG), forced displacement highlighted.
+    const rows = cd.reasons.slice().sort((a, b) => b.value - a.value);
+    const rmax = d3.max(rows, r => r.value) || 1;
+    const W = 400, mL = 126, mR = 60, mT = 6, rowH = 21, barH = 11;
+    const H = mT + rows.length * rowH + 4;
+    const x = d3.scaleLinear().domain([0, rmax]).range([mL, W - mR]);
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "lbar-svg creason-svg")
+      .attr("role", "img").attr("aria-label", "Reasons foreign citizens give for staying, 2024 census");
+    rows.forEach((r, i) => {
+      const cy = mT + i * rowH + rowH / 2;
+      const forced = /forced/i.test(r.label);
+      svg.append("text").attr("class", "lbar-name").attr("text-anchor", "end").attr("x", mL - 8).attr("y", cy + 3.5).text(r.label);
+      svg.append("rect").attr("class", "lbar-track").attr("x", mL).attr("y", cy - barH / 2).attr("width", x.range()[1] - mL).attr("height", barH).attr("rx", 3);
+      svg.append("rect").attr("class", forced ? "creason-forced" : "creason-bar").attr("x", mL).attr("y", cy - barH / 2).attr("width", Math.max(1, x(r.value) - mL)).attr("height", barH).attr("rx", 3);
+      const pct = Math.round(r.value / cd.reasons_total * 100);
+      const v = svg.append("text").attr("class", "lbar-val").attr("x", x(r.value) + 5).attr("y", cy + 3.5);
+      v.append("tspan").text(f(r.value));
+      if (pct >= 1) v.append("tspan").attr("class", "lbar-pct").attr("dx", 4).text(pct + "%");
+    });
+
+    el.innerHTML =
+      `<h4 class="census-title">A closer look at the ${f(c.total)} residents born abroad</h4>`
+      + `<div class="census-sub">Most of them are not foreign nationals at all. ${f(c.moldovan)} of them, about ${molPct} percent, hold Moldovan citizenship (including ${f(c.dual)} with dual citizenship). Only ${f(c.foreign)} hold another country's citizenship.</div>`
+      + `<div class="cit-bar" role="img" aria-label="${molPct} percent hold Moldovan citizenship, ${forPct} percent foreign">`
+      + `<div class="cit-seg cit-mol" style="width:${(c.moldovan / c.total * 100).toFixed(1)}%">${molPct}%</div>`
+      + `<div class="cit-seg cit-for" style="width:${(c.foreign / c.total * 100).toFixed(1)}%">${forPct}%</div></div>`
+      + `<div class="cit-legend"><span><span class="cit-key cit-key-mol"></span>Moldovan citizenship · ${f(c.moldovan)}</span>`
+      + `<span><span class="cit-key cit-key-for"></span>Foreign citizenship · ${f(c.foreign)}</span></div>`
+      + `<h4 class="census-title census-title-2">Why the ${f(cd.reasons_total)} foreign citizens are here</h4>`
+      + `<div class="census-sub">Among the residents who hold another country's citizenship, forced displacement, that is the Ukrainian refugee inflow, is by far the largest reason, followed by family.</div>`
+      + `<div id="censusReasons"></div>`;
+    const host = el.querySelector("#censusReasons");
+    if (host) host.appendChild(svg.node());
     el.hidden = false;
   }
 

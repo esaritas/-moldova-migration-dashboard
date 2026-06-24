@@ -35,7 +35,9 @@ window.MIGRATION_DATA = {
     "Israel":         [32.08, 34.78], "United States":  [38.90, -77.04],
     "United Kingdom": [51.51, -0.13], "Portugal":       [38.72, -9.14],
     "Spain":          [40.42, -3.70], "Turkey":         [39.93, 32.86],
-    "India":          [28.61, 77.21]
+    "India":          [28.61, 77.21],
+    "Kazakhstan":     [48.02, 66.92], "Belarus":        [53.71, 27.95],
+    "Azerbaijan":     [40.38, 47.60]
   },
 
   meta: {
@@ -336,14 +338,14 @@ window.MIGRATION_DATA = {
       note: ""
     },
     nbs_census_migration: {
-      label: "2024 Census: population by country of birth (foreign-born residents)",
+      label: "2024 Census, Migration Characteristics (country of birth, citizenship, reasons for staying)",
       publisher: "National Bureau of Statistics of the Republic of Moldova",
-      url: "https://statistica.gov.md/en/final-results-of-the-2024-population-and-housing-census-migration-10121_61958.html",
-      indicator_code: "Census 2024 · foreign-born usual residents",
-      accessed: "2026-06-14",
-      definition: "Usually-resident people born outside Moldova, counted at the 2024 census.",
-      scope: "106,700 persons (4.4%); 77.4% hold Moldovan citizenship. Excludes Transnistria.",
-      note: "A residence and stock measure, distinct from UNHCR's refugee-hosting count."
+      url: "https://statistica.gov.md/files/files/serii_de_timp/recensamant_2024/date_finale/Migration_Characteristics_2024_PHC_EN.xlsx",
+      indicator_code: "2024 PHC Migration Characteristics (tables 3.2, 3.5, 3.6)",
+      accessed: "2026-06-23",
+      definition: "Usual residents born outside the Republic of Moldova, with their citizenship and, for foreign citizens, their reason for staying, counted at the 2024 census.",
+      scope: "106,718 people were born abroad, which is 4.4 percent of residents. Of them 82,575, or 77 percent, hold Moldovan citizenship. Excludes the Transnistria region.",
+      note: "A residence and stock measure, distinct from the UNHCR refugee-hosting count."
     },
     nbs_migration: {
       label: "International migration: emigrants by destination, immigrants by origin",
@@ -664,20 +666,22 @@ window.MIGRATION_DATA = {
       ]
     },
     immigration_census: {
-      takeaway: "At the 2024 census, 106,700 of the people who actually live in Moldova had been born somewhere else, about 4.4% of the population. Those born in Ukraine (52,400) and Russia (around 32,500) make up nearly 80% of them. This is a census headcount, and it is not the same thing as UNHCR's refugee tally.",
-      headline: "Moldova's 2024 census counted 106,700 of its usual residents as having been born " +
-                "outside the country, about 4.4% of everyone living there and a little above the " +
-                "world average of 3.7%. People born in Ukraine are the largest group at 52,400, " +
-                "followed by those born in Russia at around 32,500 (30.5% of the foreign-born). " +
-                "This census headcount is its own measure, separate from UNHCR's Ukrainian refugee " +
-                "count: not everyone born in Ukraine is a refugee, and not every refugee shows up " +
-                "as a usual resident. UN DESA's internationally comparable migrant stock, which " +
-                "counts the Ukrainian refugees inside the total, puts the 2024 figure higher still, " +
-                "at 188,207.",
+      takeaway: "At the 2024 census, 106,718 of the people who actually live in the Republic of Moldova had been born somewhere else, about 4.4 percent of the population. Those born in Ukraine (52,360) and Russia (32,554) make up nearly 80 percent of them. The striking part is that most foreign born residents, 77 percent, hold Moldovan citizenship. This is a census headcount, and it is not the same thing as the UNHCR refugee tally.",
+      headline: "The 2024 census counted 106,718 of the usual residents of the Republic of Moldova as " +
+                "having been born outside the country, about 4.4 percent of everyone living there and a " +
+                "little above the world average of 3.7 percent. People born in Ukraine are the largest " +
+                "group at 52,360, followed by those born in Russia at 32,554. Together they are nearly " +
+                "80 percent of the foreign born population. The next largest groups are people born in " +
+                "Kazakhstan, Belarus, Italy and Romania, which mostly reflect families returning after " +
+                "the Soviet period and a smaller number of children born to Moldovan parents abroad. " +
+                "That is why most of this population, 82,575 people or 77 percent, in fact hold Moldovan " +
+                "citizenship. This census headcount is its own measure, separate from the UNHCR count of " +
+                "Ukrainian refugees, because not everyone born in Ukraine is a refugee and not every " +
+                "refugee shows up as a usual resident.",
       indicators: [
-        { term: "Foreign-born residents", value: "106.7k", sub: "4.4% of usually-resident population · NBS 2024 Census", world: "3.7% global", icon: "users", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
-        { term: "Ukraine-born", value: "52,400", sub: "49.1% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
-        { term: "Russia-born", value: "≈32,500", sub: "30.5% of all foreign-born · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" }
+        { term: "Foreign born residents", value: "106,718", sub: "4.4% of usually-resident population · NBS 2024 Census", world: "3.7% global", icon: "users", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
+        { term: "Hold Moldovan citizenship", value: "77%", sub: "82,575 of the foreign born · NBS 2024 Census", world: null, icon: "users", source_id: "nbs_census_migration", def_id: "immigrant_stock" },
+        { term: "Born in Ukraine or Russia", value: "84,914", sub: "Ukraine 52,360 · Russia 32,554 · NBS 2024 Census", world: null, icon: "globe", source_id: "nbs_census_migration", def_id: "immigrant_stock" }
       ]
     },
     population: {
@@ -830,40 +834,63 @@ window.MIGRATION_DATA = {
       }
     },
 
-    // ---- FOREIGN-BORN RESIDENTS (NBS Census 2024 + UN DESA 2020 for history) -
-    // DISTINCT measure from UNHCR refugee count above — census usual-residence concept.
+    // ---- FOREIGN-BORN RESIDENTS (NBS 2024 Census, official by country of birth) -
+    // A DISTINCT measure from the UNHCR refugee count above. This is the census
+    // usual-residence concept. All 2024 values are official, from the 2024 PHC
+    // Migration Characteristics file (table 3.5).
     immigration_census: {
       label: "Foreign-born residents",
       sublabel: "NBS 2024 Census, by country of birth",
       unit: "people",
       direction: "in",
       vintage: "NBS Census 2024",
-      // Ukraine & Russia are confirmed census values; smaller origins are
-      // proportional estimates — flagged as "partly estimated".
-      confidence: { label: "Census · partly estimated", tone: "estimated" },
+      confidence: { label: "Census (official)", tone: "census" },
       source_ids: ["nbs_census_migration", "undesa_2024"],
-      known_totals: { 2024: { value: 106700, label: "NBS 2024 Census total foreign-born" } },
+      known_totals: { 2024: { value: 106718, label: "NBS 2024 Census total people born abroad" } },
       years: {
-        // 2020: UN DESA 2020 bilateral stock (different methodology — country-of-birth,
-        // internationally comparable). Shown for trajectory only; do not compare
-        // directly with 2024 census values.
+        // 2020: UN DESA 2020 bilateral stock (different methodology, country of
+        // birth, internationally comparable). Shown for trajectory only; do not
+        // compare directly with the 2024 census values.
         2020: [
           { country: "Ukraine", value: 42000 }, { country: "Russia", value: 40000 },
           { country: "Romania", value: 8000 },  { country: "Turkey", value: 2500 },
           { country: "India", value: 1500 }
         ],
-        // 2024: NBS Census 2024 (usual residence, definitive).
-        // Ukraine 52,400 and Russia ≈32,500 confirmed. Remaining 21,800 distributed
-        // proportionally from UN DESA 2020 (no published per-country census breakdown
-        // for other origins at time of authoring).
+        // 2024: NBS 2024 Census, official figures (PHC Migration Characteristics 3.5).
         2024: [
-          { country: "Ukraine", value: 52400 },  // NBS Census 2024 — confirmed
-          { country: "Russia", value: 32500 },   // NBS Census 2024 — confirmed (30.5%)
-          { country: "Romania", value: 9200 },   // est. proportional to UN DESA 2020
-          { country: "Turkey", value: 5300 },    // est.
-          { country: "India", value: 4300 },     // est.
-          { country: "Israel", value: 1500 },    // est.
-          { country: "Italy", value: 1500 }      // est.
+          { country: "Ukraine", value: 52360 },
+          { country: "Russia", value: 32554 },
+          { country: "Kazakhstan", value: 4300 },
+          { country: "Belarus", value: 1778 },
+          { country: "Italy", value: 1743 },
+          { country: "Romania", value: 1581 },
+          { country: "Germany", value: 1369 },
+          { country: "Azerbaijan", value: 804 },
+          { country: "United Kingdom", value: 762 },
+          { country: "France", value: 761 },
+          // Reconciles the named countries to the census total of 106,718.
+          { country: "Other countries", value: 8706, residual: true }
+        ]
+      },
+      // Census attributes of the foreign-born population, for the detail panel
+      // (see renderCensusDetail in app.js). All from the 2024 PHC Migration file.
+      census_detail: {
+        citizenship: {
+          total: 106718,
+          moldovan: 82575,   // hold Republic of Moldova citizenship (table 3.2)
+          dual: 11983,       // of the Moldovan total, also hold another citizenship
+          foreign: 24143     // hold another country's citizenship
+        },
+        // Reasons foreign citizens give for being in the country (table 3.6).
+        // This subset is the 26,135 foreign citizens, not all 106,718 born abroad.
+        reasons_total: 26135,
+        reasons: [
+          { label: "Forced displacement", value: 15015 },
+          { label: "Family situation", value: 6581 },
+          { label: "Studies", value: 1788 },
+          { label: "Work or business", value: 1496 },
+          { label: "Other reasons", value: 628 },
+          { label: "Not declared", value: 627 }
         ]
       }
     },
