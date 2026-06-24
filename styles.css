@@ -31,6 +31,7 @@
   --c-in:    var(--c-refugee);
 
   --accent:  var(--c-diaspora);   /* set per mode at runtime */
+  --motif:   #A8472E;   /* Tree of Life watermark, a folk-embroidery terracotta */
 
   --radius: 10px;
   --shadow: 0 1px 2px rgba(17, 20, 24, 0.04), 0 4px 16px rgba(17, 20, 24, 0.05);
@@ -59,6 +60,20 @@ html, body {
 
 /* ---- Header --------------------------------------------------------------- */
 header { margin-bottom: 18px; }
+
+/* Tree of Life watermark (Pomul Vieții), a Moldovan folk motif. */
+.hero { position: relative; }
+.hero > * { position: relative; z-index: 1; }
+.hero-motif {
+  position: absolute; top: -10px; right: 4px; height: 250px; width: auto;
+  color: var(--motif); opacity: 0.09; z-index: 0; pointer-events: none;
+}
+.foot-motif {
+  display: block; margin: 8px auto 0; height: 180px; width: auto;
+  color: var(--motif); opacity: 0.11;
+}
+@media (max-width: 820px) { .hero-motif { height: 200px; opacity: 0.06; } }
+@media (max-width: 560px) { .hero-motif { display: none; } .foot-motif { height: 140px; } }
 
 .eyebrow {
   font-family: var(--font-mono);
