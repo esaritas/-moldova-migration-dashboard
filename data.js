@@ -347,20 +347,6 @@ window.MIGRATION_DATA = {
       scope: "106,718 people were born abroad, which is 4.4 percent of residents. Of them 82,575, or 77 percent, hold Moldovan citizenship. Excludes the Transnistria region.",
       note: "A residence and stock measure, distinct from the UNHCR refugee-hosting count."
     },
-    nbs_migration: {
-      label: "International migration: emigrants by destination, immigrants by origin",
-      publisher: "National Bureau of Statistics of the Republic of Moldova",
-      url: "https://statbank.statistica.md/pxweb/en/20%20Populatia%20si%20procesele%20demografice/POP070/",
-      indicator_code: "PxWeb POP07300 / POP07100",
-      accessed: "2026-06-12",
-      definition: "Annual registered international migration flows by country: people who " +
-                  "formally emigrated (deregistered) or immigrated (registered) in the year.",
-      scope: "Flows, not stocks, and only legally registered moves. 'Authorized emigrants' " +
-             "(who deregistered) are a small fraction of the real diaspora, just a few " +
-             "thousand a year, and NOT comparable to UN DESA migrant stock or UNHCR refugee counts. " +
-             "Excludes Transnistria.",
-      note: "The authoritative Moldovan national source for registered migration."
-    },
     // ---- Host-country proxy sources for citizenship-reporting destinations ----
     // Germany, the US and the UK report residents by citizenship, so UN DESA's
     // birthplace matrix omits Moldova-born there. These sources estimate that
@@ -414,11 +400,10 @@ window.MIGRATION_DATA = {
       accessed: "2026-06-22",
       definition: "Immigrants and emigrants defined by the international 12-month rule (a change of " +
                   "usual residence lasting at least 12 months), estimated from Border Police records.",
-      scope: "An order of magnitude larger than the domicile-registration series (POP07100/POP07300): " +
-             "in 2024, 105,804 immigrants and 123,406 emigrants. Immigration is dominated by returning " +
+      scope: "In 2024, 105,804 immigrants and 123,406 emigrants. Immigration is dominated by returning " +
              "Moldovan citizens (40,173) and Romanian-passport holders (19,052), plus Ukrainians " +
              "(23,265); net migration stays negative every year.",
-      note: "This uses a different methodology from the registered flow series, so the two are not comparable."
+      note: "The internationally comparable long stay series, shown in the labour chapter."
     }
   },
   // Single source of truth for definitions (cards link here in item 8).
@@ -451,19 +436,6 @@ window.MIGRATION_DATA = {
       definition: "The National Bank of Moldova's measure of cross-border transfers to " +
                   "individuals via banks, netted out. It stands in as a proxy for remittances by " +
                   "source country." },
-    { id: "registered_emigrant", term: "Registered (authorized) emigrant",
-      definition: "A person who formally deregistered their residence on emigrating, in a given " +
-                  "year (NBS). It is a flow, and only a small fraction of those who actually leave, " +
-                  "since most never deregister, so it sits far below the diaspora stock." },
-    { id: "registered_immigrant", term: "Registered immigrant",
-      definition: "A person who officially registered as immigrating to Moldova in a given year " +
-                  "(NBS), by country of origin. A FLOW; kept separate from UNHCR refugee figures." },
-    { id: "population_gap", term: "Implied diaspora (de jure − usually-resident)",
-      definition: "NBS publishes two population concepts: 'de jure resident' (registered residents, " +
-                  "including many who live abroad) and 'usually resident' (people actually living in " +
-                  "Moldova). The difference between them, about 0.86 million in 2019, roughly matches " +
-                  "the diaspora, and it is why NBS's tiny registered-emigration flows don't contradict " +
-                  "the figure of around 864,000." },
     { id: "depopulation", term: "Depopulation",
       definition: "Moldova's usually-resident population fell to 2.41M at the 2024 census, a drop of " +
                   "380,000 (13.6%) from 2014, driven by emigration together with more deaths than births (NBS)." },
@@ -472,14 +444,7 @@ window.MIGRATION_DATA = {
                   "naturalised abroad and the destinations that report by citizenship; counts on a " +
                   "nationality basis (UN DESA 2020, 1.16M; IOM around 1.0 to 1.2M) include them. The " +
                   "NBS gap between de jure and resident population, about 0.86 million, tracks the " +
-                  "birth basis." },
-    { id: "youth_emigration", term: "Youth emigration",
-      definition: "Share of registered emigrants aged under 35, which reached 68% in 2024 (about 46% " +
-                  "are 15 to 29), concentrating the loss in working and child-bearing ages (NBS POP07300)." },
-    { id: "repatriate", term: "Repatriate (returnee)",
-      definition: "A person of Moldovan origin who officially returns to settle in Moldova in a given " +
-                  "year (NBS). It is a small and shrinking counter-flow, falling from 1,462 in 2015 to " +
-                  "332 in 2024." }
+                  "birth basis." }
   ],
 
   // Caveats / scope notes — the political-safety + methodology landmines, in one
@@ -501,25 +466,16 @@ window.MIGRATION_DATA = {
       "full by-country breakdown only through 2020. The Russia-to-EU shift is shown as data only.",
     "Figures shown as estimates are estimates; official series are cited individually in Sources. " +
       "Terminology follows official usage (“irregular” not “illegal”; “Republic of Moldova”).",
-    "Why NBS migration looks so small vs other sources: (1) it is an annual FLOW, not a cumulative " +
-      "stock; (2) emigration counts only people who formally DEREGISTERED, and most of the diaspora never " +
-      "did; (3) the diaspora instead appears in NBS's population accounts, where 'de jure resident' " +
-      "exceeds 'usually resident' by ≈0.86M; (4) Ukrainian refugees are counted by UNHCR, not NBS; and " +
-      "(5) each source defines a 'migrant' differently (UN DESA = country of birth, Eurostat = " +
-      "citizenship, NBM = bank transfers, UNHCR = refugees, NBS = registered moves).",
-    "A consequence of (2): by NBS registered counts, recorded immigration (about 6,600 a year) now " +
-      "exceeds recorded emigration (about 3,500–4,000 a year), not because more people arrive than leave, " +
-      "but because arrivals must register while departures rarely do. The real net flow is strongly " +
-      "outward, as the 13.6% fall in resident population shows (NBS 2024 Census). The NBS tables " +
-      "show only the top destination/origin countries; both totals are verified against NBS POP07300 " +
-      "(emigrants) and POP07100 (immigrants) for 2024, which include dozens of smaller-flow countries " +
-      "not listed here. Returnees (repatriates with Moldovan origin) numbered 332 in 2024, down from " +
-      "1,462 in 2015 (NBS POP07300)."
+    "Each source defines a 'migrant' differently, so the headline figures are not interchangeable: " +
+      "UN DESA counts by country of birth, Eurostat by citizenship, the National Bank of Moldova by " +
+      "bank transfers, UNHCR by refugee status, and the census by usual residence. The diaspora also " +
+      "shows up inside NBS's population accounts, where the 'de jure resident' count exceeds the " +
+      "'usually resident' count by about 0.86 million, roughly the number of Moldovans living abroad."
   ],
 
   // Long-term international migration (NBS POP07060, Border Police, 12-month rule).
-  // The internationally-comparable flow series — roughly 16x the domicile-register
-  // counts the map's "Registered flows" view uses. Verified from the PxWeb API.
+  // The internationally-comparable flow series shown in the labour chapter.
+  // Verified from the PxWeb API.
   ltmigration: {
     source_id: "nbs_ltmig",
     years: [
@@ -569,12 +525,9 @@ window.MIGRATION_DATA = {
     { topic: "Remittances", source: "NBM / World Bank", year: "2020 / 2024",
       measure: "Bank transfers (by country) / BPM6 total & %GDP",
       limit: "Different definitions and years; by-country geography is historical (2020)." },
-    { topic: "Registered flows", source: "NBS", year: "2024",
-      measure: "Formal annual emigrant/immigrant registrations",
-      limit: "Undercounts real movement; most emigrants never formally deregister." },
     { topic: "Long-term flows", source: "NBS (Border Police)", year: "2024",
       measure: "12-month-rule migration (POP07060): 105,804 in / 123,406 out",
-      limit: "~16× the register; immigration is mostly returning Moldovan/Romanian-passport citizens." },
+      limit: "Internationally comparable; immigration is mostly returning Moldovan/Romanian-passport citizens." },
     { topic: "Resident population", source: "NBS Census", year: "2024",
       measure: "Usually-resident population by district",
       limit: "Excludes Transnistria & Bender; not comparable to de-jure register." }
@@ -964,10 +917,6 @@ window.MIGRATION_DATA = {
         ]
       }
     },
-
-    // ---- REGISTERED EMIGRANTS / YEAR (NBS official flows, by destination) ----
-    // OFFICIAL national flows — far smaller than the diaspora stock above; these
-    // count only people who formally deregistered on leaving (NBS POP07300).
 
     // ---- RESIDENT POPULATION BY DISTRICT (NBS 2024 Census choropleth) --------
     // A district choropleth, not a country flow-map: the map + table read from

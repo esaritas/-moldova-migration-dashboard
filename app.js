@@ -1078,7 +1078,7 @@
   // ---- Per-mode plain-language glossary ------------------------------------
   // Surfaces the definitions for the terms used on the current view's stat
   // cards, on the page itself, so a general reader understands "stock", "net
-  // settlements", "registered emigrant" etc. without hovering or opening the
+  // settlements", "depopulation" etc. without hovering or opening the
   // modal. Reuses DATA.glossary (single source of truth), deduped by id.
   function renderCtxDefs(ctx) {
     const el = document.getElementById("ctxDefs");
@@ -1640,7 +1640,6 @@
     wb_remit_total: "annual",
     nbs_census_2024: "decennial census",
     nbs_census_migration: "decennial census",
-    nbs_migration: "annual",
     eurostat_migr: "annual (1 January reference)",
     mof_budget: "annual (budget execution)"
   };
@@ -1904,10 +1903,9 @@
   }
 
   // ---- Long-term migration: immigrants vs emigrants (NBS POP07060) ----------
-  // The internationally-comparable border-crossing series (12-month rule), ~16×
-  // the domicile register the map's "Registered flows" view uses. Shows the
-  // persistent net outflow and the 2022 war-churn spike; the note explains that
-  // most "immigrants" are Moldovans returning home.
+  // The internationally-comparable border-crossing series (12-month rule). Shows
+  // the persistent net outflow and the 2022 war-churn spike; the note explains
+  // that most "immigrants" are Moldovans returning home.
   function renderLtMig() {
     const host = document.getElementById("ltmigChart");
     const D = DATA.ltmigration;
@@ -1958,7 +1956,7 @@
       noteEl.innerHTML = `About <strong>56 percent</strong> of these long stay immigrants are Moldovans returning home. `
         + `They include 40,173 Moldovan citizens and a further 19,052 who hold Romanian passports, most of whom are also Moldovans. `
         + `Genuine foreign immigration is smaller and is led by Ukrainians, with 23,265 arrivals, which reflects the war. `
-        + `The total of ${d3.format(",")(t.imm)} is about sixteen times the few thousand a year in the administrative domicile register, which counts only people who formally change their permanent residence.`;
+        + `The total of ${d3.format(",")(t.imm)} counts everyone who stays for a year or more, which is why it is far larger than a single year of arrivals would suggest.`;
     }
     const srcEl = document.getElementById("ltmigSrc");
     if (srcEl) { const o = { source_id: "nbs_ltmig" }; srcEl.textContent = "Source: " + captionsFor(o); srcEl.title = citationsFor(o); }
