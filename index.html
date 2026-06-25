@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260623h" />
+  <link rel="stylesheet" href="styles.css?v=20260623i" />
 </head>
 <body>
 
@@ -162,8 +162,8 @@
           </div>
           <div class="concept-card c-grey">
             <span class="concept-ico" data-ico="route"></span>
-            <h3>Registered flows</h3>
-            <p>People who <em>formally registered</em> a move during a single year, only a few thousand according to the National Bureau of Statistics. This is a flow. It is tiny next to the stocks, because most people who leave never deregister.</p>
+            <h3>Yearly flows</h3>
+            <p>People who <em>move during a single year</em>. In 2024 the National Bureau of Statistics recorded about 105,800 long stay arrivals and 123,400 departures under the international twelve month rule. This is a flow, not a stock, and you can explore it under Labour migration.</p>
           </div>
         </div>
         <div class="concept-egs">
@@ -356,7 +356,7 @@
               </div>
               <div class="labour-card">
                 <h4>Brain drain or brain circulation</h4>
-                <p><strong>Brain drain</strong> is the permanent loss of skilled and young workers. <strong>Brain circulation</strong> is the more hopeful idea that migrants return with skills, capital and networks. The Republic of Moldova leans toward drain, because about <strong>68%</strong> of registered emigrants are under the age of 35.</p>
+                <p><strong>Brain drain</strong> is the permanent loss of skilled and young workers. <strong>Brain circulation</strong> is the more hopeful idea that migrants return with skills, capital and networks. The Republic of Moldova leans toward drain, because emigration is heavily concentrated among the young, who leave in their working and child-bearing years.</p>
               </div>
             </div>
           </div>
@@ -370,8 +370,8 @@
         </div>
         <!-- Long-term migration: the bigger official flow series (NBS POP07060) -->
         <div class="ewshift">
-          <h3 class="ewshift-title">More movement than the register shows</h3>
-          <p class="ewshift-sub">Beyond the small domicile register, the National Bureau of Statistics publishes a much larger series that follows the international twelve month rule, estimated from border crossings. It captures the long stays that the register misses, and emigration has run ahead of immigration in every year from 2014 to 2024.</p>
+          <h3 class="ewshift-title">The fuller picture of yearly movement</h3>
+          <p class="ewshift-sub">The National Bureau of Statistics publishes a long stay migration series that follows the international twelve month rule, estimated from border crossings. It captures the people who settle abroad or arrive for a year or more, and emigration has run ahead of immigration in every year from 2014 to 2024.</p>
           <div class="ltmig-grid">
             <div class="ltmig-col">
               <h4 class="ltmig-subh">Immigrants and emigrants each year</h4>
@@ -391,14 +391,8 @@
         </div>
         <!-- Disambiguation: three different "immigration" numbers users conflate -->
         <div class="measures-box">
-          <h4 class="measures-title">Three different immigration numbers, and why they differ</h4>
+          <h4 class="measures-title">Two different immigration numbers, and why they differ</h4>
           <div class="measures-grid">
-            <div class="measure">
-              <span class="measure-tag tag-flow">Flow, per year</span>
-              <span class="measure-num">~6,600</span>
-              <span class="measure-name">Registered immigrants</span>
-              <span class="measure-desc">The official register counts only people who <strong>formally change their permanent residence</strong>. This is the figure on the Registered flows view of the map.</span>
-            </div>
             <div class="measure">
               <span class="measure-tag tag-flow">Flow, per year</span>
               <span class="measure-num">~105,804</span>
@@ -415,7 +409,7 @@
           <p class="measures-foot"><strong>Why 105,804 and 106,700 look alike but are not the same.</strong> A flow is movement during a single year, while a stock is a headcount at one moment. The first number is one year of arrivals, most of them Moldovans coming home. The second is the entire population that was born abroad. The two count different people.</p>
         </div>
         <div class="labour-limits">
-          <strong>Data limitations.</strong> There is no comprehensive, regularly published breakdown of the diaspora by occupation, skill level or sector. In broad terms, Moldovans abroad are concentrated in construction, domestic and care work, agriculture, hospitality and transport, but this dashboard does not chart that for lack of an authoritative and current source. The registered flows from the National Bureau of Statistics also undercount real movement, so the labour migration totals shown here should be read as lower bounds.
+          <strong>Data limitations.</strong> There is no comprehensive, regularly published breakdown of the diaspora by occupation, skill level or sector. In broad terms, Moldovans abroad are concentrated in construction, domestic and care work, agriculture, hospitality and transport, but this dashboard does not chart that for lack of an authoritative and current source. The border-based long stay estimates still understate informal and short-term movement, so the labour migration totals shown here should be read as lower bounds.
         </div>
       </div>
     </section>
@@ -450,11 +444,11 @@
   <!-- Libraries & data (load order matters) -->
   <!-- d3 is vendored locally so the dashboard never depends on a CDN being
        reachable (a blocked CDN previously left the page blank). CDN is a fallback. -->
-  <script src="d3.v7.min.js?v=20260623h"></script>
+  <script src="d3.v7.min.js?v=20260623i"></script>
   <script>window.d3 || document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/d3@7"><\/scr' + 'ipt>');</script>
-  <script src="world-data.js?v=20260623h"></script>
-  <script src="moldova-adm1.js?v=20260623h"></script>
-  <script src="data.js?v=20260623h"></script>
-  <script src="app.js?v=20260623h"></script>
+  <script src="world-data.js?v=20260623i"></script>
+  <script src="moldova-adm1.js?v=20260623i"></script>
+  <script src="data.js?v=20260623i"></script>
+  <script src="app.js?v=20260623i"></script>
 </body>
 </html>
