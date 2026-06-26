@@ -25,65 +25,49 @@
 <body>
 
   <!-- Moldovan carpet (covor / scoarta) motif used as a faint, seamless
-       background watermark. A floral Bessarabian design: the covor basarabean
-       is known for stylised roses and leafy vines rather than pure geometry.
-       A central rose medallion is joined by curving stems and almond leaves to
-       roses at the tile corners and smaller flowers at the edge midpoints, so
-       the floral field repeats cleanly across tiles. -->
+       background watermark. A grapevine design, a nod to Moldova's old wine
+       country: hanging grape clusters (struguri), lobed vine leaves and curling
+       tendrils on a vine lattice. A central cluster sits among leaves, joined by
+       curving stems to clusters at the tile corners, so the vine repeats cleanly. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
-      <!-- a single rounded petal and an almond leaf, reused below -->
-      <path id="cv-petal" d="M0 0 C 8 -8 9 -22 0 -30 C -9 -22 -8 -8 0 0 Z"/>
-      <path id="cv-leaf"  d="M0 0 C 5 -6 5 -15 0 -20 C -5 -15 -5 -6 0 0 Z"/>
-      <!-- layered rose: a ring of eight outer petals with eight smaller inner
-           petals offset between them, around an open centre -->
-      <g id="cv-rose" fill="currentColor" stroke="none">
-        <use href="#cv-petal" transform="rotate(0)"/>
-        <use href="#cv-petal" transform="rotate(45)"/>
-        <use href="#cv-petal" transform="rotate(90)"/>
-        <use href="#cv-petal" transform="rotate(135)"/>
-        <use href="#cv-petal" transform="rotate(180)"/>
-        <use href="#cv-petal" transform="rotate(225)"/>
-        <use href="#cv-petal" transform="rotate(270)"/>
-        <use href="#cv-petal" transform="rotate(315)"/>
-        <g transform="rotate(22.5) scale(0.55)">
-          <use href="#cv-petal" transform="rotate(0)"/>
-          <use href="#cv-petal" transform="rotate(45)"/>
-          <use href="#cv-petal" transform="rotate(90)"/>
-          <use href="#cv-petal" transform="rotate(135)"/>
-          <use href="#cv-petal" transform="rotate(180)"/>
-          <use href="#cv-petal" transform="rotate(225)"/>
-          <use href="#cv-petal" transform="rotate(270)"/>
-          <use href="#cv-petal" transform="rotate(315)"/>
-        </g>
-        <circle r="5" fill="var(--bg,#fff)"/>
-        <circle r="2.4"/>
+      <!-- a bunch of grapes, hanging from the stem point at the origin -->
+      <g id="cv-grapes" fill="currentColor" stroke="none">
+        <circle cx="-8"   cy="5"    r="3.2"/><circle cx="-2.7" cy="5"    r="3.2"/>
+        <circle cx="2.7"  cy="5"    r="3.2"/><circle cx="8"    cy="5"    r="3.2"/>
+        <circle cx="-5.4" cy="10.5" r="3.2"/><circle cx="0"    cy="10.5" r="3.2"/>
+        <circle cx="5.4"  cy="10.5" r="3.2"/>
+        <circle cx="-2.7" cy="16"   r="3.2"/><circle cx="2.7"  cy="16"   r="3.2"/>
+        <circle cx="0"    cy="21.2" r="3.2"/>
       </g>
-      <pattern id="covor" width="170" height="170" patternUnits="userSpaceOnUse">
-        <!-- curving stems linking the central rose to the corner roses -->
+      <!-- a lobed, serrated grape leaf, tip pointing up, base at the origin -->
+      <path id="cv-vleaf" fill="currentColor" stroke="none"
+            d="M0 0 L2.5 -3 L1.5 -6 L5 -7 L3.5 -11 L7 -12 L4.5 -16 L2 -19 L0 -21
+               L-2 -19 L-4.5 -16 L-7 -12 L-3.5 -11 L-5 -7 L-1.5 -6 L-2.5 -3 Z"/>
+      <!-- a small curling tendril (carcel) -->
+      <path id="cv-tendril" fill="none" stroke="currentColor" stroke-width="1.1"
+            stroke-linecap="round" d="M0 0 C 4 -1 5 3 1.8 3.4 C -0.6 3.7 -0.4 1 1.4 1"/>
+      <pattern id="covor" width="180" height="180" patternUnits="userSpaceOnUse">
+        <!-- vine stems linking the central cluster to the corner clusters -->
         <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-          <path d="M85 85 C 60 65 35 50 0 0   M85 85 C 110 65 135 50 170 0
-                   M85 85 C 60 105 35 120 0 170   M85 85 C 110 105 135 120 170 170"/>
+          <path d="M90 90 C 64 70 38 52 0 0   M90 90 C 116 70 142 52 180 0
+                   M90 90 C 64 110 38 128 0 180   M90 90 C 116 110 142 128 180 180"/>
         </g>
-        <g fill="currentColor" stroke="none">
-          <!-- almond leaves along the stems -->
-          <use href="#cv-leaf" transform="translate(54 46) rotate(145)"/>
-          <use href="#cv-leaf" transform="translate(116 46) rotate(215)"/>
-          <use href="#cv-leaf" transform="translate(54 124) rotate(35)"/>
-          <use href="#cv-leaf" transform="translate(116 124) rotate(325)"/>
-          <!-- central rose medallion -->
-          <use href="#cv-rose" transform="translate(85 85)"/>
-          <!-- corner roses (completed across the four neighbouring tiles) -->
-          <use href="#cv-rose" transform="translate(0 0) scale(0.6)"/>
-          <use href="#cv-rose" transform="translate(170 0) scale(0.6)"/>
-          <use href="#cv-rose" transform="translate(0 170) scale(0.6)"/>
-          <use href="#cv-rose" transform="translate(170 170) scale(0.6)"/>
-          <!-- smaller flowers at the edge midpoints (shared with neighbours) -->
-          <use href="#cv-rose" transform="translate(85 0) scale(0.42)"/>
-          <use href="#cv-rose" transform="translate(85 170) scale(0.42)"/>
-          <use href="#cv-rose" transform="translate(0 85) scale(0.42)"/>
-          <use href="#cv-rose" transform="translate(170 85) scale(0.42)"/>
-        </g>
+        <!-- vine leaves along the four stems (kept inside the tile) -->
+        <use href="#cv-vleaf" transform="translate(50 50) rotate(135)"/>
+        <use href="#cv-vleaf" transform="translate(130 50) rotate(225)"/>
+        <use href="#cv-vleaf" transform="translate(50 130) rotate(45)"/>
+        <use href="#cv-vleaf" transform="translate(130 130) rotate(315)"/>
+        <!-- central cluster flanked by two leaves, with a tendril -->
+        <use href="#cv-vleaf" transform="translate(76 80) rotate(-32)"/>
+        <use href="#cv-vleaf" transform="translate(104 80) rotate(32)"/>
+        <use href="#cv-tendril" transform="translate(96 76)"/>
+        <use href="#cv-grapes" transform="translate(90 82)"/>
+        <!-- grape clusters at the corners (reconstructed across four tiles) -->
+        <use href="#cv-grapes" transform="translate(0 0) scale(0.66)"/>
+        <use href="#cv-grapes" transform="translate(180 0) scale(0.66)"/>
+        <use href="#cv-grapes" transform="translate(0 180) scale(0.66)"/>
+        <use href="#cv-grapes" transform="translate(180 180) scale(0.66)"/>
       </pattern>
     </defs>
   </svg>
