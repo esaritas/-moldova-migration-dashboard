@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260623j" />
+  <link rel="stylesheet" href="styles.css?v=20260623k" />
 </head>
 <body>
 
@@ -33,12 +33,12 @@
     <defs>
       <!-- a bunch of grapes, hanging from the stem point at the origin -->
       <g id="cv-grapes" fill="currentColor" stroke="none">
-        <circle cx="-10.5" cy="6"    r="4.1"/><circle cx="-3.5" cy="6"    r="4.1"/>
-        <circle cx="3.5"   cy="6"    r="4.1"/><circle cx="10.5"  cy="6"    r="4.1"/>
-        <circle cx="-7"    cy="13.5" r="4.1"/><circle cx="0"     cy="13.5" r="4.1"/>
-        <circle cx="7"     cy="13.5" r="4.1"/>
-        <circle cx="-3.5"  cy="20.5" r="4.1"/><circle cx="3.5"   cy="20.5" r="4.1"/>
-        <circle cx="0"     cy="27"   r="4.1"/>
+        <circle cx="-12.4" cy="7"  r="4.8"/><circle cx="-4.1" cy="7"  r="4.8"/>
+        <circle cx="4.1"   cy="7"  r="4.8"/><circle cx="12.4"  cy="7"  r="4.8"/>
+        <circle cx="-8.3"  cy="16" r="4.8"/><circle cx="0"     cy="16" r="4.8"/>
+        <circle cx="8.3"   cy="16" r="4.8"/>
+        <circle cx="-4.1"  cy="24" r="4.8"/><circle cx="4.1"   cy="24" r="4.8"/>
+        <circle cx="0"     cy="32" r="4.8"/>
       </g>
       <!-- a lobed, serrated grape leaf, tip pointing up, base at the origin -->
       <path id="cv-vleaf" fill="currentColor" stroke="none"
@@ -59,10 +59,10 @@
         <use href="#cv-vleaf" transform="translate(50 130) rotate(45)"/>
         <use href="#cv-vleaf" transform="translate(130 130) rotate(315)"/>
         <!-- central cluster flanked by two leaves, with a tendril -->
-        <use href="#cv-vleaf" transform="translate(70 80) rotate(-34)"/>
-        <use href="#cv-vleaf" transform="translate(110 80) rotate(34)"/>
-        <use href="#cv-tendril" transform="translate(98 75)"/>
-        <use href="#cv-grapes" transform="translate(90 81)"/>
+        <use href="#cv-vleaf" transform="translate(67 79) rotate(-34)"/>
+        <use href="#cv-vleaf" transform="translate(113 79) rotate(34)"/>
+        <use href="#cv-tendril" transform="translate(100 74)"/>
+        <use href="#cv-grapes" transform="translate(90 80)"/>
         <!-- grape clusters at the corners (reconstructed across four tiles) -->
         <use href="#cv-grapes" transform="translate(0 0) scale(0.66)"/>
         <use href="#cv-grapes" transform="translate(180 0) scale(0.66)"/>
@@ -428,11 +428,11 @@
   <!-- Libraries & data (load order matters) -->
   <!-- d3 is vendored locally so the dashboard never depends on a CDN being
        reachable (a blocked CDN previously left the page blank). CDN is a fallback. -->
-  <script src="d3.v7.min.js?v=20260623j"></script>
+  <script src="d3.v7.min.js?v=20260623k"></script>
   <script>window.d3 || document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/d3@7"><\/scr' + 'ipt>');</script>
-  <script src="world-data.js?v=20260623j"></script>
-  <script src="moldova-adm1.js?v=20260623j"></script>
-  <script src="data.js?v=20260623j"></script>
-  <script src="app.js?v=20260623j"></script>
+  <script src="world-data.js?v=20260623k"></script>
+  <script src="moldova-adm1.js?v=20260623k"></script>
+  <script src="data.js?v=20260623k"></script>
+  <script src="app.js?v=20260623k"></script>
 </body>
 </html>
