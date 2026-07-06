@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260706a" />
+  <link rel="stylesheet" href="styles.css?v=20260706b" />
 </head>
 <body>
 
@@ -309,7 +309,10 @@
         <h2 class="chapter-title">What drove the trends, 1991 to 2026</h2>
       </div>
       <p class="chapter-intro reveal">Moldova's migration story tracks its history: independence opened the borders, crises pushed people out, EU ties pulled them west, and the war next door made the country a major refugee host almost overnight.</p>
-      <div class="milestone-strip reveal" id="milestoneStrip"><!-- built by app.js --></div>
+      <div class="strip-shell reveal" id="milestoneShell">
+        <div class="milestone-strip" id="milestoneStrip"><!-- built by app.js --></div>
+        <span class="strip-cue" aria-hidden="true">&rarr;</span>
+      </div>
     </section>
 
     <!-- ===================== 05 · LABOUR MIGRATION ===================== -->
@@ -406,6 +409,16 @@
       </div>
       <p class="chapter-intro reveal">The numbers of the Republic of Moldova tell a story that is still unfinished. The diaspora is large, the population is shrinking, remittances keep the economy afloat, and hundreds of thousands of Ukrainians have passed through in search of safety, of whom about 141,000 remain under protection. What comes next will define the country for a generation. The open questions are whether emigrants return, whether the refugee wave recedes, and whether remittances outlast the diaspora. The data below is where that story currently stands.</p>
 
+      <!-- Closing recap: the three takeaways a reader should leave with -->
+      <div class="story-recap reveal" aria-label="The story in three lines">
+        <h3 class="recap-title">The story in three lines</h3>
+        <ol class="recap-list">
+          <li class="c-blue"><strong>About one in four people born in the Republic of Moldova lives abroad.</strong> The recorded diaspora is 864,257 people, and Italy has overtaken Russia as the leading destination.</li>
+          <li class="c-orange"><strong>The country hosts about 141,000 Ukrainian refugees,</strong> one of the highest counts per resident anywhere in Europe.</li>
+          <li class="c-purple"><strong>Money sent home is worth about 10.5 percent of GDP,</strong> roughly double the world average, and since 2022 it comes overwhelmingly from the West.</li>
+        </ol>
+      </div>
+
       <footer class="reveal">
         <p><strong>Sources &amp; caveats.</strong> <span class="src" id="sourceLine"></span></p>
         <p>Drawn from official sources: the National Bank of Moldova, UN DESA's International Migrant
@@ -428,11 +441,11 @@
   <!-- Libraries & data (load order matters) -->
   <!-- d3 is vendored locally so the dashboard never depends on a CDN being
        reachable (a blocked CDN previously left the page blank). CDN is a fallback. -->
-  <script src="d3.v7.min.js?v=20260706a"></script>
+  <script src="d3.v7.min.js?v=20260706b"></script>
   <script>window.d3 || document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/d3@7"><\/scr' + 'ipt>');</script>
-  <script src="world-data.js?v=20260706a"></script>
-  <script src="moldova-adm1.js?v=20260706a"></script>
-  <script src="data.js?v=20260706a"></script>
-  <script src="app.js?v=20260706a"></script>
+  <script src="world-data.js?v=20260706b"></script>
+  <script src="moldova-adm1.js?v=20260706b"></script>
+  <script src="data.js?v=20260706b"></script>
+  <script src="app.js?v=20260706b"></script>
 </body>
 </html>

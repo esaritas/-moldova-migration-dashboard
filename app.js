@@ -398,6 +398,8 @@
       .attr("d", pathFor)
       .call(animateStream, reduceMotion);
 
+    // The largest destination reads darker, mirroring the bar chart's leader.
+    const leadCountry = rows.length ? rows[0].country : null;
     gNodes.selectAll("circle.node").data(rows, d => d.country).join(
       enter => enter.append("circle").attr("class", "node")
         .attr("cx", d => projection(coordOf(d.country))[0])
@@ -407,7 +409,7 @@
         .attr("cx", d => projection(coordOf(d.country))[0])
         .attr("cy", d => projection(coordOf(d.country))[1]),
       exit => exit.remove()
-    );
+    ).classed("node-lead", d => d.country === leadCountry);
 
     // Figures sitting on each bubble.
     gNodes.selectAll("text.bubble-label").data(rows, d => d.country).join(
@@ -1003,7 +1005,10 @@
       }
     }
 
-    document.getElementById("contextHeadline").textContent = ctx.headline;
+    // Headlines may carry "\n\n" paragraph breaks so long analyses read as
+    // short paragraphs rather than one wall of text.
+    document.getElementById("contextHeadline").innerHTML =
+      String(ctx.headline || "").split(/\n\s*\n/).map(esc).join("<br><br>");
 
     // Pick the chart that fits the story:
     //  - remittances -> remittances-to-GDP over time, with the world-average line
@@ -1786,6 +1791,18 @@
       + `<div class="milestone-event">${esc(s.event)}</div>`
       + `<div class="milestone-note">${esc(s.note)}</div>`
       + `</div>`).join("");
+
+    // Hide the scroll cue when the strip has nothing more to show.
+    const shell = document.getElementById("milestoneShell");
+    if (shell) {
+      const sync = () => {
+        const done = strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 4;
+        shell.classList.toggle("at-end", done);
+      };
+      strip.addEventListener("scroll", sync, { passive: true });
+      window.addEventListener("resize", sync);
+      sync();
+    }
   }
 
   // ---- Labour migration: data-driven destination bar chart -----------------
