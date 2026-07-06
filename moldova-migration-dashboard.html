@@ -1319,12 +1319,10 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
 @media (max-width: 880px) {
   .modes { gap: 14px; }
   .mode-group { width: 100%; }
-  .mode-pill {
-    overflow-x: auto; scroll-snap-type: x proximity;
-    -ms-overflow-style: none; scrollbar-width: none;
-  }
-  .mode-pill::-webkit-scrollbar { display: none; }
-  .mode-pill .mode-btn { scroll-snap-align: start; min-height: 44px; white-space: nowrap; }
+  /* Wrap buttons onto a second row rather than clipping them behind an
+     invisible horizontal scrollbar (buttons were getting cut off). */
+  .mode-pill { flex-wrap: wrap; border-radius: 22px; }
+  .mode-pill .mode-btn { min-height: 44px; white-space: nowrap; }
   /* concept grid: 2 cols on tablet */
   .concept-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -1512,7 +1510,7 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
           </div>
         </div>
       </div>
-      <p class="modes-note">A note on yearly flows. The <strong>National Bureau of Statistics</strong> also keeps an administrative register of permanent-residence changes, but it records only a few thousand moves a year because most people who leave never formally deregister, so it badly understates real movement. The fuller and more honest picture, with 105,804 immigrants and 123,486 emigrants in 2024, comes from the long-term migration series you can explore under <a href="#ch-labour" class="jit-link">Labour migration</a>. <a href="#ch-concepts" class="jit-link">What is the difference between a stock and a flow?</a></p>
+      <p class="modes-note">A note on yearly flows. The <strong>National Bureau of Statistics</strong> also keeps an administrative register of permanent-residence changes, but it records only a few thousand moves a year because most people who leave never formally deregister, so it badly understates real movement. The fuller and more honest picture, with 105,804 immigrants and 123,406 emigrants in 2024, comes from the long-term migration series you can explore under <a href="#ch-labour" class="jit-link">Labour migration</a>. <a href="#ch-concepts" class="jit-link">What is the difference between a stock and a flow?</a></p>
 
       <!-- Source/date + confidence badges for the active mode (built by app.js).
            Makes the vintage and reliability of each lens visible at point of use. -->
@@ -1695,7 +1693,7 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
           <div class="measures-grid">
             <div class="measure">
               <span class="measure-tag tag-flow">Flow, per year</span>
-              <span class="measure-num">~105,804</span>
+              <span class="measure-num">105,804</span>
               <span class="measure-name">Long-term immigrants</span>
               <span class="measure-desc">The border crossing series, under the twelve month rule, counts <strong>anyone who stays for a year or more</strong>. About 56 percent of them are Moldovans returning home. This is the chart above.</span>
             </div>
@@ -1720,7 +1718,7 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
         <span class="chapter-num">06</span>
         <h2 class="chapter-title">Sources &amp; methodology</h2>
       </div>
-      <p class="chapter-intro reveal">The numbers of the Republic of Moldova tell a story that is still unfinished. The diaspora is large, the population is shrinking, remittances keep the economy afloat, and a quarter of a million Ukrainians have passed through in search of safety. What comes next will define the country for a generation. The open questions are whether emigrants return, whether the refugee wave recedes, and whether remittances outlast the diaspora. The data below is where that story currently stands.</p>
+      <p class="chapter-intro reveal">The numbers of the Republic of Moldova tell a story that is still unfinished. The diaspora is large, the population is shrinking, remittances keep the economy afloat, and hundreds of thousands of Ukrainians have passed through in search of safety, of whom about 141,000 remain under protection. What comes next will define the country for a generation. The open questions are whether emigrants return, whether the refugee wave recedes, and whether remittances outlast the diaspora. The data below is where that story currently stands.</p>
 
       <footer class="reveal">
         <p><strong>Sources &amp; caveats.</strong> <span class="src" id="sourceLine"></span></p>
@@ -1808,7 +1806,7 @@ window.MIGRATION_DATA = {
     // "Data current as of" stamp. The pipeline overwrites `generated` on each run;
     // `updated` is a manual fallback for hand-edits. Per-series freshness lives in
     // each source's `accessed`.
-    updated: "2026-06-17",
+    updated: "2026-07-06",
     latest_year: { emigration: 2024, immigration: 2026, remittances: 2020 },
     note: "Remittances by-country is official/exact (NBM 2018 & 2020). " +
           "Immigration uses UNHCR refugee counts (to 2026). " +
@@ -1968,7 +1966,7 @@ window.MIGRATION_DATA = {
     { year: 2020, modes: ["remittances"],
       text: "Russia's share slips to third place as Israel takes the top spot; EU countries together already account for more than a third of flows (NBM, 2020)." },
     { year: 2022, modes: ["remittances"],
-      text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. Sources in the European Union, led by Italy, Germany, the United Kingdom and France, now account for most formal flows." },
+      text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. Sources in the European Union, led by Italy, Germany and France, together with the United Kingdom, now account for most formal flows." },
     { year: 2024, modes: ["emigration"],
       text: "The recorded diaspora tilts toward the EU, with Italy now in the lead as the Russia-born count falls (UN DESA)." }
   ],
@@ -2433,8 +2431,8 @@ window.MIGRATION_DATA = {
                 "than a quarter of all formal transfers. By 2020 Israel had overtaken it. Then, after the " +
                 "Western financial sanctions on Russia in 2022, transfers from Russia through Moldovan " +
                 "banks essentially stopped, and their share fell from around 14 percent in 2020 to near " +
-                "zero. Member states of the European Union, led by Italy, Germany, the United Kingdom and " +
-                "France, now account for the large majority of formal inflows. The total net settlements " +
+                "zero. Member states of the European Union, led by Italy, Germany and France, together " +
+                "with the United Kingdom, now account for the large majority of formal inflows. The total net settlements " +
                 "reported by the National Bank of Moldova, which is a narrower measure covering banks only, " +
                 "came to about 1.63 billion dollars in 2023. The broader World Bank series puts total " +
                 "remittances at 1.92 billion dollars in 2024.",
@@ -2806,7 +2804,7 @@ window.MIGRATION_DATA = {
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
-    emigration: "Moldovans abroad, by main destination (stock)",
+    emigration: "Moldovans abroad, total over time (stock)",
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     population: "Resident population, by census year (NBS)"
@@ -3064,7 +3062,10 @@ window.MIGRATION_DATA = {
 
   function currentRows() {
     const arr = DATA.modes[mode].years[year];
-    return arr ? arr.slice().sort((p, q) => q.value - p.value) : [];
+    // Residual buckets ("Other destinations") sort last so the country ranking
+    // reads cleanly, whatever their size.
+    return arr ? arr.slice().sort((p, q) =>
+      ((p.residual ? 1 : 0) - (q.residual ? 1 : 0)) || (q.value - p.value)) : [];
   }
 
   function widthScaleFor(mode) {
@@ -3366,6 +3367,10 @@ window.MIGRATION_DATA = {
 
   // Fallback data table for the choropleth: districts ranked by value.
   // Doubles as the accessible alternative to the map (acceptance §8).
+  // Zoom hint matched to the input device: touch users pinch, mouse users scroll.
+  const ZOOM_HINT = (window.matchMedia && matchMedia("(pointer: coarse)").matches)
+    ? "pinch to zoom, drag to pan" : "scroll to zoom, drag to pan";
+
   function renderDistrictTable(cfg) {
     const { src, total } = choroModel(cfg);
     const vk = cfg.valueKey;
@@ -3373,7 +3378,7 @@ window.MIGRATION_DATA = {
     const asOf = fmtDate(meta.asOf) || meta.asOf || "";
     const capWord = cfg.valueWord.charAt(0).toUpperCase() + cfg.valueWord.slice(1);
     valueHead.textContent = capWord;
-    mapCaption.textContent = cfg.mapCaptionLead + asOf + " · scroll to zoom, drag to pan";
+    mapCaption.textContent = cfg.mapCaptionLead + asOf + " · " + ZOOM_HINT;
     const srcObj = { source_ids: meta.source_ids };
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
@@ -3412,7 +3417,7 @@ window.MIGRATION_DATA = {
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
-    mapCaption.textContent = (m.vintage ? m.vintage + " · " : "") + "scroll to zoom, drag to pan";
+    mapCaption.textContent = (m.vintage ? m.vintage + " · " : "") + ZOOM_HINT;
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(m); mapSrc.title = citationsFor(m); }
     sourceLine.textContent = citationsFor(m);
@@ -3946,7 +3951,7 @@ window.MIGRATION_DATA = {
     const f = d3.format(",");
     const rows = cd.reasons.slice().sort((a, b) => b.value - a.value);
     const rmax = d3.max(rows, r => r.value) || 1;
-    const W = 420, mL = 142, mR = 56, mT = 4, rowH = 20, barH = 11;
+    const W = 420, mL = 142, mR = 78, mT = 4, rowH = 20, barH = 11;
     const H = mT + rows.length * rowH + 4;
     const x = d3.scaleLinear().domain([0, rmax]).range([mL, W - mR]);
     const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "lbar-svg creason-svg")
@@ -3966,7 +3971,7 @@ window.MIGRATION_DATA = {
   }
 
   // 100%-stacked reason mix per nationality (table 3.8).
-  const RBN_COLORS = ["#CF5B3B", "#2B6CA8", "#E0A93F", "#2E8B6B", "#9AA0A6"]; // forced, family, studies, work, other
+  const RBN_COLORS = ["#CF5B3B", "#2B6CA8", "#B98A1E", "#2E8B6B", "#767E88"]; // forced, family, studies, work, other
   function buildReasonsByNat(rbn, legendEl) {
     const f = d3.format(",");
     if (legendEl) legendEl.innerHTML = rbn.order.map((o, k) =>
@@ -4462,7 +4467,7 @@ window.MIGRATION_DATA = {
         sub: "10.5% of GDP · World Bank 2024", tone: "c-purple", mode: "remittances" },
       { label: "Long-term immigrants / year", value: "105,804",
         sub: "2024 · NBS long-term migration", tone: "c-green", section: "ch-labour" },
-      { label: "Long-term emigrants / year", value: "123,486",
+      { label: "Long-term emigrants / year", value: "123,406",
         sub: "2024 · NBS long-term migration", tone: "c-blue", section: "ch-labour" }
     ];
     grid.innerHTML = KPIS.map(k => {
@@ -4511,7 +4516,9 @@ window.MIGRATION_DATA = {
       { year: "2022", tone: "c-orange", event: "Russia invades Ukraine",
         note: "Moldova becomes one of Europe's largest refugee hosts per capita almost overnight." },
       { year: "2024", tone: "c-green", event: "Census & EU accession path",
-        note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." }
+        note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." },
+      { year: "2026", tone: "c-orange", event: "The war next door grinds on",
+        note: "141,058 Ukrainian refugees remain under protection (UNHCR, May 2026) while EU accession negotiations continue." }
     ];
     strip.innerHTML = MS.map(s =>
       `<div class="milestone ${s.tone}">`

@@ -64,7 +64,7 @@
   };
   // Chart title per mode (the economics panel chart).
   const CHART_TITLES = {
-    emigration: "Moldovans abroad, by main destination (stock)",
+    emigration: "Moldovans abroad, total over time (stock)",
     immigration: "Ukrainian refugees in Moldova (UNHCR)",
     immigration_census: "Foreign-born residents in Moldova (NBS 2024 Census)",
     population: "Resident population, by census year (NBS)"
@@ -322,7 +322,10 @@
 
   function currentRows() {
     const arr = DATA.modes[mode].years[year];
-    return arr ? arr.slice().sort((p, q) => q.value - p.value) : [];
+    // Residual buckets ("Other destinations") sort last so the country ranking
+    // reads cleanly, whatever their size.
+    return arr ? arr.slice().sort((p, q) =>
+      ((p.residual ? 1 : 0) - (q.residual ? 1 : 0)) || (q.value - p.value)) : [];
   }
 
   function widthScaleFor(mode) {
@@ -624,6 +627,10 @@
 
   // Fallback data table for the choropleth: districts ranked by value.
   // Doubles as the accessible alternative to the map (acceptance §8).
+  // Zoom hint matched to the input device: touch users pinch, mouse users scroll.
+  const ZOOM_HINT = (window.matchMedia && matchMedia("(pointer: coarse)").matches)
+    ? "pinch to zoom, drag to pan" : "scroll to zoom, drag to pan";
+
   function renderDistrictTable(cfg) {
     const { src, total } = choroModel(cfg);
     const vk = cfg.valueKey;
@@ -631,7 +638,7 @@
     const asOf = fmtDate(meta.asOf) || meta.asOf || "";
     const capWord = cfg.valueWord.charAt(0).toUpperCase() + cfg.valueWord.slice(1);
     valueHead.textContent = capWord;
-    mapCaption.textContent = cfg.mapCaptionLead + asOf + " · scroll to zoom, drag to pan";
+    mapCaption.textContent = cfg.mapCaptionLead + asOf + " · " + ZOOM_HINT;
     const srcObj = { source_ids: meta.source_ids };
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(srcObj); mapSrc.title = citationsFor(srcObj); }
@@ -670,7 +677,7 @@
     const m = DATA.modes[mode];
     const rows = currentRows();
     valueHead.textContent = m.unit === "usd_million" ? "USD" : "People";
-    mapCaption.textContent = (m.vintage ? m.vintage + " · " : "") + "scroll to zoom, drag to pan";
+    mapCaption.textContent = (m.vintage ? m.vintage + " · " : "") + ZOOM_HINT;
     const mapSrc = document.getElementById("mapSource");
     if (mapSrc) { mapSrc.textContent = captionsFor(m); mapSrc.title = citationsFor(m); }
     sourceLine.textContent = citationsFor(m);
@@ -1204,7 +1211,7 @@
     const f = d3.format(",");
     const rows = cd.reasons.slice().sort((a, b) => b.value - a.value);
     const rmax = d3.max(rows, r => r.value) || 1;
-    const W = 420, mL = 142, mR = 56, mT = 4, rowH = 20, barH = 11;
+    const W = 420, mL = 142, mR = 78, mT = 4, rowH = 20, barH = 11;
     const H = mT + rows.length * rowH + 4;
     const x = d3.scaleLinear().domain([0, rmax]).range([mL, W - mR]);
     const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("class", "lbar-svg creason-svg")
@@ -1224,7 +1231,7 @@
   }
 
   // 100%-stacked reason mix per nationality (table 3.8).
-  const RBN_COLORS = ["#CF5B3B", "#2B6CA8", "#E0A93F", "#2E8B6B", "#9AA0A6"]; // forced, family, studies, work, other
+  const RBN_COLORS = ["#CF5B3B", "#2B6CA8", "#B98A1E", "#2E8B6B", "#767E88"]; // forced, family, studies, work, other
   function buildReasonsByNat(rbn, legendEl) {
     const f = d3.format(",");
     if (legendEl) legendEl.innerHTML = rbn.order.map((o, k) =>
@@ -1720,7 +1727,7 @@
         sub: "10.5% of GDP · World Bank 2024", tone: "c-purple", mode: "remittances" },
       { label: "Long-term immigrants / year", value: "105,804",
         sub: "2024 · NBS long-term migration", tone: "c-green", section: "ch-labour" },
-      { label: "Long-term emigrants / year", value: "123,486",
+      { label: "Long-term emigrants / year", value: "123,406",
         sub: "2024 · NBS long-term migration", tone: "c-blue", section: "ch-labour" }
     ];
     grid.innerHTML = KPIS.map(k => {
@@ -1769,7 +1776,9 @@
       { year: "2022", tone: "c-orange", event: "Russia invades Ukraine",
         note: "Moldova becomes one of Europe's largest refugee hosts per capita almost overnight." },
       { year: "2024", tone: "c-green", event: "Census & EU accession path",
-        note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." }
+        note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." },
+      { year: "2026", tone: "c-orange", event: "The war next door grinds on",
+        note: "141,058 Ukrainian refugees remain under protection (UNHCR, May 2026) while EU accession negotiations continue." }
     ];
     strip.innerHTML = MS.map(s =>
       `<div class="milestone ${s.tone}">`
