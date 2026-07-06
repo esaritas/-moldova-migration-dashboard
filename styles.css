@@ -1294,12 +1294,10 @@ body.js-reveal .reveal.in { opacity: 1; transform: none; }
 @media (max-width: 880px) {
   .modes { gap: 14px; }
   .mode-group { width: 100%; }
-  .mode-pill {
-    overflow-x: auto; scroll-snap-type: x proximity;
-    -ms-overflow-style: none; scrollbar-width: none;
-  }
-  .mode-pill::-webkit-scrollbar { display: none; }
-  .mode-pill .mode-btn { scroll-snap-align: start; min-height: 44px; white-space: nowrap; }
+  /* Wrap buttons onto a second row rather than clipping them behind an
+     invisible horizontal scrollbar (buttons were getting cut off). */
+  .mode-pill { flex-wrap: wrap; border-radius: 22px; }
+  .mode-pill .mode-btn { min-height: 44px; white-space: nowrap; }
   /* concept grid: 2 cols on tablet */
   .concept-grid { grid-template-columns: repeat(2, 1fr); }
 }

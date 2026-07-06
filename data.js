@@ -44,7 +44,7 @@ window.MIGRATION_DATA = {
     // "Data current as of" stamp. The pipeline overwrites `generated` on each run;
     // `updated` is a manual fallback for hand-edits. Per-series freshness lives in
     // each source's `accessed`.
-    updated: "2026-06-17",
+    updated: "2026-07-06",
     latest_year: { emigration: 2024, immigration: 2026, remittances: 2020 },
     note: "Remittances by-country is official/exact (NBM 2018 & 2020). " +
           "Immigration uses UNHCR refugee counts (to 2026). " +
@@ -204,7 +204,7 @@ window.MIGRATION_DATA = {
     { year: 2020, modes: ["remittances"],
       text: "Russia's share slips to third place as Israel takes the top spot; EU countries together already account for more than a third of flows (NBM, 2020)." },
     { year: 2022, modes: ["remittances"],
-      text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. Sources in the European Union, led by Italy, Germany, the United Kingdom and France, now account for most formal flows." },
+      text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. Sources in the European Union, led by Italy, Germany and France, together with the United Kingdom, now account for most formal flows." },
     { year: 2024, modes: ["emigration"],
       text: "The recorded diaspora tilts toward the EU, with Italy now in the lead as the Russia-born count falls (UN DESA)." }
   ],
@@ -669,8 +669,8 @@ window.MIGRATION_DATA = {
                 "than a quarter of all formal transfers. By 2020 Israel had overtaken it. Then, after the " +
                 "Western financial sanctions on Russia in 2022, transfers from Russia through Moldovan " +
                 "banks essentially stopped, and their share fell from around 14 percent in 2020 to near " +
-                "zero. Member states of the European Union, led by Italy, Germany, the United Kingdom and " +
-                "France, now account for the large majority of formal inflows. The total net settlements " +
+                "zero. Member states of the European Union, led by Italy, Germany and France, together " +
+                "with the United Kingdom, now account for the large majority of formal inflows. The total net settlements " +
                 "reported by the National Bank of Moldova, which is a narrower measure covering banks only, " +
                 "came to about 1.63 billion dollars in 2023. The broader World Bank series puts total " +
                 "remittances at 1.92 billion dollars in 2024.",
