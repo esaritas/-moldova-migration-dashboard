@@ -566,12 +566,13 @@ window.MIGRATION_DATA = {
                 "now live abroad. It is a strict count by country of birth, so it leaves out places that " +
                 "report by citizenship instead, namely Germany, the United States and the United Kingdom, " +
                 "and it quietly loses anyone who has since naturalised. On that birthplace basis the number " +
-                "has been climbing, from 812,653 in 2020 to 864,257 in 2024. Eurostat's independent figures " +
-                "by country of birth for European Union member states alone confirm more than 400,000 people " +
-                "born in the Republic of Moldova living across Italy, Romania, France, Spain and Portugal. " +
-                "That is consistent with the five European Union rows in this dashboard, and Germany adds " +
-                "roughly 35,000 more that the United Nations matrix omits because Germany reports by " +
-                "citizenship. Counted by nationality rather than by birthplace, the diaspora is larger still. " +
+                "has been climbing, from 812,653 in 2020 to 864,257 in 2024.\n\n" +
+                "Independent sources point the same way. Eurostat's figures by country of birth for " +
+                "European Union member states alone confirm more than 400,000 people born in the Republic " +
+                "of Moldova living across Italy, Romania, France, Spain and Portugal. That is consistent " +
+                "with the five European Union rows in this dashboard, and Germany adds roughly 35,000 more " +
+                "that the United Nations matrix omits because Germany reports by citizenship.\n\n" +
+                "Counted by nationality rather than by birthplace, the diaspora is larger still. " +
                 "The Prague Process puts Moldovan nationals abroad at about 1.16 million in 2020, and the " +
                 "country's own population gap of about 0.86 million points to a real diaspora of roughly " +
                 "1.0 to 1.2 million.",
@@ -664,13 +665,15 @@ window.MIGRATION_DATA = {
       panel_note: "The breakdown by country is from the National Bank of Moldova for 2020, the last year with a published breakdown by country. The aggregate net settlements from the National Bank came to about 1.63 billion dollars in 2023. The broader World Bank measure puts total remittances at 1.92 billion dollars in 2024, and the economic indicators on this view use the World Bank figures for 2024.",
       headline: "Money sent home is one of the pillars of the economy. Even after sliding from its " +
                 "peak of 34.5 percent in 2006, it still amounts to about 10.5 percent of GDP, roughly " +
-                "double the world average. The geography of those flows has also shifted dramatically. " +
+                "double the world average.\n\n" +
+                "The geography of those flows has shifted dramatically. " +
                 "Russia was the single largest source from at least 2015 through 2019, contributing more " +
                 "than a quarter of all formal transfers. By 2020 Israel had overtaken it. Then, after the " +
                 "Western financial sanctions on Russia in 2022, transfers from Russia through Moldovan " +
                 "banks essentially stopped, and their share fell from around 14 percent in 2020 to near " +
                 "zero. Member states of the European Union, led by Italy, Germany and France, together " +
-                "with the United Kingdom, now account for the large majority of formal inflows. The total net settlements " +
+                "with the United Kingdom, now account for the large majority of formal inflows.\n\n" +
+                "The total net settlements " +
                 "reported by the National Bank of Moldova, which is a narrower measure covering banks only, " +
                 "came to about 1.63 billion dollars in 2023. The broader World Bank series puts total " +
                 "remittances at 1.92 billion dollars in 2024.",
