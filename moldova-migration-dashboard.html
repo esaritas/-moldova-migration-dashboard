@@ -10,7 +10,7 @@
   <!-- Open Graph / LinkedIn preview -->
   <meta property="og:type"        content="website" />
   <meta property="og:title"       content="Moldova in Motion: migration and remittances" />
-  <meta property="og:description" content="One in four people born in Moldova now live abroad. Six short data chapters on where Moldovans go, who arrives, and how much money flows back home." />
+  <meta property="og:description" content="One in four people born in the Republic of Moldova now live abroad. Six short data chapters on where Moldovans go, who arrives, and how much money flows back home." />
   <meta property="og:url"         content="https://esaritas.github.io/-moldova-migration-dashboard/" />
   <meta property="og:image"       content="https://esaritas.github.io/-moldova-migration-dashboard/og-preview.png" />
   <meta property="og:image:width"  content="1200" />
@@ -1854,7 +1854,7 @@ window.MIGRATION_DATA = {
     // "Data current as of" stamp. The pipeline overwrites `generated` on each run;
     // `updated` is a manual fallback for hand-edits. Per-series freshness lives in
     // each source's `accessed`.
-    updated: "2026-07-06",
+    updated: "2026-07-07",
     latest_year: { emigration: 2024, immigration: 2026, remittances: 2020 },
     note: "Remittances by-country is official/exact (NBM 2018 & 2020). " +
           "Immigration uses UNHCR refugee counts (to 2026). " +
@@ -2081,7 +2081,7 @@ window.MIGRATION_DATA = {
       publisher: "National Bank of Moldova",
       url: "https://www.bnm.md/en/content/money-transfers-abroad-individuals-banks-republic-moldova-2020-net-settlements",
       indicator_code: "DBP4 / annual press release (net settlements)",
-      accessed: "2026-06-11",
+      accessed: "2026-07-07",
       definition: "Cross-border money transfers to resident individuals settled via Moldovan " +
                   "banks, by source country, net basis. A proxy for remittances.",
       scope: "Excludes the Transnistria region (not under the authorities' control), so " +
@@ -2089,8 +2089,8 @@ window.MIGRATION_DATA = {
              "labour remittances, and also include some salaries, pensions and other transfers. " +
              "A full by-country breakdown was published annually only through 2020; from 2021 the " +
              "breakdown lives only in NBM's interactive DBP4 database. The aggregate (all countries) " +
-             "continues to be published: ≈$1.63bn in 2023 (NBM net settlements).",
-      note: "Exact official figures for 2018 and 2020. 2023 aggregate ≈$1.63bn (NBM DBP4)."
+             "continues to be published: ≈$1.66bn in 2025 (NBM net settlements).",
+      note: "Exact official figures for 2018 and 2020. 2025 aggregate ≈$1.66bn (NBM DBP4)."
     },
     wb_remit_gdp: {
       label: "Personal remittances received (% of GDP)",
@@ -2170,7 +2170,7 @@ window.MIGRATION_DATA = {
       definition: "People living in the United States who were born in the Republic of Moldova. " +
                   "This is a place of birth basis, the same concept the United Nations uses elsewhere.",
       scope: "ACS estimate ≈52,000 (2021), up from ≈43,600 (2015). Captures naturalised " +
-             "US citizens born in Moldova, whom UN DESA's bilateral matrix omits because " +
+             "US citizens born in the Republic of Moldova, whom UN DESA's bilateral matrix omits because " +
              "the US reports by citizenship.",
       note: "A survey estimate with a margin of error; treated here as a proxy, not an exact count."
     },
@@ -2219,10 +2219,10 @@ window.MIGRATION_DATA = {
   // Single source of truth for definitions (cards link here in item 8).
   glossary: [
     { id: "emigrant_stock", term: "Emigrant (diaspora) stock",
-      definition: "People born in Moldova who live in another country, counted at a single point in " +
+      definition: "People born in the Republic of Moldova who live in another country, counted at a single point in " +
                   "time. It is a stock, not the number who left in any given year." },
     { id: "immigrant_stock", term: "Immigrant stock",
-      definition: "People living in Moldova who were born in another country, counted at a " +
+      definition: "People living in the Republic of Moldova who were born in another country, counted at a " +
                   "point in time." },
     { id: "emigration_rate", term: "Emigration rate",
       definition: "The share of all Moldovan-born people who live abroad: diaspora ÷ " +
@@ -2370,7 +2370,7 @@ window.MIGRATION_DATA = {
       implied_diaspora_nbs: 857936     // the gap — NBS's own measure of who's abroad
     },
     emigration: {
-      takeaway: "About 864,000 people born in Moldova now live abroad. That is roughly one in four of everyone born here, and more than a third of all the people still living in the country today.",
+      takeaway: "About 864,000 people born in the Republic of Moldova now live abroad. That is roughly one in four of everyone born here, and more than a third of all the people still living in the country today.",
       headline: "Few countries have been shaped by emigration the way the Republic of Moldova has. " +
                 "The 2024 edition from the United Nations counts 864,257 people born in the country who " +
                 "now live abroad. It is a strict count by country of birth, so it leaves out places that " +
@@ -2472,7 +2472,7 @@ window.MIGRATION_DATA = {
     },
     remittances: {
       takeaway: "The money that Moldovans abroad send home is worth about 10.5 percent of GDP. That is nearly double the global average and more than half the size of the state budget. The map shows where it came from in 2020. Since 2022 the share from Russia has effectively collapsed.",
-      panel_note: "The breakdown by country is from the National Bank of Moldova for 2020, the last year with a published breakdown by country. The aggregate net settlements from the National Bank came to about 1.63 billion dollars in 2023. The broader World Bank measure puts total remittances at 1.92 billion dollars in 2024, and the economic indicators on this view use the World Bank figures for 2024.",
+      panel_note: "The breakdown by country is from the National Bank of Moldova for 2020, the last year with a published breakdown by country. The aggregate net settlements from the National Bank came to about 1.66 billion dollars in 2025. The broader World Bank measure puts total remittances at 1.92 billion dollars in 2024, and the economic indicators on this view use the World Bank figures for 2024.",
       headline: "Money sent home is one of the pillars of the economy. Even after sliding from its " +
                 "peak of 34.5 percent in 2006, it still amounts to about 10.5 percent of GDP, roughly " +
                 "double the world average.\n\n" +
@@ -2485,7 +2485,7 @@ window.MIGRATION_DATA = {
                 "with the United Kingdom, now account for the large majority of formal inflows.\n\n" +
                 "The total net settlements " +
                 "reported by the National Bank of Moldova, which is a narrower measure covering banks only, " +
-                "came to about 1.63 billion dollars in 2023. The broader World Bank series puts total " +
+                "came to about 1.66 billion dollars in 2025. The broader World Bank series puts total " +
                 "remittances at 1.92 billion dollars in 2024.",
       // Remittances-to-GDP over time. Recent years exact; earlier approximate.
       gdp_series_source_id: "wb_remit_gdp",
@@ -2496,7 +2496,7 @@ window.MIGRATION_DATA = {
       ],
       indicators: [
         { term: "Remittances-to-GDP", value: "10.5%", sub: "2024", world: "≈5% country average", icon: "percent", source_id: "wb_remit_gdp", def_id: "remittances_gdp" },
-        { term: "Remittance inflows", value: "$1.92bn", sub: "2024 (World Bank BPM6); NBM net settlements 2023: ≈$1.63bn", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
+        { term: "Remittance inflows", value: "$1.92bn", sub: "2024 (World Bank BPM6); NBM net settlements 2025: ≈$1.66bn", world: null, icon: "banknote", source_id: "wb_remit_total", def_id: "remittance_inflows" },
         { term: "Russia's share", value: "14% → near zero", sub: "2020 to post-2022; EU + Israel now dominate formal flows (NBM)", world: null, icon: "route", source_id: "nbm_transfers", def_id: "net_settlements" },
         { term: "vs. state budget", value: "≈51%", sub: "$1.92bn × ~17.7 = ~34.0bn MDL, against 66.98bn MDL state budget revenue (2024)", world: null, icon: "landmark", source_id: "mof_budget", def_id: "budget_ratio" }
       ]
