@@ -202,7 +202,7 @@ window.MIGRATION_DATA = {
     { year: 2024, modes: ["immigration"],
       text: "Around 136,000 refugees from Ukraine are now living in the Republic of Moldova (UNHCR)." },
     { year: 2020, modes: ["remittances"],
-      text: "Russia's share slips to third place as Israel takes the top spot; EU countries together already account for more than a third of flows (NBM, 2020)." },
+      text: "Russia's share slips to third place as Israel takes the top spot; EU countries together already account for more than a third of flows (NBM, 2020). After the sanctions of 2022 transfers from Russia collapsed, and by 2025 the yearly total through banks reached about 1.66 billion dollars (NBM)." },
     { year: 2022, modes: ["remittances"],
       text: "Western financial sanctions on Russia effectively shut down formal banking transfers from Russia. Sources in the European Union, led by Italy, Germany and France, together with the United Kingdom, now account for most formal flows." },
     { year: 2024, modes: ["emigration"],
