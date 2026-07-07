@@ -2124,8 +2124,9 @@
         + `<em>published</em> geographic breakdown, the 2020 net settlements from the National Bank of Moldova, `
         + `and it is shown as history rather than as today's pattern. Since the sanctions of 2022, transfers `
         + `from Russia have collapsed and sources in the European Union now dominate. The headline figures on `
-        + `this view, 10.5 percent of GDP and 1.92 billion dollars in 2024, are current. Only the geography by `
-        + `country is historical.</div>`;
+        + `this view are current: the World Bank puts total remittances at 1.92 billion dollars (10.5 percent `
+        + `of GDP) in 2024, and the National Bank of Moldova recorded about 1.66 billion dollars of bank `
+        + `transfers in 2025. Only the geography by country is historical.</div>`;
       el.hidden = false;
     } else if (mode === "immigration") {
       el.innerHTML =
