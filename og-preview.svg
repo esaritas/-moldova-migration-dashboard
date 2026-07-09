@@ -1,56 +1,102 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- LinkedIn / Open Graph share card, 1200×630.
+       Design mirrors the dashboard itself (styles.css): white page, ink text,
+       Space Grotesk display / Inter body / IBM Plex Mono captions, the
+       diaspora-blue · refugee-orange · money-purple accent palette, the faint
+       terracotta grapevine covor watermark, and the flag hairline.
+       Render to og-preview.png at 1200×630 after editing (see scratch notes in
+       repo history: chromium --headless --screenshot over a font-loading page). -->
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f1623"/>
-      <stop offset="100%" stop-color="#1a2535"/>
-    </linearGradient>
+    <!-- Grapevine covor motif (same drawing as index.html's watermark) -->
+    <g id="og-grapes" fill="currentColor" stroke="none">
+      <circle cx="-12.4" cy="7"  r="4.8"/><circle cx="-4.1" cy="7"  r="4.8"/>
+      <circle cx="4.1"   cy="7"  r="4.8"/><circle cx="12.4"  cy="7"  r="4.8"/>
+      <circle cx="-8.3"  cy="16" r="4.8"/><circle cx="0"     cy="16" r="4.8"/>
+      <circle cx="8.3"   cy="16" r="4.8"/>
+      <circle cx="-4.1"  cy="24" r="4.8"/><circle cx="4.1"   cy="24" r="4.8"/>
+      <circle cx="0"     cy="32" r="4.8"/>
+    </g>
+    <path id="og-vleaf" fill="currentColor" stroke="none"
+          d="M0 0 L2.5 -3 L1.5 -6 L5 -7 L3.5 -11 L7 -12 L4.5 -16 L2 -19 L0 -21
+             L-2 -19 L-4.5 -16 L-7 -12 L-3.5 -11 L-5 -7 L-1.5 -6 L-2.5 -3 Z"/>
+    <pattern id="og-covor" width="180" height="180" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+        <path d="M90 90 C 64 70 38 52 0 0   M90 90 C 116 70 142 52 180 0
+                 M90 90 C 64 110 38 128 0 180   M90 90 C 116 110 142 128 180 180"/>
+      </g>
+      <use href="#og-vleaf" transform="translate(50 50) rotate(135)"/>
+      <use href="#og-vleaf" transform="translate(130 50) rotate(225)"/>
+      <use href="#og-vleaf" transform="translate(50 130) rotate(45)"/>
+      <use href="#og-vleaf" transform="translate(130 130) rotate(315)"/>
+      <use href="#og-vleaf" transform="translate(67 79) rotate(-34)"/>
+      <use href="#og-vleaf" transform="translate(113 79) rotate(34)"/>
+      <use href="#og-grapes" transform="translate(90 80)"/>
+      <use href="#og-grapes" transform="translate(0 0) scale(0.66)"/>
+      <use href="#og-grapes" transform="translate(180 0) scale(0.66)"/>
+      <use href="#og-grapes" transform="translate(0 180) scale(0.66)"/>
+      <use href="#og-grapes" transform="translate(180 180) scale(0.66)"/>
+    </pattern>
   </defs>
 
-  <!-- Background -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Page -->
+  <rect width="1200" height="630" fill="#FFFFFF"/>
+  <!-- Faint terracotta covor watermark, as on the site (--motif #A8472E) -->
+  <rect width="1200" height="630" fill="url(#og-covor)" color="#A8472E" opacity="0.055"/>
 
-  <!-- Accent bar top -->
-  <rect x="0" y="0" width="1200" height="6" fill="#2B6CA8"/>
+  <!-- Eyebrow (IBM Plex Mono, like the site's .eyebrow) -->
+  <text x="84" y="112" font-family="'IBM Plex Mono', ui-monospace, Menlo, monospace"
+        font-size="20" font-weight="500" fill="#8B9097" letter-spacing="3">REPUBLIC OF MOLDOVA · PEOPLE &amp; REMITTANCES</text>
 
-  <!-- Flag colours strip bottom-right decoration -->
-  <rect x="900" y="540" width="300" height="4" fill="#003DA5" opacity="0.6"/>
-  <rect x="900" y="548" width="300" height="4" fill="#FFD700" opacity="0.6"/>
-  <rect x="900" y="556" width="300" height="4" fill="#CC0001" opacity="0.6"/>
+  <!-- Title (Space Grotesk, ink) -->
+  <text x="80" y="216" font-family="'Space Grotesk', 'Segoe UI', system-ui, sans-serif"
+        font-size="96" font-weight="600" fill="#1A1C1E">Moldova</text>
+  <text x="80" y="316" font-family="'Space Grotesk', 'Segoe UI', system-ui, sans-serif"
+        font-size="96" font-weight="600" fill="#1A1C1E">in Motion</text>
 
-  <!-- Eyebrow -->
-  <text x="80" y="110" font-family="'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="500" fill="#7EA8D4" letter-spacing="2">REPUBLIC OF MOLDOVA · DATA DASHBOARD</text>
+  <!-- Subtitle (Inter, ink-soft) -->
+  <text x="82" y="378" font-family="Inter, system-ui, sans-serif"
+        font-size="28" font-weight="400" fill="#585E66">Migration · Population · Remittances</text>
 
-  <!-- Main title -->
-  <text x="80" y="210" font-family="'Helvetica Neue', Arial, sans-serif" font-size="88" font-weight="700" fill="#FFFFFF">Moldova</text>
-  <text x="80" y="305" font-family="'Helvetica Neue', Arial, sans-serif" font-size="88" font-weight="700" fill="#FFFFFF">in Motion</text>
+  <!-- Hairline divider (--line) -->
+  <line x1="84" y1="420" x2="640" y2="420" stroke="#E6E7E9" stroke-width="2"/>
 
-  <!-- Subtitle -->
-  <text x="80" y="375" font-family="'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="400" fill="#A8BDD4">Migration · Population · Remittances</text>
+  <!-- Key stats, in the site's per-phenomenon accent colours -->
+  <text x="84"  y="486" font-family="'Space Grotesk', 'Segoe UI', system-ui, sans-serif" font-size="46" font-weight="600" fill="#2B6CA8">864K</text>
+  <text x="84"  y="518" font-family="'IBM Plex Mono', ui-monospace, Menlo, monospace" font-size="16.5" fill="#585E66">diaspora abroad</text>
 
-  <!-- Divider -->
-  <line x1="80" y1="415" x2="560" y2="415" stroke="#2B6CA8" stroke-width="2"/>
+  <text x="292" y="486" font-family="'Space Grotesk', 'Segoe UI', system-ui, sans-serif" font-size="46" font-weight="600" fill="#E08A2E">141K</text>
+  <text x="292" y="518" font-family="'IBM Plex Mono', ui-monospace, Menlo, monospace" font-size="16.5" fill="#585E66">refugees hosted</text>
 
-  <!-- Key stat callouts -->
-  <text x="80"  y="470" font-family="'Helvetica Neue', Arial, sans-serif" font-size="42" font-weight="700" fill="#5A9FD4">864K</text>
-  <text x="80"  y="500" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" fill="#7EA8D4">diaspora abroad</text>
+  <text x="500" y="486" font-family="'Space Grotesk', 'Segoe UI', system-ui, sans-serif" font-size="46" font-weight="600" fill="#6E4FA3">$1.9B</text>
+  <text x="500" y="518" font-family="'IBM Plex Mono', ui-monospace, Menlo, monospace" font-size="16.5" fill="#585E66">remittances / yr</text>
 
-  <text x="280" y="470" font-family="'Helvetica Neue', Arial, sans-serif" font-size="42" font-weight="700" fill="#D4844A">141K</text>
-  <text x="280" y="500" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" fill="#7EA8D4">refugees hosted</text>
+  <!-- Right side: mini bar chart in the dashboard palette, on a white card -->
+  <g>
+    <rect x="790" y="128" width="330" height="368" rx="10" fill="#FFFFFF" stroke="#E6E7E9" stroke-width="1.5"/>
+    <rect x="826" y="188" width="20" height="270" rx="4" fill="#2B6CA8" opacity="0.95"/>
+    <rect x="862" y="246" width="20" height="212" rx="4" fill="#2B6CA8" opacity="0.6"/>
+    <rect x="898" y="222" width="20" height="236" rx="4" fill="#E08A2E" opacity="0.85"/>
+    <rect x="934" y="300" width="20" height="158" rx="4" fill="#2E8B6B" opacity="0.8"/>
+    <rect x="970" y="266" width="20" height="192" rx="4" fill="#6E4FA3" opacity="0.8"/>
+    <rect x="1006" y="318" width="20" height="140" rx="4" fill="#2B6CA8" opacity="0.45"/>
+    <rect x="1042" y="238" width="20" height="220" rx="4" fill="#E08A2E" opacity="0.5"/>
+    <rect x="1078" y="284" width="20" height="174" rx="4" fill="#2E8B6B" opacity="0.5"/>
+    <line x1="812" y1="458" x2="1098" y2="458" stroke="#8B9097" stroke-width="1.5" opacity="0.6"/>
+  </g>
 
-  <text x="480" y="470" font-family="'Helvetica Neue', Arial, sans-serif" font-size="42" font-weight="700" fill="#8C6FBD">$2.8B</text>
-  <text x="480" y="500" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" fill="#7EA8D4">remittances / yr</text>
+  <!-- Grape cluster accent by the card, in the motif terracotta -->
+  <g color="#A8472E" opacity="0.5">
+    <use href="#og-vleaf" transform="translate(936 78) rotate(-34) scale(1.7)"/>
+    <use href="#og-vleaf" transform="translate(1014 78) rotate(34) scale(1.7)"/>
+    <use href="#og-grapes" transform="translate(975 80) scale(1.7)"/>
+  </g>
 
-  <!-- Right side decorative bars (mini bar chart feel) -->
-  <rect x="840" y="150" width="18" height="320" rx="4" fill="#2B6CA8" opacity="0.9"/>
-  <rect x="876" y="220" width="18" height="250" rx="4" fill="#2B6CA8" opacity="0.6"/>
-  <rect x="912" y="190" width="18" height="280" rx="4" fill="#E08A2E" opacity="0.7"/>
-  <rect x="948" y="280" width="18" height="190" rx="4" fill="#2E8B6B" opacity="0.7"/>
-  <rect x="984" y="240" width="18" height="230" rx="4" fill="#6E4FA3" opacity="0.7"/>
-  <rect x="1020" y="300" width="18" height="170" rx="4" fill="#2B6CA8" opacity="0.5"/>
-  <rect x="1056" y="200" width="18" height="270" rx="4" fill="#E08A2E" opacity="0.5"/>
-  <rect x="1092" y="260" width="18" height="210" rx="4" fill="#2E8B6B" opacity="0.5"/>
-  <line x1="820" y1="470" x2="1130" y2="470" stroke="#2B6CA8" stroke-width="1.5" opacity="0.5"/>
+  <!-- Flag hairline, bottom right (subtle, as before) -->
+  <rect x="900" y="560" width="300" height="4" fill="#003DA5" opacity="0.55"/>
+  <rect x="900" y="568" width="300" height="4" fill="#FFD700" opacity="0.65"/>
+  <rect x="900" y="576" width="300" height="4" fill="#CC0001" opacity="0.55"/>
 
-  <!-- URL -->
-  <text x="80" y="590" font-family="'Helvetica Neue', Arial, sans-serif" font-size="20" fill="#4A6A8A">esaritas.github.io/-moldova-migration-dashboard</text>
+  <!-- URL (IBM Plex Mono, ink-faint) -->
+  <text x="84" y="588" font-family="'IBM Plex Mono', ui-monospace, Menlo, monospace"
+        font-size="19" fill="#8B9097">esaritas.github.io/-moldova-migration-dashboard</text>
 </svg>
