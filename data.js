@@ -44,7 +44,7 @@ window.MIGRATION_DATA = {
     // "Data current as of" stamp. The pipeline overwrites `generated` on each run;
     // `updated` is a manual fallback for hand-edits. Per-series freshness lives in
     // each source's `accessed`.
-    updated: "2026-07-07",
+    updated: "2026-07-09",
     latest_year: { emigration: 2024, immigration: 2026, remittances: 2020 },
     note: "Remittances by-country is official/exact (NBM 2018 & 2020). " +
           "Immigration uses UNHCR refugee counts (to 2026). " +
@@ -198,7 +198,7 @@ window.MIGRATION_DATA = {
   // neutral (data, not framing); `modes` limits where each shows.
   annotations: [
     { year: 2022, modes: ["immigration"],
-      text: "War breaks out in Ukraine, and the number of people fleeing across the border surges (UNHCR)." },
+      text: "War breaks out in Ukraine, and the number of people fleeing across the border surges. More than two million border crossings follow over the next four years, most of them onward transit (UNHCR)." },
     { year: 2024, modes: ["immigration"],
       text: "Around 136,000 refugees from Ukraine are now living in the Republic of Moldova (UNHCR)." },
     { year: 2020, modes: ["remittances"],
@@ -232,13 +232,18 @@ window.MIGRATION_DATA = {
     },
     unhcr: {
       label: "Refugee Population Statistics (people residing in Moldova)",
-      publisher: "UNHCR",
+      publisher: "UNHCR · Government of the Republic of Moldova",
       url: "https://www.unhcr.org/refugee-statistics/",
       indicator_code: "population/v1 · coa=MDA · refugees + asylum-seekers",
       accessed: "2026-06-11",
       definition: "Refugees and asylum-seekers whose country of asylum is the Republic of " +
-                  "Moldova, at year-end.",
-      scope: "From 2022 this population is predominantly people fleeing the war in Ukraine.",
+                  "Moldova, at year-end. UNHCR compiles these figures from Government of the " +
+                  "Republic of Moldova registration data.",
+      scope: "From 2022 this population is predominantly people fleeing the war in Ukraine. " +
+             "It is a stock of people hosted at a point in time, spanning several legal statuses " +
+             "(Temporary Protection, residence permits, asylum procedures) — not cumulative " +
+             "arrivals: UNHCR has recorded more than two million border crossings from Ukraine " +
+             "into Moldova since February 2022, most of them onward transit.",
       note: "Reported in UNHCR's terms, as refugees and people fleeing the war in Ukraine, " +
             "and not merged into general 'immigrants'."
     },
@@ -419,7 +424,9 @@ window.MIGRATION_DATA = {
                   "(diaspora + resident Moldovan-born)." },
     { id: "refugee_population", term: "Refugee population",
       definition: "Refugees and asylum-seekers residing in a country at a given time (UNHCR " +
-                  "basis), here with the Republic of Moldova as country of asylum." },
+                  "basis, compiled from Government of the Republic of Moldova registration data), " +
+                  "here with the Republic of Moldova as country of asylum. A stock of people " +
+                  "hosted, not cumulative arrivals since 2022." },
     { id: "remittances_gdp", term: "Remittances-to-GDP",
       definition: "Personal remittances received as a percentage of GDP, a way of seeing how large " +
                   "the money sent home is next to the whole economy." },
@@ -460,7 +467,12 @@ window.MIGRATION_DATA = {
     "Many Moldovans also hold Romanian citizenship and may move onward through the EU; flows " +
       "to Romania reflect this passport and mobility fact, not any identity claim.",
     "Arrivals from Ukraine are reported in UNHCR's terms, as refugees and people fleeing the war " +
-      "in Ukraine, and are kept separate from general 'immigrant' figures.",
+      "in Ukraine, and are kept separate from general 'immigrant' figures. UNHCR publishes these " +
+      "figures from Government of the Republic of Moldova registration data. They are stocks of " +
+      "people hosted at a point in time, not cumulative arrivals — more than two million border " +
+      "crossings from Ukraine have been recorded since February 2022, most of them onward transit — " +
+      "and the 141,058 hosted refugees and 92,405 Temporary Protection holders are different " +
+      "populations: not everyone hosted holds Temporary Protection.",
     "Remittances are NBM money transfers via banks (net settlements): a proxy that also " +
       "includes some salaries and pensions, excludes Transnistria, and was published with a " +
       "full by-country breakdown only through 2020. The Russia-to-EU shift is shown as data only.",
@@ -516,9 +528,9 @@ window.MIGRATION_DATA = {
     { topic: "Diaspora abroad", source: "UN DESA", year: "2024",
       measure: "Country-of-birth migrant stock",
       limit: "Omits citizenship-reporting countries (DE/US/UK); misses naturalised Moldovans." },
-    { topic: "Refugees hosted", source: "UNHCR", year: "2026",
+    { topic: "Refugees hosted", source: "UNHCR (Govt of Moldova data)", year: "2026",
       measure: "Operational refugee count (residing + TP)",
-      limit: "Humanitarian count; district map is TP holders only, not all refugees." },
+      limit: "A stock of people hosted, not cumulative arrivals; district map is TP holders only, not all refugees." },
     { topic: "Foreign-born residents", source: "NBS Census", year: "2024",
       measure: "Usual-resident count by country of birth",
       limit: "Different concept from the UNHCR refugee count; smaller origins estimated." },
@@ -601,20 +613,24 @@ window.MIGRATION_DATA = {
       }
     },
     immigration: {
-      takeaway: "Since the early days of 2022, the Republic of Moldova has taken in more than 141,000 Ukrainians fleeing the war. That is one of the highest shares anywhere in Europe, at about one refugee for every 17 residents, and roughly two in five of them are children. The map shows where the people granted Temporary Protection have settled.",
+      takeaway: "As of May 2026, the Republic of Moldova hosts about 141,000 refugees from Ukraine, one of the highest counts per resident anywhere in Europe, at about one refugee for every 17 residents, and roughly two in five of them are children. Far more people passed through: since February 2022 more than two million border crossings from Ukraine have been recorded, most of them moving onward. The map shows where the people enrolled for Temporary Protection have settled.",
       headline: "When Russia launched its full invasion of Ukraine in February 2022, the Republic of " +
                 "Moldova found itself receiving one of the largest refugee inflows per person anywhere in " +
-                "Europe. As of 31 May 2026, UNHCR counts 141,058 Ukrainian refugees still in the " +
-                "country, with 92,405 of them enrolled in Temporary Protection, recorded on 27 April " +
-                "2026 and valid through March 2027. The population skews young and female. About " +
+                "Europe: more than two million border crossings from Ukraine have been recorded since " +
+                "then, with most people continuing onward into the European Union. As of 31 May 2026, " +
+                "UNHCR — compiling registration data from the Government of the Republic of Moldova — " +
+                "counts 141,058 Ukrainian refugees hosted in the country. Of them, 92,405 were enrolled " +
+                "in Temporary Protection as of 27 April 2026, a regime extended to March 2027; the rest " +
+                "hold other statuses, such as residence permits or pending asylum claims, so the two " +
+                "figures describe different populations. The hosted population skews young and female. About " +
                 "38 percent of those in the country are children under 18, roughly 39 percent are adult women, " +
                 "and about 23 percent are adult men. This is a demographic pattern that is typical of conflict " +
                 "displacement, where men of military age often remain in or return to Ukraine. These are the " +
                 "operational figures from UNHCR, and they are a different thing from the 52,400 residents born " +
                 "in Ukraine that the 2024 census recorded, which you can explore on the Foreign born residents tab.",
       indicators: [
-        { term: "Residing (May 2026)", value: "141,058", sub: "Ukrainian refugees remaining · UNHCR 31 May 2026", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
-        { term: "Temporary Protection", value: "92,405", sub: "TP enrolled 27 Apr 2026 (UNHCR); valid to Mar 2027", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
+        { term: "Hosted (May 2026)", value: "141,058", sub: "Ukrainian refugees in the country · UNHCR (Govt of Moldova data), 31 May 2026", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
+        { term: "Temporary Protection", value: "92,405", sub: "TP enrolled 27 Apr 2026 (Govt of Moldova via UNHCR); valid to Mar 2027 · a subset of statuses, not all refugees", world: null, icon: "tent", source_id: "unhcr", def_id: "refugee_population" },
         { term: "Per capita", value: "1 in 17", sub: "residents per refugee · 2024 Census vs UNHCR May 2026", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" },
         { term: "Children (under 18)", value: "~38%", sub: "of Ukrainian refugees in Moldova · adult women ~39% · adult men ~23% (UNHCR 2024)", world: null, icon: "users", source_id: "unhcr", def_id: "refugee_population" }
       ]
@@ -672,7 +688,7 @@ window.MIGRATION_DATA = {
                 "Western financial sanctions on Russia in 2022, transfers from Russia through Moldovan " +
                 "banks essentially stopped, and their share fell from around 14 percent in 2020 to near " +
                 "zero. Member states of the European Union, led by Italy, Germany and France, together " +
-                "with the United Kingdom, now account for the large majority of formal inflows.\n\n" +
+                "with the United Kingdom, now account for most formal inflows (NBM DBP4 database).\n\n" +
                 "The total net settlements " +
                 "reported by the National Bank of Moldova, which is a narrower measure covering banks only, " +
                 "came to about 1.66 billion dollars in 2025. The broader World Bank series puts total " +

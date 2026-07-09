@@ -1724,10 +1724,10 @@
         sub: "Usually-resident · NBS 2024 Census (−13.6% since 2014)", tone: "c-green", mode: "population" },
       { label: "Foreign-born residents", value: "106,700",
         sub: "4.4% of residents · NBS 2024 Census", tone: "c-green", mode: "immigration_census" },
-      { label: "Ukrainian refugees", value: "141,058",
-        sub: "Residing · UNHCR 31 May 2026", tone: "c-orange", mode: "immigration" },
+      { label: "Ukrainian refugees hosted", value: "141,058",
+        sub: "UNHCR (Govt of Moldova data) · 31 May 2026", tone: "c-orange", mode: "immigration" },
       { label: "Temporary Protection", value: d3.format(",")(tp.nationalTotal || 92405),
-        sub: "Enrolled · UNHCR 27 Apr 2026", tone: "c-orange", mode: "immigration" },
+        sub: "Enrolled · Govt of Moldova via UNHCR · 27 Apr 2026", tone: "c-orange", mode: "immigration" },
       { label: "Annual remittances", value: "$1.92bn",
         sub: "10.5% of GDP · World Bank 2024", tone: "c-purple", mode: "remittances" },
       { label: "Long-term immigrants / year", value: "105,804",
@@ -1783,7 +1783,7 @@
       { year: "2024", tone: "c-green", event: "Census & EU accession path",
         note: "Census confirms 2.41M residents (−13.6% since 2014) as EU accession talks advance." },
       { year: "2026", tone: "c-orange", event: "The war next door grinds on",
-        note: "141,058 Ukrainian refugees remain under protection (UNHCR, May 2026) while EU accession negotiations continue." }
+        note: "141,058 refugees from Ukraine are still hosted in the country (UNHCR, from Government of Moldova data, May 2026) while EU accession negotiations continue." }
     ];
     strip.innerHTML = MS.map(s =>
       `<div class="milestone ${s.tone}">`
@@ -2131,10 +2131,13 @@
     } else if (mode === "immigration") {
       el.innerHTML =
         `<div><strong>How to read the refugee map.</strong> The district map shows <em>Temporary `
-        + `Protection holders</em>, about 92,405 as recorded by UNHCR in April 2026, not all of the Ukrainian `
-        + `refugees in the country. The headline count of 141,058 is the broader UNHCR figure for refugees `
-        + `residing in the country. It is related to the figure mapped by district, but larger. Both are `
-        + `separate again from the foreign born residents counted in the census, on the next tab.</div>`;
+        + `Protection holders</em>, about 92,405 as recorded on 27 April 2026, not all of the Ukrainian `
+        + `refugees in the country. The headline count of 141,058 is the broader figure for refugees `
+        + `hosted in the country, which also includes people on residence permits or in asylum procedures. `
+        + `Both figures are published by UNHCR from Government of the Republic of Moldova registration `
+        + `data, and both are stocks of people present — not the two-million-plus border crossings recorded `
+        + `since 2022. They are separate again from the foreign born residents counted in the census, on `
+        + `the next tab.</div>`;
       el.hidden = false;
     } else if (mode === "emigration") {
       el.innerHTML =
