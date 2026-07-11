@@ -390,7 +390,7 @@ window.MIGRATION_DATA = {
       indicator_code: "Census 2021 · TS012 country of birth",
       accessed: "2026-06-21",
       definition: "Usual residents of England and Wales who were born in the Republic of Moldova.",
-      scope: "This badly undercounts the community, because most Moldovans in the United Kingdom " +
+      scope: "This considerably undercounts the community, because most Moldovans in the United Kingdom " +
              "entered and are recorded as holders of Romanian passports from the European Union, so " +
              "the country of birth tables capture only a fraction. Earlier estimates put the number " +
              "born in the Republic of Moldova near 3,400 in 2015.",
@@ -577,7 +577,7 @@ window.MIGRATION_DATA = {
                 "The 2024 edition from the United Nations counts 864,257 people born in the country who " +
                 "now live abroad. It is a strict count by country of birth, so it leaves out places that " +
                 "report by citizenship instead, namely Germany, the United States and the United Kingdom, " +
-                "and it quietly loses anyone who has since naturalised. On that birthplace basis the number " +
+                "and it does not include people who have since naturalised abroad. On that birthplace basis the number " +
                 "has been climbing, from 812,653 in 2020 to 864,257 in 2024.\n\n" +
                 "Independent sources point the same way. Eurostat's figures by country of birth for " +
                 "European Union member states alone confirm more than 400,000 people born in the Republic " +
